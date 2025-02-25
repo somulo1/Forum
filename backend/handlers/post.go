@@ -49,7 +49,7 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	filters := r.URL.Query()
 	category := filters.Get("category")
 	userID := filters.Get("user_id")
-	likedByUserID := filters.Get("liked_by_user_id")
+	// likedByUserID := filters.Get("liked_by_user_id")
 
 	// Fetch posts from database based on filters
 	// Example: posts := db.GetPosts(category, userID, likedByUserID)

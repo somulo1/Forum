@@ -2,9 +2,10 @@ package handlers
 
 import (
 	"encoding/json"
+	"net/http"
+
 	"forum/models"
 	"forum/utils"
-	"net/http"
 )
 
 // RegisterUser handles user registration
