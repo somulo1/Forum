@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 
+	"forum/middleware"
 	"forum/models"
 	"forum/utils"
 )
@@ -54,14 +55,14 @@ func GetPosts(w http.ResponseWriter, r *http.Request) {
 	// Fetch posts from database based on filters
 	// Example: posts := db.GetPosts(category, userID, likedByUserID)
 	posts := []models.Post{
-		{ID: 1, Title: "Post 1", Content: "Content 1", UserID: 1, Category: "Technology"},
-		{ID: 2, Title: "Post 2", Content: "Content 2", UserID: 2, Category: "Science"},
+		{ID: 1, Title: "Post 1", Content: "Content 1", UserID: 1, Categories: []string{"Technology"}},
+		{ID: 2, Title: "Post 2", Content: "Content 2", UserID: 2, Categories: []string{"Science"}},
 	}
 
 	// Apply filters (example logic)
 	filteredPosts := make([]models.Post, 0)
 	for _, post := range posts {
-		if category != "" && post.Category != category {
+		if category != "" && !middleware.Contains(post.Categories, category) {
 			continue
 		}
 		if userID != "" && strconv.Itoa(post.UserID) != userID {
