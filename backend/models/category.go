@@ -4,6 +4,6 @@ var Categories=map[string]int{
 
 }
 type Category struct {
-    ID       int    `json:"id"`
-    Name     string `json:"name"`
+    ID       int    `json:"id" validate:"required"`
+    Name     string `json:"name" validate:"required,min=3,max=32"`
 }
