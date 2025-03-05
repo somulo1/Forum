@@ -1,6 +1,6 @@
 package middleware
 
-func Contains(slice []string, str string) bool {
+func Contains(slice []int, str int) bool {
 	for _, w := range slice {
 		if w == str {
 			return true
