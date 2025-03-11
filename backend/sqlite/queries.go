@@ -60,14 +60,14 @@ func DeletePost(db *sql.DB, postID int) error {
 }
 
 // ToggleLike toggles a like for a post or comment
-func ToggleLike(db *sql.DB, userID, postID int, commentID int) error {
+func ToggleLike(db *sql.DB, userID, postID int, commentID *int) error {
 	var res sql.Result
 	var err error
 
-	if commentID == 0 {
+	if commentID == nil {
 		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, postID)
 	} else {
-		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, commentID)
+		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, *commentID)
 	}
 	if err != nil {
 		return err
@@ -75,10 +75,10 @@ func ToggleLike(db *sql.DB, userID, postID int, commentID int) error {
 
 	rowsAffected, _ := res.RowsAffected()
 	if rowsAffected == 0 {
-		if commentID == 0 {
+		if commentID == nil {
 			_, err = db.Exec(`INSERT INTO likes (user_id, post_id) VALUES (?, ?)`, userID, postID)
 		} else {
-			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, commentID)
+			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, *commentID)
 		}
 	}
 	return err
