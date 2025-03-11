@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"time"
 
 	"forum/routes"
 	"forum/sqlite"
@@ -21,7 +22,14 @@ func main() {
 
 	// Setup routes with database connection
 	mux := routes.SetupRoutes(sqlite.DB)
-
+	go func() {
+		for {
+			time.Sleep(1 * time.Hour) // Runs every 1 hour
+			if err := sqlite.CleanupSessions(sqlite.DB, -24); err != nil {
+				fmt.Println("Warning: Failed to clean up old sessions:", err)
+			}
+		}
+	}()
 	// Start server
 	port := ":8080"
 	fmt.Printf("Server started on http://localhost%s\n", port)

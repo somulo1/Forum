@@ -87,8 +87,8 @@ func ToggleLike(db *sql.DB, userID, postID int, commentID *int) error {
 // CleanupSessions removes expired sessions
 func CleanupSessions(db *sql.DB, expiryHours int) error {
 	_, err := db.Exec(`
-	DELETE FROM sessions WHERE created_at < datetime('now', '-' || ? || ' hours')
-	`, -expiryHours)
+	DELETE FROM sessions WHERE created_at < datetime('now', ? || ' hours')
+`, -expiryHours)
 	return err
 }
 

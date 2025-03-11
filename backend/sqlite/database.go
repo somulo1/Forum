@@ -23,7 +23,6 @@ func InitializeDatabase(dbPath string) error {
 	if err := applySchemaFromFile("schema.sql"); err != nil {
 		return fmt.Errorf("failed to apply schema: %w", err)
 	}
-
 	return nil
 }
 
@@ -45,6 +44,7 @@ func applySchemaFromFile(filename string) error {
 		fmt.Println("Schema execution failed. Contents of schema.sql:\n", string(schemaSQL))
 		return err
 	}
+
 	return nil
 }
 
