@@ -1,15 +1,18 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"forum/models"
+	"forum/sqlite"
 	"forum/utils"
 )
 
 // CreateComment creates a new comment
-func CreateComment(w http.ResponseWriter, r *http.Request) {
+func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -22,50 +25,89 @@ func CreateComment(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate user session, save comment to database
-	// Example: comment.UserID = utils.GetUserIDFromSession(r)
-	// Save comment to database (e.g., db.CreateComment(&comment))
+	// Validate user session
+	userID, err := utils.GetUserIDFromSession(db, r)
+	if err != nil || userID == 0 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	comment.UserID = userID
+
+	err = sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.Content)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to create comment", http.StatusInternalServerError)
+		return
+	}
+
 	utils.SendJSONResponse(w, comment, http.StatusCreated)
 }
 
 // GetComments fetches comments for a post
-func GetComments(w http.ResponseWriter, r *http.Request) {
+func GetComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	postID := r.URL.Query().Get("post_id")
-	if postID == "" {
-		http.Error(w, "Post ID is required", http.StatusBadRequest)
+	// Retrieve `post_id` from query parameters
+	postIDStr := r.URL.Query().Get("post_id")
+	if postIDStr == "" {
+		http.Error(w, "Missing post_id parameter", http.StatusBadRequest)
 		return
 	}
 
-	// Fetch comments from database for the given post ID
-	// Example: comments := db.GetComments(postID)
-	comments := []models.Comment{
-		{ID: 1, Content: "Comment 1", PostID: 1, UserID: 1},
-		{ID: 2, Content: "Comment 2", PostID: 1, UserID: 2},
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post_id parameter", http.StatusBadRequest)
+		return
 	}
 
+	// Fetch comments from the database
+	comments, err := sqlite.GetPostComments(db, postID)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
+		return
+	}
+
+	// Send comments as JSON response
 	utils.SendJSONResponse(w, comments, http.StatusOK)
 }
 
 // DeleteComment deletes a comment
-func DeleteComment(w http.ResponseWriter, r *http.Request) {
+func DeleteComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	commentID := r.URL.Query().Get("id")
-	if commentID == "" {
-		http.Error(w, "Comment ID is required", http.StatusBadRequest)
+	var request struct {
+		CommentID int `json:"comment_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request data", http.StatusBadRequest)
 		return
 	}
 
 	// Validate user session and check if the user is the author of the comment
-	// Example: if !utils.IsAuthor(r, commentID) { http.Error(w, "Unauthorized", http.StatusUnauthorized) }
-	// Delete comment from database (e.g., db.DeleteComment(commentID))
+	userID, err := utils.GetUserIDFromSession(db, r)
+	if err != nil || userID == 0 {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	isAuthor, err := utils.IsAuthor(db, userID, request.CommentID)
+	if err != nil || !isAuthor {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	// Delete comment from database
+	err = sqlite.DeleteComment(db, request.CommentID)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to delete comment", http.StatusInternalServerError)
+		return
+	}
+
 	utils.SendJSONResponse(w, map[string]string{"message": "Comment deleted"}, http.StatusOK)
 }

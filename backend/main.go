@@ -2,14 +2,28 @@ package main
 
 import (
 	"fmt"
-	"forum/routes"
 	"log"
 	"net/http"
+
+	"forum/routes"
+	"forum/sqlite"
+
+	_ "github.com/mattn/go-sqlite3"
 )
 
 func main() {
-	router := routes.SetupRoutes()
+	// Initialize database
+	err := sqlite.InitializeDatabase("forum.db")
+	if err != nil {
+		log.Fatalf("Failed to initialize database: %v", err)
+	}
+	defer sqlite.CloseDatabase()
 
-	fmt.Println("Server running on :8080")
-	log.Fatal(http.ListenAndServe(":8080", router))
+	// Setup routes with database connection
+	mux := routes.SetupRoutes(sqlite.DB)
+
+	// Start server
+	port := ":8080"
+	fmt.Printf("Server started on http://localhost%s\n", port)
+	log.Fatal(http.ListenAndServe(port, mux))
 }

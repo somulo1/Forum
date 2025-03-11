@@ -1,17 +1,18 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"net/http"
 	"strconv"
 
-	"forum/middleware"
 	"forum/models"
+	"forum/sqlite"
 	"forum/utils"
 )
 
 // CreatePost creates a new post
-func CreatePost(w http.ResponseWriter, r *http.Request) {
+func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -25,58 +26,40 @@ func CreatePost(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate user session
-	userID := utils.GetUserIDFromSession(r)
-	if userID == 0 {
+	userID, err := utils.GetUserIDFromSession(db, r)
+	if err != nil || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Set the user ID for the post
 	post.UserID = userID
+	err = sqlite.CreatePost(db, post.UserID, post.Title, post.Content)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to create post", http.StatusInternalServerError)
+		return
+	}
 
-	// Save post to database (e.g., db.CreatePost(&post))
-	// Example: db.CreatePost(&post)
 	utils.SendJSONResponse(w, post, http.StatusCreated)
 }
 
 // GetPosts fetches posts (with optional filters)
-func GetPosts(w http.ResponseWriter, r *http.Request) {
+func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Extract filters from query params (category, user ID, liked posts)
-	filters := r.URL.Query()
-	category := filters.Get("category")
-	userID := filters.Get("user_id")
-	// likedByUserID := filters.Get("liked_by_user_id")
-
-	// Fetch posts from database based on filters
-	// Example: posts := db.GetPosts(category, userID, likedByUserID)
-	posts := []models.Post{
-		{ID: 1, Title: "Post 1", Content: "Content 1", UserID: 1, CategoryID: []int{1}},
-		{ID: 2, Title: "Post 2", Content: "Content 2", UserID: 2, CategoryID: []int{1, 2}},
+	posts, err := sqlite.GetPosts(db, 1, 10) // Example pagination (can be modified)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to fetch posts", http.StatusInternalServerError)
+		return
 	}
 
-	// Apply filters (example logic)
-	filteredPosts := make([]models.Post, 0)
-	for _, post := range posts {
-		if category != "" && !middleware.Contains(post.CategoryID, models.Categories[category]) {
-			continue
-		}
-		if userID != "" && strconv.Itoa(post.UserID) != userID {
-			continue
-		}
-		// LikedByUserID logic would require a database query to check likes
-		filteredPosts = append(filteredPosts, post)
-	}
-
-	utils.SendJSONResponse(w, filteredPosts, http.StatusOK)
+	utils.SendJSONResponse(w, posts, http.StatusOK)
 }
 
 // UpdatePost updates an existing post
-func UpdatePost(w http.ResponseWriter, r *http.Request) {
+func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -89,48 +72,108 @@ func UpdatePost(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Validate user session and check if the user is the author of the post
-	userID := utils.GetUserIDFromSession(r)
-	if userID == 0 || userID != post.UserID {
+	// Validate user session
+	userID, err := utils.GetUserIDFromSession(db, r)
+	if err != nil || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Update post in database (e.g., db.UpdatePost(&post))
-	// Example: db.UpdatePost(&post)
+	// Ensure the post belongs to the user
+	existingPost, err := sqlite.GetPost(db, post.ID)
+	if err != nil {
+		utils.SendJSONError(w, "Post not found", http.StatusNotFound)
+		return
+	}
+	var existingPostData models.Post
+	if err := existingPost.Scan(&existingPostData.ID, &existingPostData.UserID, &existingPostData.Title, &existingPostData.Content); err != nil {
+		utils.SendJSONError(w, "Failed to read post data", http.StatusInternalServerError)
+		return
+	}
+
+	if existingPostData.UserID != userID {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	err = sqlite.UpdatePost(db, post.ID, post.Title, post.Content)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to update post", http.StatusInternalServerError)
+		return
+	}
+
 	utils.SendJSONResponse(w, post, http.StatusOK)
 }
 
-// DeletePost deletes a post
-func DeletePost(w http.ResponseWriter, r *http.Request) {
+func DeletePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodDelete {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	postID := r.URL.Query().Get("id")
-	if postID == "" {
-		http.Error(w, "Post ID is required", http.StatusBadRequest)
+	var request struct {
+		PostID int `json:"post_id"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
+		http.Error(w, "Invalid request data", http.StatusBadRequest)
 		return
 	}
 
-	// Validate user session and check if the user is the author of the post
-	userID := utils.GetUserIDFromSession(r)
-	if userID == 0 {
+	// Validate user session
+	userID, err := utils.GetUserIDFromSession(db, r)
+	if err != nil || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	// Fetch post from database to check ownership
-	// Example: post := db.GetPost(postID)
-	post := models.Post{ID: 1, Title: "Post 1", Content: "Content 1", UserID: 1} // Placeholder
-
-	if post.UserID != userID {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+	// Ensure the post belongs to the user
+	existingPost, err := sqlite.GetPost(db, request.PostID)
+	if err != nil {
+		utils.SendJSONError(w, "Post not found", http.StatusNotFound)
 		return
 	}
 
-	// Delete post from database (e.g., db.DeletePost(postID))
-	// Example: db.DeletePost(postID)
+	var existingPostData models.Post
+	if err := existingPost.Scan(&existingPostData.ID, &existingPostData.UserID, &existingPostData.Title, &existingPostData.Content); err != nil {
+		utils.SendJSONError(w, "Failed to read post data", http.StatusInternalServerError)
+		return
+	}
+
+	if existingPostData.UserID != userID {
+		http.Error(w, "Forbidden", http.StatusForbidden)
+		return
+	}
+
+	err = sqlite.DeletePost(db, request.PostID)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to delete post", http.StatusInternalServerError)
+		return
+	}
+
 	utils.SendJSONResponse(w, map[string]string{"message": "Post deleted"}, http.StatusOK)
+}
+
+func GetPostComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	postIDStr := r.URL.Query().Get("post_id")
+	if postIDStr == "" {
+		http.Error(w, "Missing post_id parameter", http.StatusBadRequest)
+		return
+	}
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post_id parameter", http.StatusBadRequest)
+		return
+	}
+	comments, err := sqlite.GetPostComments(db, postID)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
+		return
+	}
+
+	utils.SendJSONResponse(w, comments, http.StatusOK)
 }
