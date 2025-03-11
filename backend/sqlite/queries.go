@@ -61,47 +61,33 @@ func DeletePost(db *sql.DB, postID int) error {
 
 // ToggleLike toggles a like for a post or comment
 func ToggleLike(db *sql.DB, userID, postID int, commentID int) error {
-	var existing int
+	var res sql.Result
+	var err error
 
 	if commentID == 0 {
-		err := db.QueryRow(`
-			SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = ?
-		`, userID, postID).Scan(&existing)
-		if err != nil && err != sql.ErrNoRows {
-			return err
-		}
+		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, postID)
 	} else {
-		err := db.QueryRow(`
-			SELECT COUNT(*) FROM likes WHERE user_id = ? AND comment_id = ?
-		`, userID, commentID).Scan(&existing)
-		if err != nil && err != sql.ErrNoRows {
-			return err
-		}
+		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, commentID)
+	}
+	if err != nil {
+		return err
 	}
 
-	if existing > 0 {
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
 		if commentID == 0 {
-			_, err := db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, postID)
-			return err
+			_, err = db.Exec(`INSERT INTO likes (user_id, post_id) VALUES (?, ?)`, userID, postID)
 		} else {
-			_, err := db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, commentID)
-			return err
-		}
-	} else {
-		if commentID == 0 {
-			_, err := db.Exec(`INSERT INTO likes (user_id, post_id) VALUES (?, ?)`, userID, postID)
-			return err
-		} else {
-			_, err := db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, commentID)
-			return err
+			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, commentID)
 		}
 	}
+	return err
 }
 
 // CleanupSessions removes expired sessions
 func CleanupSessions(db *sql.DB, expiryHours int) error {
 	_, err := db.Exec(`
-	DELETE FROM sessions WHERE created_at < datetime('now', ?)
+	DELETE FROM sessions WHERE created_at < datetime('now', '-' || ? || ' hours')
 	`, -expiryHours)
 	return err
 }

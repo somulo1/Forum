@@ -41,7 +41,11 @@ func applySchemaFromFile(filename string) error {
 	}
 
 	_, err = DB.Exec(string(schemaSQL))
-	return err
+	if err != nil {
+		fmt.Println("Schema execution failed. Contents of schema.sql:\n", string(schemaSQL))
+		return err
+	}
+	return nil
 }
 
 // CloseDatabase closes the database connection
