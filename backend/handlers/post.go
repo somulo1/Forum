@@ -80,11 +80,8 @@ func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ensure the post belongs to the user
-	existingPost, err := sqlite.GetPost(db, post.ID)
-	if err != nil {
-		utils.SendJSONError(w, "Post not found", http.StatusNotFound)
-		return
-	}
+	existingPost := sqlite.GetPost(db, post.ID)
+
 	var existingPostData models.Post
 	if err := existingPost.Scan(&existingPostData.ID, &existingPostData.UserID, &existingPostData.Title, &existingPostData.Content); err != nil {
 		utils.SendJSONError(w, "Failed to read post data", http.StatusInternalServerError)
@@ -127,11 +124,7 @@ func DeletePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Ensure the post belongs to the user
-	existingPost, err := sqlite.GetPost(db, request.PostID)
-	if err != nil {
-		utils.SendJSONError(w, "Post not found", http.StatusNotFound)
-		return
-	}
+	existingPost := sqlite.GetPost(db, request.PostID)
 
 	var existingPostData models.Post
 	if err := existingPost.Scan(&existingPostData.ID, &existingPostData.UserID, &existingPostData.Title, &existingPostData.Content); err != nil {

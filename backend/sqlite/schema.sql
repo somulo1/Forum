@@ -55,18 +55,18 @@ CREATE TABLE IF NOT EXISTS likes (
     FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
 );
 
--- Auto-update `updated_at` column in `posts`
-CREATE TRIGGER update_post_timestamp
-AFTER UPDATE ON posts
-FOR EACH ROW
-BEGIN
-    UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
+-- -- Auto-update `updated_at` column in `posts`
+-- CREATE TRIGGER update_post_timestamp
+-- AFTER UPDATE ON posts
+-- FOR EACH ROW
+-- BEGIN
+--     UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+-- END;
 
--- Auto-update `updated_at` column in `comments`
-CREATE TRIGGER update_comment_timestamp
-AFTER UPDATE ON comments
-FOR EACH ROW
-BEGIN
-    UPDATE comments SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
-END;
+-- -- Auto-update `updated_at` column in `comments`
+-- CREATE TRIGGER update_comment_timestamp
+-- AFTER UPDATE ON comments
+-- FOR EACH ROW
+-- BEGIN
+--     UPDATE comments SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+-- END;

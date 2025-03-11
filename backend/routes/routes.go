@@ -27,16 +27,16 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.Handle("/api/posts/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreatePost)))
 	mux.Handle("/api/posts", http.HandlerFunc(HandlerWrapper(db, handlers.GetPosts))) // Allow public access
 	mux.Handle("/api/posts/update", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.UpdatePost)))
+	// Comment routes (protected by auth middleware)
 	mux.Handle("/api/comments/delete", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.DeleteComment)))
 
-	// Comment routes (protected by auth middleware)
 	mux.Handle("/api/comments/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreateComment)))
 	mux.Handle("/api/comments/post", http.HandlerFunc(HandlerWrapper(db, handlers.GetPostComments))) // Public access
-	mux.Handle("/api/comments/delete", middleware.AuthMiddleware(db, http.HandlerFunc(HandlerWrapper(db, handlers.DeleteComment))))
+
 	// Category routes (protected by auth middleware)
 	mux.Handle("/api/categories/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreateCategory)))
 	// Like routes (protected by auth middleware)
-	mux.Handle("/api/likes/toggle", middleware.AuthMiddleware(HandlerWrapper(db, handlers.ToggleLike)))
+	mux.Handle("/api/likes/toggle", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.ToggleLike)))
 
 	return mux
 }
