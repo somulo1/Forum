@@ -72,15 +72,16 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Dereference pointers before passing to the database function
 	postID := 0
+	commentID := 0
 
 	if request.PostID != nil {
 		postID = *request.PostID
 	}
-	// if request.CommentID != nil {
-	// 	commentID = *request.CommentID
-	// }
+	if request.CommentID != nil {
+		commentID = *request.CommentID
+	}
 
-	err = sqlite.ToggleLike(db, userID, postID, request.CommentID)
+	err = sqlite.ToggleLike(db, userID, postID, &commentID)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to toggle like", http.StatusInternalServerError)
 		return
