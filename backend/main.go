@@ -4,6 +4,8 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"os"
+	"strconv"
 	"time"
 
 	"forum/routes"
@@ -12,6 +14,19 @@ import (
 
 func main() {
 	// Initialize the database
+	if len(os.Args) > 2 {
+		fmt.Println("Usage:\n\n$ go run .\n\nor\n\n$ go run . 'port no'\n\nwhere port no; is a four digit integer greater than 1023 and not equal to 3306/3389")
+		return
+	}
+	port := ":8080"
+	if len(os.Args) == 2 {
+		p, er := strconv.Atoi(os.Args[1])
+		if er != nil || !(p > 1023 && p != 3306 && p != 3389) {
+			fmt.Println("Usage:\n\n$ go run .\n\nor\n\n$ go run . 'port no'\n\nwhere port no; is a four digit integer greater than 1023 and not equal to 3306/3389")
+			return
+		}
+		port = ":" + os.Args[1]
+	}
 	err := sqlite.InitializeDatabase("forum.db")
 	if err != nil {
 		log.Fatalf("Failed to initialize database: %v", err)
@@ -25,8 +40,8 @@ func main() {
 	go scheduleDailyCleanup()
 
 	// Start server
-	port := ":8080"
-	fmt.Printf("🚀 Server started on http://localhost%s\n", port)
+
+	fmt.Printf("🚀 [%s] Server is running at http://localhost%s\n", time.Now().Format(time.RFC3339), port)
 	log.Fatal(http.ListenAndServe(port, mux))
 }
 
@@ -52,7 +67,7 @@ func scheduleDailyCleanup() {
 
 		// Run session cleanup
 		if err := sqlite.CleanupSessions(sqlite.DB, 24); err != nil {
-			fmt.Println("❌ Failed to clean up old sessions:", err)
+			fmt.Printf("❌ [%s] Session cleanup failed: %v\n", time.Now().Format(time.RFC3339), err)
 		} else {
 			fmt.Println("✅ Expired sessions cleaned up successfully at midnight.")
 		}

@@ -49,7 +49,11 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	posts, err := sqlite.GetPosts(db, 1, 10) // Example pagination (can be modified)
+	// Extract pagination parameters from the URL query
+	page, limit := utils.GetPaginationParams(r)
+
+	// Fetch posts with pagination
+	posts, err := sqlite.GetPosts(db, page, limit)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return

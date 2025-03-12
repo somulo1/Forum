@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"strconv"
 	"time"
 
 	"forum/sqlite"
@@ -89,3 +90,27 @@ func getUserIDFromSession(db *sql.DB, sessionID string) (int, error) {
 	}
 	return userID, nil
 }
+
+// GetPaginationParams extracts "page" and "limit" from query parameters
+func GetPaginationParams(r *http.Request) (int, int) {
+	page, err := strconv.Atoi(r.URL.Query().Get("page"))
+	if err != nil || page < 1 {
+		page = 1 // Default to first page
+	}
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil || limit < 1 {
+		limit = 10 // Default page size
+	}
+
+	return page, limit
+}
+
+// func Contains(slice []int, str int) bool {
+// 	for _, w := range slice {
+// 		if w == str {
+// 			return true
+// 		}
+// 	}
+// 	return false
+// }
