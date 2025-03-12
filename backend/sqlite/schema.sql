@@ -6,7 +6,8 @@ CREATE TABLE IF NOT EXISTS users (
     username TEXT UNIQUE NOT NULL,
     email TEXT UNIQUE NOT NULL,
     password_hash TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
 -- Sessions Table
@@ -55,18 +56,31 @@ CREATE TABLE IF NOT EXISTS likes (
     FOREIGN KEY (comment_id) REFERENCES comments(id) ON DELETE CASCADE
 );
 
--- -- Auto-update `updated_at` column in `posts`
--- CREATE TRIGGER update_post_timestamp
--- AFTER UPDATE ON posts
--- FOR EACH ROW
--- BEGIN
---     UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
--- END;
+-- Ensure the old trigger is removed before creating a new one
+DROP TRIGGER IF EXISTS update_user_timestamp;
+DROP TRIGGER IF EXISTS update_post_timestamp;
+DROP TRIGGER IF EXISTS update_comment_timestamp;
 
--- -- Auto-update `updated_at` column in `comments`
--- CREATE TRIGGER update_comment_timestamp
--- AFTER UPDATE ON comments
--- FOR EACH ROW
--- BEGIN
---     UPDATE comments SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
--- END;
+-- Auto-update `updated_at` column in `users`
+CREATE TRIGGER update_user_timestamp
+AFTER UPDATE ON users
+FOR EACH ROW
+BEGIN
+    UPDATE users SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;
+
+-- Auto-update `updated_at` column in `posts`
+CREATE TRIGGER update_post_timestamp
+AFTER UPDATE ON posts
+FOR EACH ROW
+BEGIN
+    UPDATE posts SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;
+
+-- Auto-update `updated_at` column in `comments`
+CREATE TRIGGER update_comment_timestamp
+AFTER UPDATE ON comments
+FOR EACH ROW
+BEGIN
+    UPDATE comments SET updated_at = CURRENT_TIMESTAMP WHERE id = OLD.id;
+END;

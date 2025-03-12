@@ -38,11 +38,20 @@ func scheduleDailyCleanup() {
 		nextMidnight := time.Date(now.Year(), now.Month(), now.Day()+1, 0, 0, 0, 0, now.Location())
 		sleepDuration := time.Until(nextMidnight)
 
-		fmt.Printf("🕛 Scheduled session cleanup in %v at midnight...\n", sleepDuration)
-		time.Sleep(sleepDuration) // Wait until midnight
+		fmt.Println("🕛 Session cleanup scheduled for midnight...")
+
+		// Start countdown in hours and minutes
+		for remaining := sleepDuration; remaining > 0; remaining -= time.Minute {
+			hours := int(remaining.Hours())
+			minutes := int(remaining.Minutes()) % 60
+			fmt.Printf("\r⏳ Time until cleanup: %02d h %02d min   ", hours, minutes) // Overwrites same line
+			time.Sleep(1 * time.Minute)
+		}
+
+		fmt.Println("\n🚀 Running session cleanup...")
 
 		// Run session cleanup
-		if err := sqlite.CleanupSessions(sqlite.DB, -24); err != nil {
+		if err := sqlite.CleanupSessions(sqlite.DB, 24); err != nil {
 			fmt.Println("❌ Failed to clean up old sessions:", err)
 		} else {
 			fmt.Println("✅ Expired sessions cleaned up successfully at midnight.")

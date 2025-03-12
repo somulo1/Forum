@@ -8,4 +8,5 @@ type User struct {
 	Email     string    `json:"email" validate:"required,email" gorm:"unique;not null"`
 	Password  string    `json:"-" validate:"required"`
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+    UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }

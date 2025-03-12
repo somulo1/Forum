@@ -87,7 +87,7 @@ func ToggleLike(db *sql.DB, userID, postID int, commentID *int) error {
 // CleanupSessions removes expired sessions
 func CleanupSessions(db *sql.DB, expiryHours int) error {
 	_, err := db.Exec(`
-	DELETE FROM sessions WHERE created_at < datetime('now', ? || ' hours')
+	DELETE FROM sessions WHERE created_at < datetime('now', '-'|| ? || ' hours')
 `, -expiryHours)
 	return err
 }
@@ -117,13 +117,35 @@ func CreateComment(db *sql.DB, userID, postID int, content string) error {
 }
 
 // GetPostComments retrieves comments for a specific post
-func GetPostComments(db *sql.DB, postID int) (*sql.Rows, error) {
-	return db.Query(`
+func GetPostComments(db *sql.DB, postID int) ([]map[string]interface{}, error) {
+	rows, err := db.Query(`
 		SELECT id, user_id, content, created_at
 		FROM comments
 		WHERE post_id = ?
 		ORDER BY created_at ASC
 	`, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var comments []map[string]any
+	for rows.Next() {
+		var id, userID int
+		var content string
+		var createdAt string
+		if err := rows.Scan(&id, &userID, &content, &createdAt); err != nil {
+			return nil, err
+		}
+
+		comments = append(comments, map[string]any{
+			"id":         id,
+			"user_id":    userID,
+			"content":    content,
+			"created_at": createdAt,
+		})
+	}
+	return comments, nil
 }
 
 // CreateCategory inserts a new category

@@ -41,7 +41,7 @@ func applySchemaFromFile(filename string) error {
 
 	_, err = DB.Exec(string(schemaSQL))
 	if err != nil {
-		fmt.Println("Schema execution failed. Contents of schema.sql:\n", string(schemaSQL))
+		fmt.Printf("❌ Schema execution failed: %v\nContents of schema.sql:\n%s\n", err, string(schemaSQL))
 		return err
 	}
 
