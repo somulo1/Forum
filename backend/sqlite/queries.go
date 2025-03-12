@@ -4,6 +4,8 @@ import (
 	"database/sql"
 	"time"
 
+	"forum/models"
+
 	"github.com/google/uuid"
 )
 
@@ -31,12 +33,15 @@ func CreatePost(db *sql.DB, userID int, title, content string) error {
 }
 
 // GetPost retrieves a single post by ID
-func GetPost(db *sql.DB, postID int) *sql.Row {
-	return db.QueryRow(`
-		SELECT id, user_id, title, content, created_at
-		FROM posts
-		WHERE id = ?
-	`, postID)
+func GetPost(db *sql.DB, postID int) (models.Post, error) {
+	var post models.Post
+	err := db.QueryRow(`
+        SELECT id, user_id, title, content FROM posts WHERE id = ?
+    `, postID).Scan(&post.ID, &post.UserID, &post.Title, &post.Content)
+	if err != nil {
+		return models.Post{}, err
+	}
+	return post, nil
 }
 
 // GetPosts retrieves posts with pagination
