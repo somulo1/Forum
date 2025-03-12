@@ -64,7 +64,11 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	var user models.User
 	err = userRow.Scan(&user.ID, &user.Username, &user.Email, &user.Password)
 	if err != nil {
-		utils.SendJSONError(w, "Invalid email or password", http.StatusUnauthorized)
+		if err == sql.ErrNoRows {
+			utils.SendJSONError(w, "Invalid email or password", http.StatusUnauthorized)
+			return
+		}
+		utils.SendJSONError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
 
