@@ -1,9 +1,14 @@
 package models
 
+import "time"
+
 type Post struct {
-    ID          int    `json:"id" validate:"required"`
-    Title       string `json:"title" validate:"required,min=3,max=128"`
-    Content     string `json:"content" validate:"required,min=3,max=1024"`
-    UserID      int    `json:"user_id" validate:"required"`
-    CategoryID  int    `json:"category_id" validate:"required"`
+	ID          int       `json:"id" gorm:"primaryKey"`
+	Title       string    `json:"title" validate:"required" gorm:"not null"`
+	Content     string    `json:"content" validate:"required" gorm:"not null"`
+	UserID      int       `json:"user_id" gorm:"not null"`
+	CategoryID  *int      `json:"category_id,omitempty"` // Supports both single & multiple categories
+	CategoryIDs []int     `json:"category_ids" gorm:"-"` // Excluded from DB, handled manually
+	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }

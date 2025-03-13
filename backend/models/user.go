@@ -1,8 +1,12 @@
 package models
 
+import "time"
+
 type User struct {
-    ID       int    `json:"id" validate:"required"`
-    Username string `json:"username" validate:"required,min=3,max=32"`
-    Email    string `json:"email" validate:"required,email"`
-    Password string `json:"password" validate:"required,min=8,max=128"`
+	ID        int       `json:"id" gorm:"primaryKey"`
+	Username  string    `json:"username" validate:"required" gorm:"unique;not null"`
+	Email     string    `json:"email" validate:"required,email" gorm:"unique;not null"`
+	Password  string    `json:"-" validate:"required"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+    UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }

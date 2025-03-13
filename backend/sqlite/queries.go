@@ -2,150 +2,214 @@ package sqlite
 
 import (
 	"database/sql"
-	"errors"
 	"time"
+
+	"forum/models"
+
+	"github.com/google/uuid"
 )
 
-// User-related queries
-func CreateUser(username, email, passwordHash string) (int64, error) {
-	result, err := DB.Exec(`
+// GetUserByUsername retrieves a user by username
+func GetUserByUsername(db *sql.DB, username string) *sql.Row {
+	return db.QueryRow(`SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?`, username)
+}
+
+// CreateUser inserts a new user into the database
+func CreateUser(db *sql.DB, username, email, passwordHash string) error {
+	_, err := db.Exec(`
 		INSERT INTO users (username, email, password_hash)
 		VALUES (?, ?, ?)
 	`, username, email, passwordHash)
+	return err
+}
+
+// CreatePost inserts a new post
+func CreatePost(db *sql.DB, userID int, title, content string) error {
+	_, err := db.Exec(`
+		INSERT INTO posts (user_id, title, content)
+		VALUES (?, ?, ?)
+	`, userID, title, content)
+	return err
+}
+
+// GetPost retrieves a single post by ID
+func GetPost(db *sql.DB, postID int) (models.Post, error) {
+	var post models.Post
+	err := db.QueryRow(`
+        SELECT id, user_id, title, content FROM posts WHERE id = ?
+    `, postID).Scan(&post.ID, &post.UserID, &post.Title, &post.Content)
 	if err != nil {
+		return models.Post{}, err
+	}
+	return post, nil
+}
+
+// GetPosts retrieves posts with pagination
+func GetPosts(db *sql.DB, page, limit int) (*sql.Rows, error) {
+	if page < 1 {
+		page = 1
+	}
+	offset := (page - 1) * limit
+	return db.Query(`
+		SELECT id, user_id, title, content, created_at
+		FROM posts
+		ORDER BY created_at DESC
+		LIMIT ? OFFSET ?
+	`, limit, offset)
+}
+
+// DeletePost removes a post by ID
+func DeletePost(db *sql.DB, postID int) error {
+	_, err := db.Exec(`DELETE FROM posts WHERE id = ?`, postID)
+	return err
+}
+
+// ToggleLike toggles a like for a post or comment
+func ToggleLike(db *sql.DB, userID, postID int, commentID *int) error {
+	var res sql.Result
+	var err error
+
+	if commentID == nil {
+		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, postID)
+	} else {
+		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, *commentID)
+	}
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, _ := res.RowsAffected()
+	if rowsAffected == 0 {
+		if commentID == nil {
+			_, err = db.Exec(`INSERT INTO likes (user_id, post_id) VALUES (?, ?)`, userID, postID)
+		} else {
+			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, *commentID)
+		}
+	}
+	return err
+}
+
+// CleanupSessions removes expired sessions
+func CleanupSessions(db *sql.DB, expiryHours int) error {
+	_, err := db.Exec(`
+	DELETE FROM sessions WHERE created_at < datetime('now', '-'|| ? || ' hours')
+`, -expiryHours)
+	return err
+}
+
+// GetUserIDFromSession retrieves a user ID from a session ID
+func GetUserIDFromSession(db *sql.DB, sessionID string) (int, error) {
+	var userID int
+	err := db.QueryRow(`
+		SELECT user_id FROM sessions WHERE id = ?
+	`, sessionID).Scan(&userID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return 0, nil // No user found
+		}
 		return 0, err
 	}
-	return result.LastInsertId()
+	return userID, nil
 }
 
-func GetUserByUsername(username string) (*sql.Row, error) {
-	return DB.QueryRow(`
-		SELECT id, username, email, password_hash, created_at
-		FROM users
-		WHERE username = ?
-	`, username), nil
+// CreateComment inserts a new comment
+func CreateComment(db *sql.DB, userID, postID int, content string) error {
+	_, err := db.Exec(`
+		INSERT INTO comments (user_id, post_id, content)
+		VALUES (?, ?, ?)
+	`, userID, postID, content)
+	return err
 }
 
-// Category-related queries
-func CreateCategory(name, description string) (int64, error) {
-	result, err := DB.Exec(`
-		INSERT INTO categories (name, description)
-		VALUES (?, ?)
-	`, name, description)
+// GetPostComments retrieves comments for a specific post
+func GetPostComments(db *sql.DB, postID int) ([]map[string]interface{}, error) {
+	rows, err := db.Query(`
+		SELECT id, user_id, content, created_at
+		FROM comments
+		WHERE post_id = ?
+		ORDER BY created_at ASC
+	`, postID)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
-	return result.LastInsertId()
+	defer rows.Close()
+
+	var comments []map[string]any
+	for rows.Next() {
+		var id, userID int
+		var content string
+		var createdAt string
+		if err := rows.Scan(&id, &userID, &content, &createdAt); err != nil {
+			return nil, err
+		}
+
+		comments = append(comments, map[string]any{
+			"id":         id,
+			"user_id":    userID,
+			"content":    content,
+			"created_at": createdAt,
+		})
+	}
+	return comments, nil
 }
 
-func GetCategories() (*sql.Rows, error) {
-	return DB.Query(`
-		SELECT id, name, description, created_at
-		FROM categories
-		ORDER BY name
+// CreateCategory inserts a new category
+func CreateCategory(db *sql.DB, name string) error {
+	_, err := db.Exec(`
+		INSERT INTO categories (name)
+		VALUES (?)
+	`, name)
+	return err
+}
+
+// GetCategories retrieves all categories
+func GetCategories(db *sql.DB) (*sql.Rows, error) {
+	return db.Query(`
+		SELECT id, name FROM categories
 	`)
 }
 
-// Post-related queries
-func CreatePost(title, content string, userID, categoryID int64) (int64, error) {
-	result, err := DB.Exec(`
-		INSERT INTO posts (title, content, user_id, category_id)
-		VALUES (?, ?, ?, ?)
-	`, title, content, userID, categoryID)
+// UpdatePost updates an existing post's title and content
+func UpdatePost(db *sql.DB, postID int, title, content string) error {
+	_, err := db.Exec(`
+		UPDATE posts 
+		SET title = ?, content = ?
+		WHERE id = ?
+	`, title, content, postID)
+	return err
+}
+
+// DeleteComment removes a comment from the database by its ID
+func DeleteComment(db *sql.DB, commentID int) error {
+	_, err := db.Exec(`
+		DELETE FROM comments WHERE id = ?
+	`, commentID)
+	return err
+}
+
+// GetUserByEmail retrieves a user by email
+func GetUserByEmail(db *sql.DB, email string) *sql.Row {
+	return db.QueryRow(`
+		SELECT id, username, email, password_hash FROM users WHERE email = ?
+	`, email)
+}
+
+// CreateSession creates a new session for a user and returns the session ID
+func CreateSession(db *sql.DB, userID int) (string, error) {
+	sessionID := uuid.New().String()
+	_, err := db.Exec(`
+		INSERT INTO sessions (id, user_id, created_at) VALUES (?, ?, ?)
+	`, sessionID, userID, time.Now())
 	if err != nil {
-		return 0, err
+		return "", err
 	}
-	return result.LastInsertId()
+	return sessionID, nil
 }
 
-func GetPost(postID int64) (*sql.Row, error) {
-	return DB.QueryRow(`
-		SELECT p.id, p.title, p.content, p.created_at, p.updated_at,
-			   u.username, c.name as category_name
-		FROM posts p
-		JOIN users u ON p.user_id = u.id
-		JOIN categories c ON p.category_id = c.id
-		WHERE p.id = ?
-	`, postID), nil
-}
-
-func GetPosts(page, pageSize int) (*sql.Rows, error) {
-	offset := (page - 1) * pageSize
-	return DB.Query(`
-		SELECT p.id, p.title, p.content, p.created_at,
-			   u.username, c.name as category_name,
-			   (SELECT COUNT(*) FROM comments WHERE post_id = p.id) as comment_count,
-			   (SELECT COUNT(*) FROM likes WHERE post_id = p.id AND is_like = true) as like_count
-		FROM posts p
-		JOIN users u ON p.user_id = u.id
-		JOIN categories c ON p.category_id = c.id
-		ORDER BY p.created_at DESC
-		LIMIT ? OFFSET ?
-	`, pageSize, offset)
-}
-
-// Comment-related queries
-func CreateComment(content string, userID, postID int64, parentID *int64) (int64, error) {
-	result, err := DB.Exec(`
-		INSERT INTO comments (content, user_id, post_id, parent_id)
-		VALUES (?, ?, ?, ?)
-	`, content, userID, postID, parentID)
-	if err != nil {
-		return 0, err
-	}
-	return result.LastInsertId()
-}
-
-func GetPostComments(postID int64) (*sql.Rows, error) {
-	return DB.Query(`
-		SELECT c.id, c.content, c.created_at, c.parent_id,
-			   u.username,
-			   (SELECT COUNT(*) FROM likes WHERE comment_id = c.id AND is_like = true) as like_count
-		FROM comments c
-		JOIN users u ON c.user_id = u.id
-		WHERE c.post_id = ?
-		ORDER BY c.created_at
-	`, postID)
-}
-
-// Like-related queries
-func ToggleLike(userID, postID, commentID int64, isLike bool) error {
-	tx, err := DB.Begin()
-	if err != nil {
-		return err
-	}
-	defer tx.Rollback()
-
-	// Check if a like/dislike already exists
-	var existingID int64
-	var existingIsLike bool
-	err = tx.QueryRow(`
-		SELECT id, is_like FROM likes
-		WHERE user_id = ? AND post_id = ? AND comment_id = ?
-	`, userID, postID, commentID).Scan(&existingID, &existingIsLike)
-
-	if err != nil {
-		if errors.Is(err, sql.ErrNoRows) {
-			// Create new like/dislike
-			_, err = tx.Exec(`
-				INSERT INTO likes (user_id, post_id, comment_id, is_like)
-				VALUES (?, ?, ?, ?)
-			`, userID, postID, commentID, isLike)
-		}
-		return err
-	}
-
-	// Update existing like/dislike
-	if existingIsLike != isLike {
-		_, err = tx.Exec(`
-			UPDATE likes
-			SET is_like = ?, updated_at = ?
-			WHERE id = ?
-		`, isLike, time.Now(), existingID)
-		if err != nil {
-			return err
-		}
-	}
-
-	return tx.Commit()
+// DeleteSession removes a session from the database
+func DeleteSession(db *sql.DB, sessionID string) error {
+	_, err := db.Exec(`
+		DELETE FROM sessions WHERE id = ?
+	`, sessionID)
+	return err
 }
