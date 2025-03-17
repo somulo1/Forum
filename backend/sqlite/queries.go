@@ -45,17 +45,29 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 }
 
 // GetPosts retrieves posts with pagination
-func GetPosts(db *sql.DB, page, limit int) (*sql.Rows, error) {
-	if page < 1 {
-		page = 1
-	}
+func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
+	var posts []models.Post
 	offset := (page - 1) * limit
-	return db.Query(`
-		SELECT id, user_id, title, content, created_at
-		FROM posts
+
+	rows, err := db.Query(`
+		SELECT id, user_id, title, content, created_at FROM posts
 		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?
 	`, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var post models.Post
+		if err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.CreatedAt); err != nil {
+			return nil, err
+		}
+		posts = append(posts, post)
+	}
+
+	return posts, nil
 }
 
 // DeletePost removes a post by ID
@@ -92,7 +104,7 @@ func ToggleLike(db *sql.DB, userID, postID int, commentID *int) error {
 // CleanupSessions removes expired sessions
 func CleanupSessions(db *sql.DB, expiryHours int) error {
 	_, err := db.Exec(`
-	DELETE FROM sessions WHERE created_at < datetime('now', '-'|| ? || ' hours')
+	DELETE FROM sessions WHERE created_at <= datetime('now', '-'|| ? || ' hours')
 `, -expiryHours)
 	return err
 }
