@@ -1,157 +1,125 @@
+// ================== API ENDPOINTS ==================
+const API_BASE_URL = "http://localhost:8080/api";
 
-
-// SIDE BAR
-const menuItems = document.querySelectorAll('.menu-item');
-// MESSAGES
-const messagesNotification = document.querySelector('#messages-notifications');
-const messages = document.querySelector('.messages');
-const message = messages.querySelectorAll('.message');
-const messageSearch = document.querySelector('#messages-search');
-
-// THEME
-const theme = document.querySelector('#theme');
-const themeModal = document.querySelector('.customize-theme');
-const fontSizes = document.querySelectorAll('.choose-size span');
-var root = document.querySelector(':root');
-const colorPalette = document.querySelectorAll('.choose-color span');
-
-
-// ============================= SIDEBAR===============================
-// remove active class from all menu items
-const changeActiveItem = () =>{
-menuItems.forEach(item => {
-item.classList.remove('active')
-})
-}
-menuItems.forEach(item => {
-item.addEventListener('click', ()=> {
-changeActiveItem();
-item.classList.add('active')
-if(item.id != 'notifications'){
-document.querySelector('.notification-popup').
-style.display = 'none';
-} else {
-document.querySelector('.notification-popup').
-style.display = 'block';
-document.querySelector('#notifications .notification-count').
-style.display ='none';
-
-}
-})
-})
-// ==========================MESSAGES======================
-//searches charts
-const searchMessage = () => {
-const val = messageSearch.value.toLowerCase();
-message.forEach(chat => {
-let name = chat.querySelector('h5').textContent.toLowerCase();
-if(name.indexOf(val) != -1){
-chat.style.display = 'flex';
-}else{
-chat.style.display = 'none';
-}
-})
-}
-// search chat
-messageSearch.addEventListener('keyup', searchMessage);
-
-// highlight messages card when messages menu is clicked
-messagesNotification.addEventListener('click', () => {
-messages.style.boxShadow = '0 0 1rem var(--color-primary)';
-messagesNotification.querySelector('.notification-count').
-style.display = 'none';
-setTimeout(() => {
-messages.style.boxShadow = 'none';
-}, 5000);
-})
-
-// THEME/DISPLAY CUSTOMIZATION
-
-// Function that opens modal
-const openThemeModal = () => {
-themeModal.style.display = 'grid';
-}
-theme.addEventListener('click', openThemeModal);
-
-// function that closes modal
-const closeThemeModal = (e) => {
-if(e.target.classList.contains('customize-theme')){
-themeModal.style.display = 'none';
-}
+// ================== AUTHENTICATION ==================
+// Check if user is logged in
+async function fetchUserData() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/user`, { credentials: "include" });
+        if (!response.ok) {
+            window.location.href = "login.html"; // Redirect to login if not authenticated
+        }
+        const user = await response.json();
+        document.querySelector(".profile .handle h3").textContent = user.username;
+        document.querySelector(".profile .handle p").textContent = `@${user.username}`;
+        document.querySelector(".profile-picture img").src = user.profilePicture || "default-avatar.png";
+    } catch (error) {
+        console.error("Error fetching user data:", error);
+    }
 }
 
-// close modal
-themeModal.addEventListener('click', closeThemeModal);
-
-//------------------------FONTS -------------------------
-
-// remove active class from span or font size selectors
-const removeSizeSelector = () => {
-fontSizes.forEach(size => {
-size.classList.remove('active');
-})
+// Logout function
+async function logout() {
+    await fetch(`${API_BASE_URL}/logout`, { method: "POST", credentials: "include" });
+    window.location.href = "login.html"; // Redirect to login page after logout
 }
 
-fontSizes.forEach(size => {
-size.addEventListener('click', () => {
-removeSizeSelector();
-let fontSize;
-size.classList.toggle('active');
-if(size.classList.contains('font-size-1')){
-fontSize = '10px';
-root.style.setProperty('----sticky-top-left', '5.4rem;');
-root.style.setProperty('----sticky-top-right', '5.4rem;');
-} else if(size.classList.contains('font-size-2')){
-fontSize = '13px';
-root.style.setProperty('----sticky-top-left', '5.4rem;');
-root.style.setProperty('----sticky-top-right', '-7rem;');
-} else if(size.classList.contains('font-size-3')){
-fontSize = '16px';
-root.style.setProperty('----sticky-top-left', '-2rem;');
-root.style.setProperty('----sticky-top-right', '-17em;');
-} else if(size.classList.contains('font-size-4')){
-fontSize = '19px';
-root.style.setProperty('----sticky-top-left', '-5rem;');
-root.style.setProperty('----sticky-top-right', '-25rem;');
-} else if(size.classList.contains('font-size-5')){
-fontSize = '22px';
-root.style.setProperty('----sticky-top-left', '-10rem;');
-root.style.setProperty('----sticky-top-right', '-33rem;');
-}
-// change font size of the root html element
-document.querySelector('html').style.fontSize = fontSize;
+// Attach logout to settings menu (Assuming a logout button exists)
+document.querySelector(".menu-item:last-child").addEventListener("click", logout);
 
-})
-
-})
-
-// remove active class from colors
-
-const changeActiveColorClass = () => {
-    colorPalette.forEach(colorPicker => {
-        colorPicker.classList.remove('active');
-    })
+// ================== FETCH POSTS ==================
+async function fetchPosts() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/posts`);
+        const posts = await response.json();
+        renderPosts(posts);
+    } catch (error) {
+        console.error("Error fetching posts:", error);
+    }
 }
 
-// change Primary Colors
+// Render posts dynamically
+function renderPosts(posts) {
+    const feedsContainer = document.querySelector(".feeds");
+    feedsContainer.innerHTML = ""; // Clear existing content
 
-colorPalette.forEach(color => {
-color.addEventListener('click', () => {
-let primaryHue;
-// remove active class from colors
-changeActiveColorClass();
-if(color.classList.contains('color-1')){
-primaryHue = 252;
-} else if(color.classList.contains('color-2')){
-primaryHue = 52;
-} else if(color.classList.contains('color-3')){
-primaryHue = 352;
-} else if(color.classList.contains('color-4')){
-primaryHue = 152;
-} else if(color.classList.contains('color-5')){
-primaryHue = 202;
+    posts.forEach((post) => {
+        const postElement = document.createElement("div");
+        postElement.classList.add("feed");
+        postElement.innerHTML = `
+            <div class="head">
+                <div class="user">
+                    <div class="profile-picture">
+                        <img src="${post.userProfile || 'default-avatar.png'}">
+                    </div>
+                    <div class="info">
+                        <h3>${post.username}</h3>
+                        <small>${new Date(post.created_at).toLocaleString()}</small>
+                    </div>
+                </div>
+            </div>
+            <div class="photo">
+                <img src="${post.image || 'default-post.jpg'}">
+            </div>
+            <div class="action-buttons">
+                <span class="like" data-post-id="${post.id}"><i class="uil uil-heart"></i> Like</span>
+                <span class="comment" data-post-id="${post.id}"><i class="uil uil-comment-dots"></i> Comment</span>
+            </div>
+            <div class="liked-by">
+                <p>Liked by <b>${post.likes}</b> users</p>
+            </div>
+            <div class="caption">
+                <p><b>${post.username}</b> ${post.content}</p>
+            </div>
+        `;
+        feedsContainer.appendChild(postElement);
+    });
+
+    attachLikeHandlers();
 }
-color.classList.add('active');
-root.style.setProperty('--primary-color-hue', primaryHue);
-})
-})
+
+// ================== HANDLE POST CREATION ==================
+document.querySelector(".create-post").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const content = document.querySelector("#create-post").value;
+
+    if (!content.trim()) return;
+
+    try {
+        await fetch(`${API_BASE_URL}/posts/create`, {
+            method: "POST",
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ content }),
+        });
+        document.querySelector("#create-post").value = ""; // Clear input field
+        fetchPosts(); // Refresh posts
+    } catch (error) {
+        console.error("Error creating post:", error);
+    }
+});
+
+// ================== HANDLE LIKES ==================
+function attachLikeHandlers() {
+    document.querySelectorAll(".like").forEach((btn) => {
+        btn.addEventListener("click", async () => {
+            const postId = btn.getAttribute("data-post-id");
+
+            try {
+                await fetch(`${API_BASE_URL}/likes/toggle`, {
+                    method: "POST",
+                    credentials: "include",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ post_id: parseInt(postId) }),
+                });
+                fetchPosts(); // Refresh posts to update like count
+            } catch (error) {
+                console.error("Error liking post:", error);
+            }
+        });
+    });
+}
+
+// ================== INITIALIZE PAGE ==================
+fetchUserData();
+fetchPosts();
