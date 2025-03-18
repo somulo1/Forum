@@ -268,3 +268,16 @@ func DeleteSession(db *sql.DB, sessionID string) error {
 	`, sessionID)
 	return err
 }
+func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
+	var user models.User
+
+	query := `SELECT id, username, email, password_hash, created_at, updated_at FROM users WHERE id = ?`
+	err := db.QueryRow(query, userID).Scan(
+		&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}

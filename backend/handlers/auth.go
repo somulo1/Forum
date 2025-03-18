@@ -106,6 +106,22 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, map[string]string{"message": "Logged in"}, http.StatusOK)
 }
 
+func GetUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	userID, err := utils.GetUserIDFromSession(db, r)
+	if err != nil {
+		utils.SendJSONError(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	user, err := sqlite.GetUserByID(db, userID)
+	if err != nil {
+		utils.SendJSONError(w, "User not found", http.StatusNotFound)
+		return
+	}
+
+	utils.SendJSONResponse(w, user, http.StatusOK)
+}
+
 func LogoutUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)

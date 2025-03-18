@@ -1,0 +1,16 @@
+version: "3.8"
+
+services:
+  forum:
+    build: .
+    container_name: forum_app
+    restart: always
+    ports:
+      - "8080:8080"
+    volumes:
+      - forum_data:/app/data
+    environment:
+      - DATABASE_URL=/app/data/forum.db
+
+volumes:
+  forum_data:

@@ -17,6 +17,8 @@ func HandlerWrapper(db *sql.DB, handler func(*sql.DB, http.ResponseWriter, *http
 
 func SetupRoutes(db *sql.DB) http.Handler {
 	mux := http.NewServeMux()
+	// Fetch user data
+	mux.Handle("/api/user", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.GetUser)))
 
 	// Authentication routes
 	mux.HandleFunc("/api/register", HandlerWrapper(db, handlers.RegisterUser))

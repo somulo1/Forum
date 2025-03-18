@@ -12,7 +12,7 @@ async function fetchUserData() {
         const user = await response.json();
         document.querySelector(".profile .handle h3").textContent = user.username;
         document.querySelector(".profile .handle p").textContent = `@${user.username}`;
-        document.querySelector(".profile-picture img").src = user.profilePicture || "default-avatar.png";
+        document.querySelector("#user-profile-pic").src = user.profilePicture || "default-avatar.png";
     } catch (error) {
         console.error("Error fetching user data:", error);
     }
@@ -81,16 +81,22 @@ function renderPosts(posts) {
 // ================== HANDLE POST CREATION ==================
 document.querySelector(".create-post").addEventListener("submit", async (e) => {
     e.preventDefault();
+    
     const content = document.querySelector("#create-post").value;
-
-    if (!content.trim()) return;
+    const categorySelect = document.querySelector("#category-select"); // Get category dropdown
+    const categoryID = categorySelect.value ? parseInt(categorySelect.value) : null; // Convert to integer
+    
+    if (!content.trim() || !categoryID) {
+        console.error("Content and category are required");
+        return;
+    }
 
     try {
         await fetch(`${API_BASE_URL}/posts/create`, {
             method: "POST",
             credentials: "include",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content }),
+            body: JSON.stringify({ content, category_id: categoryID }), // ✅ Send category_id
         });
         document.querySelector("#create-post").value = ""; // Clear input field
         fetchPosts(); // Refresh posts
@@ -98,6 +104,7 @@ document.querySelector(".create-post").addEventListener("submit", async (e) => {
         console.error("Error creating post:", error);
     }
 });
+
 
 // ================== HANDLE LIKES ==================
 function attachLikeHandlers() {
@@ -119,7 +126,30 @@ function attachLikeHandlers() {
         });
     });
 }
+async function fetchCategories() {
+    const response = await fetch(`${API_BASE_URL}/categories`);
+    const categories = await response.json();
+    const select = document.querySelector("#category-select");
+    
+    // ✅ Clear previous options
+    select.innerHTML = ""; 
+    
+    // ✅ Add default placeholder
+    const defaultOption = document.createElement("option");
+    defaultOption.value = "";
+    defaultOption.textContent = "Select a category";
+    select.appendChild(defaultOption);
+    
+    // ✅ Populate dropdown with categories
+    categories.forEach(category => {
+        const option = document.createElement("option");
+        option.value = category.id;
+        option.textContent = category.name;
+        select.appendChild(option);
+    });
+}
 
 // ================== INITIALIZE PAGE ==================
 fetchUserData();
+fetchCategories();
 fetchPosts();
