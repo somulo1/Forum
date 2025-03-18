@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
 	"net/http"
 
 	"forum/models"
@@ -48,10 +49,13 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Define the request struct
 	var request struct {
 		PostID    *int `json:"post_id,omitempty"`
 		CommentID *int `json:"comment_id,omitempty"`
 	}
+
+	// Decode request body
 	if err := json.NewDecoder(r.Body).Decode(&request); err != nil {
 		http.Error(w, "Invalid request data", http.StatusBadRequest)
 		return
@@ -64,26 +68,16 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Ensure at least one of postID or commentID is provided
-	if request.PostID == nil && request.CommentID == nil {
-		http.Error(w, "Missing post_id or comment_id", http.StatusBadRequest)
+	// Ensure exactly one of PostID or CommentID is provided
+	if (request.PostID != nil && request.CommentID != nil) || (request.PostID == nil && request.CommentID == nil) {
+		http.Error(w, "Must provide either post_id or comment_id, but not both", http.StatusBadRequest)
 		return
 	}
 
-	// Dereference pointers before passing to the database function
-	postID := 0
-	commentID := 0
-
-	if request.PostID != nil {
-		postID = *request.PostID
-	}
-	if request.CommentID != nil {
-		commentID = *request.CommentID
-	}
-
-	err = sqlite.ToggleLike(db, userID, postID, &commentID)
+	// Call the database function to toggle like
+	err = sqlite.ToggleLike(db, userID, request.PostID, request.CommentID)
 	if err != nil {
-		utils.SendJSONError(w, "Failed to toggle like", http.StatusInternalServerError)
+		utils.SendJSONError(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
 		return
 	}
 

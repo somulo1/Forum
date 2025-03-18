@@ -24,14 +24,16 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 // IsAuthor checks if the given user is the author of a specific comment
-func IsAuthor(db *sql.DB, userID, commentID int) (bool, error) {
+func IsAuthor(db *sql.DB, userID, id int, isPost bool) (bool, error) {
 	var authorID int
-	err := db.QueryRow(`
-		SELECT user_id FROM comments WHERE id = ?
-	`, commentID).Scan(&authorID)
+	query := "SELECT user_id FROM comments WHERE id = ?"
+	if isPost {
+		query = "SELECT user_id FROM posts WHERE id = ?"
+	}
+	err := db.QueryRow(query, id).Scan(&authorID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return false, nil // Comment does not exist
+			return false, nil
 		}
 		return false, err
 	}

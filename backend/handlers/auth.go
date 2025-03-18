@@ -6,7 +6,6 @@ import (
 	"net/http"
 	"time"
 
-	"forum/models"
 	"forum/sqlite"
 	"forum/utils"
 )
@@ -17,29 +16,38 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user models.User
-	err := json.NewDecoder(r.Body).Decode(&user)
+	// Temporary struct for decoding JSON
+	var request struct {
+		Username string `json:"username"`
+		Email    string `json:"email"`
+		Password string `json:"password"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		utils.SendJSONError(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
 	// Hash password
-	hashedPassword, err := utils.HashPassword(user.Password)
+	hashedPassword, err := utils.HashPassword(request.Password)
 	if err != nil {
 		utils.SendJSONError(w, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
-	user.Password = hashedPassword
 
 	// Save user to DB
-	err = sqlite.CreateUser(db, user.Username, user.Email, user.Password)
+	err = sqlite.CreateUser(db, request.Username, request.Email, hashedPassword)
 	if err != nil {
-		utils.SendJSONError(w, "Error registering user", http.StatusInternalServerError)
+		if sqlite.IsUniqueConstraintError(err) {
+			utils.SendJSONError(w, "Username or email already exists", http.StatusConflict)
+		} else {
+			utils.SendJSONError(w, "Database error", http.StatusInternalServerError)
+		}
 		return
 	}
 
-	utils.SendJSONResponse(w, map[string]string{"message": "User registered"}, http.StatusCreated)
+	utils.SendJSONResponse(w, map[string]string{"message": "User registered successfully"}, http.StatusCreated)
 }
 
 func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
@@ -60,9 +68,7 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Get user from DB
-	userRow := sqlite.GetUserByEmail(db, credentials.Email)
-	var user models.User
-	err = userRow.Scan(&user.ID, &user.Username, &user.Email, &user.Password)
+	user, err := sqlite.GetUserByEmail(db, credentials.Email)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			utils.SendJSONError(w, "Invalid email or password", http.StatusUnauthorized)
@@ -71,9 +77,12 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		utils.SendJSONError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-
+	if credentials.Password == "" {
+		utils.SendJSONError(w, "Password cannot be empty", http.StatusBadRequest)
+		return
+	}
 	// Validate password
-	if !utils.CheckPasswordHash(credentials.Password, user.Password) {
+	if !utils.CheckPasswordHash(credentials.Password, user.PasswordHash) {
 		utils.SendJSONError(w, "Invalid email or password", http.StatusUnauthorized)
 		return
 	}
@@ -112,7 +121,7 @@ func LogoutUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Remove session from database
 	err = sqlite.DeleteSession(db, sessionCookie.Value)
-	if err != nil {
+	if err != nil && err != sql.ErrNoRows {
 		utils.SendJSONError(w, "Failed to log out", http.StatusInternalServerError)
 		return
 	}

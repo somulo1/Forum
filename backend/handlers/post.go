@@ -33,7 +33,7 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	post.UserID = userID
-	err = sqlite.CreatePost(db, post.UserID, post.Title, post.Content)
+	err = sqlite.CreatePost(db, post.UserID, post.CategoryID, post.Title, post.Content)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to create post", http.StatusInternalServerError)
 		return

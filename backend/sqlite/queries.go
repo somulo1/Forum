@@ -2,6 +2,8 @@ package sqlite
 
 import (
 	"database/sql"
+	"errors"
+	"strings"
 	"time"
 
 	"forum/models"
@@ -10,8 +12,15 @@ import (
 )
 
 // GetUserByUsername retrieves a user by username
-func GetUserByUsername(db *sql.DB, username string) *sql.Row {
-	return db.QueryRow(`SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?`, username)
+func GetUserByUsername(db *sql.DB, username string) (models.User, error) {
+	var user models.User
+	err := db.QueryRow(`
+		SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?
+	`, username).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
 }
 
 // CreateUser inserts a new user into the database
@@ -24,11 +33,11 @@ func CreateUser(db *sql.DB, username, email, passwordHash string) error {
 }
 
 // CreatePost inserts a new post
-func CreatePost(db *sql.DB, userID int, title, content string) error {
+func CreatePost(db *sql.DB, userID int, categoryID *int, title, content string) error {
 	_, err := db.Exec(`
-		INSERT INTO posts (user_id, title, content)
-		VALUES (?, ?, ?)
-	`, userID, title, content)
+		INSERT INTO posts (user_id, category_id, title, content)
+		VALUES (?, ?, ?, ?)
+	`, userID, categoryID, title, content)
 	return err
 }
 
@@ -77,15 +86,20 @@ func DeletePost(db *sql.DB, postID int) error {
 }
 
 // ToggleLike toggles a like for a post or comment
-func ToggleLike(db *sql.DB, userID, postID int, commentID *int) error {
+func ToggleLike(db *sql.DB, userID int, postID *int, commentID *int) error {
+	if (postID == nil && commentID == nil) || (postID != nil && commentID != nil) {
+		return errors.New("must provide either postID or commentID, but not both")
+	}
+
 	var res sql.Result
 	var err error
 
 	if commentID == nil {
 		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, postID)
 	} else {
-		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, *commentID)
+		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, commentID)
 	}
+
 	if err != nil {
 		return err
 	}
@@ -95,7 +109,7 @@ func ToggleLike(db *sql.DB, userID, postID int, commentID *int) error {
 		if commentID == nil {
 			_, err = db.Exec(`INSERT INTO likes (user_id, post_id) VALUES (?, ?)`, userID, postID)
 		} else {
-			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, *commentID)
+			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, commentID)
 		}
 	}
 	return err
@@ -124,6 +138,14 @@ func GetUserIDFromSession(db *sql.DB, sessionID string) (int, error) {
 	return userID, nil
 }
 
+// IsUniqueConstraintError checks if an error is due to a unique constraint violation in SQLite
+func IsUniqueConstraintError(err error) bool {
+	if err == nil {
+		return false
+	}
+	return strings.Contains(err.Error(), "UNIQUE constraint failed")
+}
+
 // CreateComment inserts a new comment
 func CreateComment(db *sql.DB, userID, postID int, content string) error {
 	_, err := db.Exec(`
@@ -134,7 +156,7 @@ func CreateComment(db *sql.DB, userID, postID int, content string) error {
 }
 
 // GetPostComments retrieves comments for a specific post
-func GetPostComments(db *sql.DB, postID int) ([]map[string]interface{}, error) {
+func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 	rows, err := db.Query(`
 		SELECT id, user_id, content, created_at
 		FROM comments
@@ -146,21 +168,13 @@ func GetPostComments(db *sql.DB, postID int) ([]map[string]interface{}, error) {
 	}
 	defer rows.Close()
 
-	var comments []map[string]any
+	var comments []models.Comment
 	for rows.Next() {
-		var id, userID int
-		var content string
-		var createdAt string
-		if err := rows.Scan(&id, &userID, &content, &createdAt); err != nil {
+		var comment models.Comment
+		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.Content, &comment.CreatedAt); err != nil {
 			return nil, err
 		}
-
-		comments = append(comments, map[string]any{
-			"id":         id,
-			"user_id":    userID,
-			"content":    content,
-			"created_at": createdAt,
-		})
+		comments = append(comments, comment)
 	}
 	return comments, nil
 }
@@ -175,10 +189,22 @@ func CreateCategory(db *sql.DB, name string) error {
 }
 
 // GetCategories retrieves all categories
-func GetCategories(db *sql.DB) (*sql.Rows, error) {
-	return db.Query(`
-		SELECT id, name FROM categories
-	`)
+func GetCategories(db *sql.DB) ([]models.Category, error) {
+	rows, err := db.Query(`SELECT id, name FROM categories`)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categories []models.Category
+	for rows.Next() {
+		var category models.Category
+		if err := rows.Scan(&category.ID, &category.Name); err != nil {
+			return nil, err
+		}
+		categories = append(categories, category)
+	}
+	return categories, nil
 }
 
 // UpdatePost updates an existing post's title and content
@@ -200,10 +226,15 @@ func DeleteComment(db *sql.DB, commentID int) error {
 }
 
 // GetUserByEmail retrieves a user by email
-func GetUserByEmail(db *sql.DB, email string) *sql.Row {
-	return db.QueryRow(`
-		SELECT id, username, email, password_hash FROM users WHERE email = ?
-	`, email)
+func GetUserByEmail(db *sql.DB, email string) (models.User, error) {
+	var user models.User
+	err := db.QueryRow(`
+		SELECT id, username, email, password_hash, created_at FROM users WHERE email = ?
+	`, email).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+	if err != nil {
+		return models.User{}, err
+	}
+	return user, nil
 }
 
 // CreateSession creates a new session for a user and returns the session ID

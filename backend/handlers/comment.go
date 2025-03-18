@@ -96,7 +96,7 @@ func DeleteComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	isAuthor, err := utils.IsAuthor(db, userID, request.CommentID)
+	isAuthor, err := utils.IsAuthor(db, userID, request.CommentID, false)
 	if err != nil || !isAuthor {
 		http.Error(w, "Forbidden", http.StatusForbidden)
 		return
