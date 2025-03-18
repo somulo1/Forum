@@ -3,6 +3,8 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -34,11 +36,21 @@ func CreateUser(db *sql.DB, username, email, passwordHash string) error {
 
 // CreatePost inserts a new post
 func CreatePost(db *sql.DB, userID int, categoryID *int, title, content string) error {
-	_, err := db.Exec(`
-		INSERT INTO posts (user_id, category_id, title, content)
-		VALUES (?, ?, ?, ?)
+	result, err := db.Exec(`
+		INSERT INTO posts (user_id, category_id, title, content, created_at, updated_at)
+		VALUES (?, COALESCE(?, NULL), ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
 	`, userID, categoryID, title, content)
-	return err
+	if err != nil {
+		log.Println("❌ Error inserting post:", err)
+		return err
+	}
+
+	rowsAffected, _ := result.RowsAffected()
+	if rowsAffected == 0 {
+		log.Println("⚠️ No rows were inserted.")
+	}
+	fmt.Println("\n", result)
+	return nil
 }
 
 // GetPost retrieves a single post by ID

@@ -3,6 +3,7 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"log"
 	"net/http"
 	"strconv"
 
@@ -18,8 +19,14 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var post models.Post
-	err := json.NewDecoder(r.Body).Decode(&post)
+	// Use a temporary struct for decoding JSON
+	var request struct {
+		Title      string `json:"title"`
+		Content    string `json:"content"`
+		CategoryID *int   `json:"category_id,omitempty"`
+	}
+
+	err := json.NewDecoder(r.Body).Decode(&request)
 	if err != nil {
 		http.Error(w, "Invalid post data", http.StatusBadRequest)
 		return
@@ -32,14 +39,15 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	post.UserID = userID
-	err = sqlite.CreatePost(db, post.UserID, post.CategoryID, post.Title, post.Content)
+	// Create post in database
+	err = sqlite.CreatePost(db, userID, request.CategoryID, request.Title, request.Content)
 	if err != nil {
+		log.Println("Error creating post:", err) // Debugging
 		utils.SendJSONError(w, "Failed to create post", http.StatusInternalServerError)
 		return
 	}
 
-	utils.SendJSONResponse(w, post, http.StatusCreated)
+	utils.SendJSONResponse(w, map[string]string{"message": "Post created successfully"}, http.StatusCreated)
 }
 
 // GetPosts fetches posts (with optional filters)
