@@ -21,7 +21,7 @@ func main() {
 	port := ":8080"
 	if len(os.Args) == 2 {
 		p, er := strconv.Atoi(os.Args[1])
-		if er != nil || !(p > 1023 && p != 3306 && p != 3389) {
+		if er != nil || !(p > 1023 && p < 65536 && p != 3306 && p != 3389) {
 			fmt.Println("Usage:\n\n$ go run .\n\nor\n\n$ go run . 'port no'\n\nwhere port no; is a four digit integer greater than 1023 and not equal to 3306/3389")
 			return
 		}
@@ -59,7 +59,7 @@ func scheduleDailyCleanup() {
 		for remaining := sleepDuration; remaining > 0; remaining -= time.Minute {
 			hours := int(remaining.Hours())
 			minutes := int(remaining.Minutes()) % 60
-			fmt.Printf("\r⏳ Time until cleanup: %02d h %02d min   ", hours, minutes) // Overwrites same line
+			fmt.Printf("\r⏳ Time until cleanup: %02d h %02d min", hours, minutes) // Overwrites same line
 			time.Sleep(1 * time.Minute)
 		}
 

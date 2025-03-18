@@ -20,7 +20,7 @@ func InitializeDatabase(dbPath string) error {
 	}
 
 	// Apply schema from schema.sql file
-	if err := applySchemaFromFile("./sqlite/schema.sql"); err != nil {
+	if err := applySchemaFromFile("schema.sql"); err != nil {
 		return fmt.Errorf("failed to apply schema: %w", err)
 	}
 	return nil
