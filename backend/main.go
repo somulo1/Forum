@@ -8,6 +8,7 @@ import (
 	"strconv"
 	"time"
 
+	"forum/middleware"
 	"forum/routes"
 	"forum/sqlite"
 )
@@ -35,14 +36,14 @@ func main() {
 
 	// Setup routes
 	mux := routes.SetupRoutes(sqlite.DB)
-
+	handler := middleware.CORS(mux)
 	// Start a separate goroutine to run cleanup at midnight every day
 	go scheduleDailyCleanup()
 
 	// Start server
 
 	fmt.Printf("🚀 [%s] Server is running at http://localhost%s\n", time.Now().Format(time.RFC3339), port)
-	log.Fatal(http.ListenAndServe(port, mux))
+	log.Fatal(http.ListenAndServe(port, handler))
 }
 
 // scheduleDailyCleanup runs session cleanup at midnight every day
