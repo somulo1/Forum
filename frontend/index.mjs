@@ -1,155 +1,103 @@
-// ================== API ENDPOINTS ==================
-const API_BASE_URL = "http://localhost:8080/api";
+import { fetchPosts, renderCreatePostForm, deletePost } from './posts.mjs';
+import { isAuthenticated, promptAuthentication } from './authentication.mjs';
+import { loadComments} from './comments.mjs';
+import { handleLike } from './like.mjs';
+import { logoutUser, renderAuthButtons, checkAuthStatus } from './loginout.mjs';
 
-// ================== AUTHENTICATION ==================
-// Check if user is logged in
-async function fetchUserData() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/user`, { credentials: "include" });
-        if (!response.ok) {
-            window.location.href = "login.html"; // Redirect to login if not authenticated
+// Load and display posts
+async function loadPosts() {
+  try {
+    const posts = await fetchPosts();
+    const container = document.getElementById('main-content');
+    container.innerHTML = '';
+
+    if (posts.length === 0) {
+      container.innerHTML = '<p>No posts available.</p>';
+      return;
+    }
+
+    posts.forEach(post => {
+      const postElement = document.createElement('div');
+      postElement.classList.add('post');
+      postElement.innerHTML = `
+        <h3>${post.username}</h3>
+        <p>${post.content}</p>
+        <button class="like-btn" data-post-id="${post.id}">Like</button>
+        <button class="comment-btn" data-post-id="${post.id}">Comment</button>
+        ${post.isOwner ? `<button class="delete-btn" data-post-id="${post.id}">Delete</button>` : ''}
+        <div id="comments-${post.id}" class="comments-section"></div> <!-- Comments Section Added -->
+      `;
+      container.appendChild(postElement);
+    });
+    
+
+    attachEventListeners();
+  } catch (error) {
+    console.error('Failed to load posts:', error);
+  }
+}
+
+// Attach event listeners to like, comment, and delete buttons
+function attachEventListeners() {
+  document.querySelectorAll('.like-btn').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      const postId = e.target.dataset.postId;
+      if (await isAuthenticated()) {
+        handleLike(postId);
+      } else {
+        promptAuthentication();
+      }
+    });
+  });
+
+  document.querySelectorAll('.comment-btn').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      const postId = e.target.dataset.postId;
+      if (await isAuthenticated()) {
+        loadComments(postId);
+      } else {
+        promptAuthentication();
+      }
+    });
+  });
+
+  document.querySelectorAll('.delete-btn').forEach(button => {
+    button.addEventListener('click', async (e) => {
+      const postId = e.target.dataset.postId;
+      if (confirm('Are you sure you want to delete this post?')) {
+        try {
+          await deletePost(postId);
+          alert('Post deleted successfully');
+          loadPosts();
+        } catch (error) {
+          alert(error.message);
         }
-        const user = await response.json();
-        document.querySelector(".profile .handle h3").textContent = user.username;
-        document.querySelector(".profile .handle p").textContent = `@${user.username}`;
-        document.querySelector("#user-profile-pic").src = user.profilePicture || "default-avatar.png";
-    } catch (error) {
-        console.error("Error fetching user data:", error);
-    }
-}
-
-// Logout function
-async function logout() {
-    await fetch(`${API_BASE_URL}/logout`, { method: "POST", credentials: "include" });
-    window.location.href = "login.html"; // Redirect to login page after logout
-}
-
-// Attach logout to settings menu (Assuming a logout button exists)
-document.querySelector(".menu-item:last-child").addEventListener("click", logout);
-
-// ================== FETCH POSTS ==================
-async function fetchPosts() {
-    try {
-        const response = await fetch(`${API_BASE_URL}/posts`);
-        const posts = await response.json();
-        renderPosts(posts);
-    } catch (error) {
-        console.error("Error fetching posts:", error);
-    }
-}
-
-// Render posts dynamically
-function renderPosts(posts) {
-    const feedsContainer = document.querySelector(".feeds");
-    feedsContainer.innerHTML = ""; // Clear existing content
-
-    posts.forEach((post) => {
-        const postElement = document.createElement("div");
-        postElement.classList.add("feed");
-        postElement.innerHTML = `
-            <div class="head">
-                <div class="user">
-                    <div class="profile-picture">
-                        <img src="${post.userProfile || 'default-avatar.png'}">
-                    </div>
-                    <div class="info">
-                        <h3>${post.username}</h3>
-                        <small>${new Date(post.created_at).toLocaleString()}</small>
-                    </div>
-                </div>
-            </div>
-            <div class="photo">
-                <img src="${post.image || 'default-post.jpg'}">
-            </div>
-            <div class="action-buttons">
-                <span class="like" data-post-id="${post.id}"><i class="uil uil-heart"></i> Like</span>
-                <span class="comment" data-post-id="${post.id}"><i class="uil uil-comment-dots"></i> Comment</span>
-            </div>
-            <div class="liked-by">
-                <p>Liked by <b>${post.likes}</b> users</p>
-            </div>
-            <div class="caption">
-                <p><b>${post.username}</b> ${post.content}</p>
-            </div>
-        `;
-        feedsContainer.appendChild(postElement);
+      }
     });
-
-    attachLikeHandlers();
+  });
+  // Handle logout
+  const logoutBtn = document.getElementById('logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', async () => {
+      await logoutUser();
+    });
+  }
 }
 
-// ================== HANDLE POST CREATION ==================
-document.querySelector(".create-post").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    
-    const content = document.querySelector("#create-post").value;
-    const categorySelect = document.querySelector("#category-select"); // Get category dropdown
-    const categoryID = categorySelect.value ? parseInt(categorySelect.value) : null; // Convert to integer
-    
-    if (!content.trim() || !categoryID) {
-        console.error("Content and category are required");
-        return;
-    }
+// Add a Create Post button for authenticated users
+async function addCreatePostButton() {
+  if (await isAuthenticated()) {
+    const createPostButton = document.createElement('button');
+    createPostButton.textContent = 'Create Post';
+    createPostButton.addEventListener('click', renderCreatePostForm);
+    document.body.insertBefore(createPostButton, document.getElementById('main'));
+  }
+}
 
-    try {
-        await fetch(`${API_BASE_URL}/posts/create`, {
-            method: "POST",
-            credentials: "include",
-            headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ content, category_id: categoryID }), // ✅ Send category_id
-        });
-        document.querySelector("#create-post").value = ""; // Clear input field
-        fetchPosts(); // Refresh posts
-    } catch (error) {
-        console.error("Error creating post:", error);
-    }
+// Initialize app
+document.addEventListener('DOMContentLoaded', async () => {
+  await addCreatePostButton();
+  checkAuthStatus();
+  renderAuthButtons();
+  loadPosts();
 });
-
-
-// ================== HANDLE LIKES ==================
-function attachLikeHandlers() {
-    document.querySelectorAll(".like").forEach((btn) => {
-        btn.addEventListener("click", async () => {
-            const postId = btn.getAttribute("data-post-id");
-
-            try {
-                await fetch(`${API_BASE_URL}/likes/toggle`, {
-                    method: "POST",
-                    credentials: "include",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ post_id: parseInt(postId) }),
-                });
-                fetchPosts(); // Refresh posts to update like count
-            } catch (error) {
-                console.error("Error liking post:", error);
-            }
-        });
-    });
-}
-async function fetchCategories() {
-    const response = await fetch(`${API_BASE_URL}/categories`);
-    const categories = await response.json();
-    const select = document.querySelector("#category-select");
-    
-    // ✅ Clear previous options
-    select.innerHTML = ""; 
-    
-    // ✅ Add default placeholder
-    const defaultOption = document.createElement("option");
-    defaultOption.value = "";
-    defaultOption.textContent = "Select a category";
-    select.appendChild(defaultOption);
-    
-    // ✅ Populate dropdown with categories
-    categories.forEach(category => {
-        const option = document.createElement("option");
-        option.value = category.id;
-        option.textContent = category.name;
-        select.appendChild(option);
-    });
-}
-
-// ================== INITIALIZE PAGE ==================
-fetchUserData();
-fetchCategories();
-fetchPosts();

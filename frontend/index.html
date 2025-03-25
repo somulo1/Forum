@@ -1,71 +1,28 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Social Posting Forum</title>
-    <link rel="stylesheet" href="https://unicons.iconscout.com/release/v2.1.6/css/unicons.css">
-    <link rel="stylesheet" type="text/css" href="./style.css">
+    <link rel="icon" href="chat.png" type="image/png">
+    <link rel="stylesheet" type="text/css" href="./style.css" />
 </head>
 <body>
-    <nav>
-        <div class="container">
-            <h2 class="logo">Social Posting Forum</h2>
-            <div class="search-bar">
-                <input type="search" placeholder="Search for creators...">
-                <i class="uil uil-search"></i>
-            </div>
-            <div class="create">
-                <label class="btn btn-primary" for="create-post">Create Post</label>
-                <div class="profile-picture">
-                    <img id="user-profile-pic" src="default-avatar.png">
-                </div>
-            </div>
+    <header>
+        <h1><a href="/">Social Posting Forum</a></h1>
+        <div id="auth-buttons"></div>
+    </header>
+    <div class="body-div">
+        <div class="inner-div1">
+            <p>this is a side bar(left)</p>
         </div>
-    </nav>
-
-    <main>
-        <div class="container">
-            <!-- LEFT PANEL -->
-            <div class="left-panel">
-                <a class="profile">
-                    <div class="profile-picture">
-                        <img id="profile-pic" src="default-avatar.png">
-                    </div>
-                    <div class="handle">
-                        <h3 id="username">Loading...</h3>
-                        <p class="text-muted" id="user-handle">@loading</p>
-                    </div>
-                </a>
-                <div class="sidebar">
-                    <a class="menu-item active"><span><i class="uil uil-home"></i></span><h3>Home</h3></a>
-                    <a class="menu-item"><span><i class="uil uil-compass"></i></span><h3>Explore</h3></a>
-                    <a class="menu-item" id="notifications">
-                        <span><i class="uil uil-bell"> <small class="notification-count" id="notif-count">0</small></i></span>
-                        <h3>Notifications</h3>
-                        <div class="notification-popup" id="notifications-list"></div>
-                    </a>
-                    <a class="menu-item" id="logout"><span><i class="uil uil-sign-out-alt"></i></span><h3>Logout</h3></a>
-                </div>
-            </div>
-
-            <!-- CENTER PANEL -->
-            <div class="center-panel">
-                <form class="create-post">
-                    <div class="profile-picture">
-                        <img id="create-post-profile-pic" src="default-avatar.png">
-                    </div>
-                    <select id="category-select"></select> 
-                    <input type="text" placeholder="What is on your mind?" id="create-post">
-                    <input type="submit" value="Post" class="btn btn-primary">
-                </form>
-                <div class="feeds" id="posts-container">
-                    <p>Loading posts...</p>
-                </div>
-            </div>
+        <div class="inner-div2"><main id="main-content"></main></div>
+        <div class="inner-div3">
+            <p>this is also a side bar(right)</p>
         </div>
-    </main>
+    </div>
+    
 
-    <script src="./index.mjs" defer></script>
+    <script type="module" src="./index.mjs" defer></script>
 </body>
 </html>
