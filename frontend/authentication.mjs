@@ -1,28 +1,27 @@
 import { API_BASE_URL } from './config.mjs';
-import { registerUser, loginUser } from './loginout.mjs';
 
 
 export async function loginUser(email, password) {
   try {
-    const response = await fetch(`${API_BASE_URL}/login`, {
+    const response = await fetch('/api/login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password }),
-      credentials: 'include',
     });
 
     if (!response.ok) {
       const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed');
+      throw new Error(errorData.message || 'Login failed.');
     }
 
-    window.location.href = '/'; // Redirect to homepage
+    const data = await response.json();
+    alert('Login successful!');
+    localStorage.setItem('token', data.token); // Assuming a token is returned
+    window.location.reload();
   } catch (error) {
-    console.error('Login Error:', error);
-    alert(error.message);
+    alert(`Error: ${error.message}`);
   }
 }
-
 export async function registerUser(username, email, password) {
   try {
     const response = await fetch(`${API_BASE_URL}/register`, {
@@ -37,7 +36,7 @@ export async function registerUser(username, email, password) {
     }
 
     alert('Registration successful. Please login.');
-    window.location.href = '/login.html';
+    window.location.href = 'api/login';
   } catch (error) {
     console.error('Registration Error:', error);
     alert(error.message);

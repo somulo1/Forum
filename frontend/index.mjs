@@ -97,7 +97,7 @@ async function addCreatePostButton() {
 // Initialize app
 document.addEventListener('DOMContentLoaded', async () => {
   await addCreatePostButton();
-  checkAuthStatus();
-  renderAuthButtons();
+  // checkAuthStatus();
+  // renderAuthButtons();
   loadPosts();
 });

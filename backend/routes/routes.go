@@ -39,6 +39,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 
 	// Category routes (protected by auth middleware)
 	mux.Handle("/api/categories/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreateCategory)))
+	mux.HandleFunc("/api/categories", HandlerWrapper(db, handlers.GetCategories))
 	// Like routes (protected by auth middleware)
 	mux.Handle("/api/likes/toggle", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.ToggleLike)))
 

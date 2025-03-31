@@ -1,4 +1,5 @@
 import { API_BASE_URL } from './config.mjs';
+// import { promptAuthentication } from './authentication.mjs';
 
 export async function checkAuthStatus() {
   try {
@@ -11,8 +12,8 @@ export async function checkAuthStatus() {
     document.getElementById('user-profile-pic').src = user.profilePicture || 'default-avatar.png';
   } catch (error) {
     console.error('User not authenticated:', error);
-    document.getElementById('guest-section').style.display = 'flex';
-    document.getElementById('user-section').style.display = 'none';
+    // document.getElementById('guest-section').style.display = 'flex';
+    // document.getElementById('user-section').style.display = 'none';
   }
 }
 
@@ -27,7 +28,7 @@ export async function logoutUser() {
 export function renderAuthButtons() {
   const authButtonsContainer = document.getElementById('auth-buttons');
   authButtonsContainer.innerHTML = `
-  <button onclick="promptAuthentication('login')">Login</button>
+  <button onclick="$promptAuthentication('login')">Login</button>
   <button onclick="promptAuthentication('signup')">Sign Up</button>
   `;
 }
@@ -59,25 +60,5 @@ export async function registerUser(username, email, password) {
     alert(`Error: ${error.message}`);
   }
 }
-export async function loginUser(email, password) {
-  try {
-    const response = await fetch('/api/login', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password }),
-    });
 
-    if (!response.ok) {
-      const errorData = await response.json();
-      throw new Error(errorData.message || 'Login failed.');
-    }
-
-    const data = await response.json();
-    alert('Login successful!');
-    localStorage.setItem('token', data.token); // Assuming a token is returned
-    window.location.reload();
-  } catch (error) {
-    alert(`Error: ${error.message}`);
-  }
-}
 
