@@ -40,31 +40,62 @@ class App {
                 e.target.classList.add('hidden');
             }
         });
-
-        // Close buttons in modals
-        document.querySelectorAll('.close').forEach(button => {
-            button.addEventListener('click', () => {
-                button.closest('.modal').classList.add('hidden');
-            });
-        });
-
-        // Search functionality
-        const searchInput = document.getElementById('searchInput');
-        searchInput.addEventListener('input', (e) => {
-            this.handleSearch(e.target.value);
-        });
-    }
-
-    handleSearch(query) {
-        if (query.length > 2) {
-            // Filter posts by search query
-            this.postManager.filterBySearch(query);
-        } else {
-            // Reset to normal view
-            this.postManager.resetFilter();
-        }
     }
 }
 
 // Initialize the application
+document.addEventListener("DOMContentLoaded", () => {
+    const menuItems = document.querySelectorAll('.menu-item');
+    const mainContent = document.getElementById('mainContent');
+
+    menuItems.forEach(item => {
+        item.addEventListener('click', (event) => {
+            event.preventDefault(); // Prevent default anchor behavior
+            const view = item.getAttribute('data-view');
+            loadPage(view);
+        });
+    });
+
+    function loadPage(view) {
+        switch(view) {
+            case 'home':
+                loadFeedPage();
+                break;
+            case 'profile':
+                loadProfilePage();
+                break;
+            case 'trending':
+                loadTrendsPage();
+                break;
+            case 'saved':
+                loadSavedPage();
+                break;
+            default:
+                loadFeedPage(); // Default to feed if view is not recognized
+        }
+    }
+
+    function loadFeedPage() {
+        mainContent.innerHTML = '<h1>Feed</h1><p>Loading feed content...</p>';
+        // Here you can call your function to fetch and display posts
+    }
+
+    function loadProfilePage() {
+        mainContent.innerHTML = '<h1>Profile</h1><p>Loading profile content...</p>';
+        // Here you can call your function to fetch and display user profile
+    }
+
+    function loadTrendsPage() {
+        mainContent.innerHTML = '<h1>Trends</h1><p>Loading trends content...</p>';
+        // Here you can call your function to fetch and display trends
+    }
+
+    function loadSavedPage() {
+        mainContent.innerHTML = '<h1>Saved</h1><p>Loading saved content...</p>';
+        // Here you can call your function to fetch and display saved posts
+    }
+
+    // Load the default page on initial load
+    loadPage('feed');
+});
 new App();

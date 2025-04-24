@@ -1,3 +1,7 @@
+import { API_BASE_URL } from '../config.mjs';
+
+// Example of defining trendingManager
+// window.trendingManager = new TrendingManager(); // Ensure this is executed before navigation.js
 export class TrendingManager {
     constructor() {
         this.trendingSection = document.getElementById('trendingSection');
@@ -6,33 +10,62 @@ export class TrendingManager {
         this.suggestions = [];
     }
 
-    init() {
-        this.loadTrends();
-        this.loadSuggestions();
+    async init() {
+        await Promise.all([
+            this.loadTrends(),
+            this.loadSuggestions()
+        ]);
         this.render();
     }
 
-    loadTrends() {
-        // Simulate trending topics
-        this.trends = [
-            { tag: '#JavaScript', posts: 1234, avatar: 'frontend/images/Screenshot from 2025-02-25 13-39-19.png' },
-            { tag: '#WebDev', posts: 987, avatar: 'frontend/images/Screenshot from 2025-02-25 13-40-43.png' },
-            { tag: '#CodingLife', posts: 654, avatar: 'frontend/images/Screenshot from 2025-02-25 13-41-13.png' },
-            { tag: '#Programming', posts: 432, avatar: 'frontend/images/Screenshot from 2025-02-25 13-41-13.png' },
-            { tag: '#TechNews', posts: 321, avatar: 'frontend/images/Screenshot from 2025-02-25 13-41-13.png' }
-        ];
+    async loadTrends() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/trends`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch trends');
+            }
+
+            this.trends = await response.json();
+        } catch (error) {
+            console.error('Error loading trends:', error);
+            // Fallback to empty trends if API fails
+            this.trends = [];
+        }
     }
 
-    loadSuggestions() {
-        // Simulate suggested users
-        this.suggestions = [
-            { username: 'tech_guru', avatar: 'images/Screenshot from 2025-02-25 13-39-19.png', followers: 1200 },
-            { username: 'code_master', avatar: 'images/Screenshot from 2025-02-25 13-40-43.png', followers: 980 },
-            { username: 'web_ninja', avatar: 'images/Screenshot from 2025-02-25 13-41-13.png', followers: 850 }
-        ];
+    async loadSuggestions() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/suggested`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch suggestions');
+            }
+
+            this.suggestions = await response.json();
+        } catch (error) {
+            console.error('Error loading suggestions:', error);
+            // Fallback to empty suggestions if API fails
+            this.suggestions = [];
+        }
     }
 
     renderTrends() {
+        if (this.trends.length === 0) {
+            this.trendingSection.innerHTML = '<h3>No trends available</h3>';
+            return;
+        }
+
         this.trendingSection.innerHTML = `
             <h3>Trending</h3>
             ${this.trends.map(trend => `
@@ -47,9 +80,16 @@ export class TrendingManager {
     }
 
     renderSuggestions() {
+        if (this.suggestions.length === 0) {
+            this.suggestedUsers.innerHTML = '<p>No suggestions available</p>';
+            return;
+        }
+
         this.suggestedUsers.innerHTML = this.suggestions.map(user => `
             <div class="suggested-user">
-                <img src="${user.avatar}" alt="${user.username}'s avatar" class="suggested-avatar rounded-circle">
+                <img src="${user.avatar}" alt="${user.username}'s avatar" 
+                     class="suggested-avatar rounded-circle"
+                     onerror="this.src='assets/default-avatar.png'">
                 <span>${user.username} (${user.followers} followers)</span>
             </div>
         `).join('');

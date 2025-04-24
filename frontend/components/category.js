@@ -1,14 +1,40 @@
+import { API_BASE_URL } from '../config.mjs';
+
 export class CategoryManager {
     constructor() {
-        this.categories = new Set(['General', 'Technology', 'News', 'Introduction']);
+        this.categories = new Set();
         this.categoryFilter = document.getElementById('categoryFilter');
     }
 
-    init() {
-        this.renderCategories();
+    async init() {
+        await this.fetchCategories();
+        await this.renderCategories();
     }
 
-    renderCategories() {
+    async fetchCategories() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/categories`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.getCurrentUser()?.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch categories');
+            }
+
+            const categories = await response.json();
+            this.categories = new Set(categories.map(cat => cat.name));
+        } catch (error) {
+            console.error('Error fetching categories:', error);
+            // Fallback to default categories if API fails
+            this.categories = new Set(['General', 'Technology', 'News', 'Introduction']);
+        }
+    }
+
+    async renderCategories() {
         const user = this.getCurrentUser();
         if (!user) return;
 
@@ -39,8 +65,29 @@ export class CategoryManager {
         return userCookie ? JSON.parse(decodeURIComponent(userCookie.split('=')[1])) : null;
     }
 
-    addCategory(category) {
-        this.categories.add(category);
-        this.renderCategories();
+    async addCategory(category) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/categories`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.getCurrentUser()?.token}`
+                },
+                body: JSON.stringify({ name: category })
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to add category');
+            }
+
+            const newCategory = await response.json();
+            this.categories.add(newCategory.name);
+            await this.renderCategories();
+        } catch (error) {
+            console.error('Error adding category:', error);
+            // Fallback to local addition if API fails
+            this.categories.add(category);
+            await this.renderCategories();
+        }
     }
 }

@@ -1,11 +1,42 @@
+import { API_BASE_URL } from '../config.mjs';
+
 export class ProfileManager {
     constructor() {
         this.profileSection = document.getElementById('userProfile');
         this.profileModal = document.getElementById('profileModal');
     }
 
-    init() {
-        this.renderProfile();
+    async init() {
+        await this.loadUserProfile();
+        await this.renderProfile();
+    }
+
+    async loadUserProfile() {
+        const user = this.getCurrentUser();
+        if (!user) return;
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error('Failed to fetch profile');
+            }
+
+            const profileData = await response.json();
+            // Update user cookie with latest profile data
+            this.updateUserCookie({
+                ...user,
+                ...profileData
+            });
+        } catch (error) {
+            console.error('Error loading profile:', error);
+        }
     }
 
     getCurrentUser() {
@@ -15,7 +46,12 @@ export class ProfileManager {
         return userCookie ? JSON.parse(decodeURIComponent(userCookie.split('=')[1])) : null;
     }
 
-    renderProfile() {
+    updateUserCookie(userData) {
+        const expires = new Date(Date.now() + 86400000).toUTCString();
+        document.cookie = `user=${encodeURIComponent(JSON.stringify(userData))}; expires=${expires}; path=/`;
+    }
+
+    async renderProfile() {
         const user = this.getCurrentUser();
         if (!user) return;
     
@@ -31,6 +67,8 @@ export class ProfileManager {
 
     showEditProfileForm() {
         const user = this.getCurrentUser();
+        if (!user) return;
+
         const profileForm = document.getElementById('profileForm');
         
         profileForm.innerHTML = `
@@ -56,22 +94,44 @@ export class ProfileManager {
         this.profileModal.classList.remove('hidden');
     }
 
-    handleProfileUpdate(e) {
+    async handleProfileUpdate(e) {
         e.preventDefault();
         const user = this.getCurrentUser();
+        if (!user) return;
         
-        const updatedUser = {
-            ...user,
+        const updatedProfile = {
             username: document.getElementById('editUsername').value,
             bio: document.getElementById('editBio').value,
             avatar: document.getElementById('editAvatar').value
         };
 
-        // Update user cookie
-        const expires = new Date(Date.now() + 86400000).toUTCString();
-        document.cookie = `user=${encodeURIComponent(JSON.stringify(updatedUser))}; expires=${expires}; path=/`;
+        try {
+            const response = await fetch(`${API_BASE_URL}/users/${user.id}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${user.token}`
+                },
+                body: JSON.stringify(updatedProfile)
+            });
 
-        this.profileModal.classList.add('hidden');
-        window.location.reload();
+            if (!response.ok) {
+                throw new Error('Failed to update profile');
+            }
+
+            const updatedUser = await response.json();
+            
+            // Update user cookie with new profile data
+            this.updateUserCookie({
+                ...user,
+                ...updatedUser
+            });
+
+            this.profileModal.classList.add('hidden');
+            await this.renderProfile();
+        } catch (error) {
+            console.error('Error updating profile:', error);
+            alert('Failed to update profile. Please try again.');
+        }
     }
 }

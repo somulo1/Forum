@@ -6,7 +6,30 @@
     --border-color: #dddfe2;
     --hover-color: #e4e6eb;
 }
+.modal {
+    display: none; /* Hidden by default */
+    position: fixed; /* Stay in place */
+    z-index: 1; /* Sit on top */
+    left: 0;
+    top: 0;
+    width: 100%; /* Full width */
+    height: 100%; /* Full height */
+    overflow: auto; /* Enable scroll if needed */
+    background-color: rgb(0,0,0); /* Fallback color */
+    background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
 
+.modal-content {
+    background-color: #fefefe;
+    margin: 15% auto; /* 15% from the top and centered */
+    padding: 20px;
+    border: 1px solid #888;
+    width: 80%; /* Could be more or less, depending on screen size */
+}
+
+.hidden {
+    display: none;
+}
 * {
     margin: 0;
     padding: 0;
@@ -17,8 +40,11 @@ body {
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
     background-color: var(--bg-color);
     color: var(--text-color);
+    font-size: 16px;
+    line-height: 1.5;
 }
 
+/* Navbar */
 .navbar {
     background-color: white;
     padding: 0.8rem 1rem;
@@ -29,6 +55,7 @@ body {
     position: sticky;
     top: 0;
     z-index: 100;
+    width: 100%;
 }
 
 .nav-brand {
@@ -41,6 +68,7 @@ body {
 .nav-search {
     flex: 2;
     max-width: 500px;
+    padding: 0 10px;
 }
 
 .nav-search input {
@@ -58,15 +86,17 @@ body {
     gap: 10px;
 }
 
+/* Container and Layout */
 .container {
     max-width: 1200px;
     margin: 20px auto;
-    padding: 0 20px;
+    padding: 0 15px;
     display: grid;
     grid-template-columns: 250px 1fr 300px;
     gap: 20px;
 }
 
+/* Sidebar */
 .sidebar {
     background: white;
     border-radius: 8px;
@@ -74,7 +104,6 @@ body {
     height: fit-content;
     position: sticky;
     top: 80px;
-    padding-left: 200;
 }
 
 .profile-section {
@@ -93,6 +122,7 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
+    padding-left: 0%;
 }
 
 .menu-item {
@@ -116,12 +146,37 @@ body {
     text-align: center;
 }
 
+/* Stories Section */
 .story-section {
     display: flex;
     gap: 10px;
     overflow-x: auto;
     padding: 10px 0;
     margin-bottom: 20px;
+    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
+    scrollbar-width: thin; /* For Firefox */
+}
+
+.story-section::-webkit-scrollbar {
+    height: 6px;
+}
+
+.story-section::-webkit-scrollbar-thumb {
+    background-color: var(--border-color);
+    border-radius: 3px;
+}
+
+.story-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-start;
+}
+
+.visible-stories, .scrolling-stories {
+    display: flex;
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    overflow: hidden;
 }
 
 .story-card {
@@ -129,18 +184,38 @@ body {
     border-radius: 8px;
     padding: 10px;
     margin: 10px;
-    width: 220px; /* Control card size */
+    width: 150px;
+    flex-shrink: 0;
     box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
 }
 
 .story-image {
     width: 100%;
-    max-width: 200px;
     height: auto;
-    border-radius: 4px; /* Optional: round corners of images */
-    padding: 5px; /* Add padding around images */
+    border-radius: 4px;
+    padding: 5px;
 }
 
+/* Scroll animation */
+@keyframes scroll-stories {
+    0% {
+        transform: translateX(100%);
+    }
+    100% {
+        transform: translateX(-100%);
+    }
+}
+
+.scroll-stories-container {
+    display: flex;
+    animation: scroll-stories 20s linear infinite;
+}
+
+.scroll-stories-container.no-scroll {
+    animation: none;
+}
+
+/* Create Post Section */
 .create-post-section {
     background: white;
     border-radius: 8px;
@@ -154,51 +229,9 @@ body {
     align-items: center;
 }
 
-/* storeies */
-/* For the container of stories */
-.story-container {
-    display: flex;
-    flex-wrap: wrap; /* This allows the stories to wrap into multiple rows if necessary */
-    justify-content: flex-start;
-}
-
-/* Static row layout for the stories */
-.visible-stories, .scrolling-stories {
-    display: flex;
-    flex-wrap: nowrap; /* Ensure everything stays in one row */
-    justify-content: flex-start; /* Align stories to the left */
-    overflow: hidden;
-}
-
-.story-card {
-    margin-right: 15px; /* Spacing between the story cards */
-    flex-shrink: 0; /* Prevent shrinking */
-}
-
-/* Animating the scroll effect */
-@keyframes scroll-stories {
-    0% {
-        transform: translateX(100%);
-    }
-    100% {
-        transform: translateX(-100%);
-    }
-}
-
-/* Apply the scrolling animation only if more than 4 stories */
-.scroll-stories-container {
-    display: flex;
-    animation: scroll-stories 20s linear infinite; /* Customize duration for speed */
-}
-
-/* To prevent scroll animation if there are less than 4 stories */
-.scroll-stories-container.no-scroll {
-    animation: none;
-}
-
 .post-input img {
-    width: 15px;
-    height: 15px;
+    width: 32px;
+    height: 32px;
     border-radius: 50%;
 }
 
@@ -216,6 +249,7 @@ body {
     margin-top: 10px;
     padding-top: 10px;
     border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
 }
 
 .post-action {
@@ -226,20 +260,21 @@ body {
     border-radius: 8px;
     cursor: pointer;
     transition: background-color 0.2s;
+    margin: 4px;
 }
 
 .post-action:hover {
     background-color: var(--hover-color);
 }
 
+/* Post Card */
 .post-card {
     background-color: white;
-    max-width: 1000px;
+    max-width: 100%;
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 16px;
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
-    text-align: center; /* Center content within the card */
 }
 
 .post-header {
@@ -271,13 +306,15 @@ body {
 
 .post-content {
     margin-bottom: 12px;
+    word-wrap: break-word;
 }
 
 .post-image {
-    max-width: 100%; /* Allow image to take full width of the post card */
-    height: auto; /* Maintain aspect ratio */
-    border-radius: 8px; /* Add rounded corners */
-    margin: 0 auto; /* Center the image */
+    max-width: 100%;
+    height: auto;
+    border-radius: 8px;
+    margin: 0 auto;
+    display: block;
 }
 
 .post-actions {
@@ -285,6 +322,7 @@ body {
     gap: 12px;
     padding-top: 12px;
     border-top: 1px solid var(--border-color);
+    flex-wrap: wrap;
 }
 
 .action-btn {
@@ -304,6 +342,11 @@ body {
     background-color: var(--hover-color);
 }
 
+.action-btn.active {
+    color: var(--primary-color);
+}
+
+/* Category Tags */
 .category-tag {
     display: inline-block;
     padding: 4px 8px;
@@ -314,9 +357,13 @@ body {
     font-size: 0.9rem;
 }
 
+/* Trending and Suggested Sections */
 .trending-section,
 .suggested-section {
-    margin-top: 20px;
+    background: white;
+    border-radius: 8px;
+    padding: 16px;
+    margin-bottom: 20px;
 }
 
 .trending-item,
@@ -342,6 +389,7 @@ body {
     margin-right: 10px;
 }
 
+/* Buttons */
 .btn {
     padding: 8px 16px;
     border: none;
@@ -349,6 +397,7 @@ body {
     cursor: pointer;
     font-weight: 600;
     transition: background-color 0.2s;
+    white-space: nowrap;
 }
 
 .btn-primary {
@@ -361,6 +410,7 @@ body {
     color: white;
 }
 
+/* Modal */
 .modal {
     display: none;
     position: fixed;
@@ -370,6 +420,8 @@ body {
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
     z-index: 1000;
+    align-items: center;
+    justify-content: center;
 }
 
 .modal.show {
@@ -382,8 +434,10 @@ body {
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
-    margin: auto;
+    margin: 0 auto;
     position: relative;
+    max-height: 90vh;
+    overflow-y: auto;
 }
 
 .close {
@@ -394,6 +448,7 @@ body {
     cursor: pointer;
 }
 
+/* Forms */
 .form-group {
     margin-bottom: 16px;
 }
@@ -422,6 +477,13 @@ body {
     display: none;
 }
 
+/* Comments */
+.comments-section {
+    border-left: 2px solid var(--border-color);
+    margin-top: 10px;
+    padding-left: 10px;
+}
+
 .comment {
     padding: 10px;
     margin: 10px 0;
@@ -445,12 +507,14 @@ body {
 .comment-content {
     margin: 5px 0;
     padding-left: 40px;
+    word-wrap: break-word;
 }
 
 .comment-actions {
     padding-left: 40px;
     display: flex;
     gap: 10px;
+    flex-wrap: wrap;
 }
 
 .comment-input-container,
@@ -471,30 +535,177 @@ body {
     background-color: var(--bg-color);
 }
 
-.action-btn.active {
-    color: var(--primary-color);
-}
-
-.comments-section {
-    border-left: 2px solid var(--border-color);
-    margin-top: 10px;
-    padding-left: 10px;
-}
-
 .avatar {
     width: 40px;
     height: 40px;
     border-radius: 50%;
 }
 
+/* Responsive Design */
+/* Large desktop and up */
+@media (min-width: 1201px) {
+    .container {
+        grid-template-columns: 250px 1fr 300px;
+    }
+}
 
+/* Desktop to large desktops */
+@media (min-width: 992px) and (max-width: 1200px) {
+    .container {
+        grid-template-columns: 200px 1fr 250px;
+    }
+    
+    .story-card {
+        width: 130px;
+    }
+}
 
-@media (max-width: 1200px) {
+/* Tablets and small desktops */
+@media (min-width: 768px) and (max-width: 991px) {
+    .container {
+        grid-template-columns: 180px 1fr;
+    }
+    
+    .trending-section,
+    .suggested-section {
+        display: none;
+    }
+    
+    .story-card {
+        width: 120px;
+    }
+    
+    .nav-search {
+        max-width: 300px;
+    }
+}
+
+/* Large phones and tablets */
+@media (min-width: 576px) and (max-width: 767px) {
     .container {
         grid-template-columns: 1fr;
     }
-
+    
     .sidebar {
         display: none;
+    }
+    
+    .trending-section,
+    .suggested-section {
+        display: none;
+    }
+    
+    .nav-search {
+        max-width: 250px;
+    }
+    
+    .story-card {
+        width: 110px;
+    }
+    
+    .navbar {
+        padding: 0.5rem;
+    }
+    
+    .nav-brand {
+        font-size: 1.3rem;
+    }
+}
+
+/* Small phones and down */
+@media (max-width: 575px) {
+    .container {
+        grid-template-columns: 1fr;
+        padding: 0 10px;
+    }
+    
+    .sidebar {
+        display: none;
+    }
+    
+    .trending-section,
+    .suggested-section {
+        display: none;
+    }
+    
+    .nav-search {
+        max-width: 150px;
+    }
+    
+    .navbar {
+        padding: 0.5rem;
+    }
+    
+    .nav-brand {
+        font-size: 1.2rem;
+    }
+    
+    .nav-auth {
+        flex: 0;
+    }
+    
+    .post-actions-bar {
+        justify-content: space-between;
+    }
+    
+    .post-action {
+        padding: 6px;
+        font-size: 0.9rem;
+    }
+    
+    .story-card {
+        width: 100px;
+        margin: 5px;
+        padding: 8px;
+    }
+    
+    .btn {
+        padding: 6px 12px;
+        font-size: 0.9rem;
+    }
+    
+    .comment-content,
+    .comment-actions {
+        padding-left: 20px;
+    }
+    
+    .post-header {
+        flex-wrap: wrap;
+    }
+    
+    .modal-content {
+        padding: 15px;
+    }
+}
+
+/* Extra small devices */
+@media (max-width: 375px) {
+    .nav-search {
+        max-width: 100px;
+    }
+    
+    .nav-brand {
+        font-size: 1.1rem;
+    }
+    
+    .story-card {
+        width: 90px;
+    }
+    
+    .post-actions {
+        justify-content: space-around;
+    }
+    
+    .action-btn {
+        font-size: 0.8rem;
+        padding: 6px;
+    }
+    
+    .post-author {
+        font-size: 0.9rem;
+    }
+    
+    .post-time {
+        font-size: 0.8rem;
     }
 }

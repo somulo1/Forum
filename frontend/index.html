@@ -24,16 +24,16 @@
                 <!-- Profile info will be inserted here -->
             </div>
             <div class="menu-section">
-                <a href="#" class="menu-item active" data-view="feed">
+                <a href="/posts" class="menu-item active" data-view="feed">
                     <i class="fas fa-home"></i> Home
                 </a>
                 <a href="#" class="menu-item" data-view="profile">
                     <i class="fas fa-user"></i> Profile
                 </a>
-                <a href="#" class="menu-item" data-view="trending">
+                <a href="/profile" class="menu-item" data-view="trending">
                     <i class="fas fa-fire"></i> Trending
                 </a>
-                <a href="#" class="menu-item" data-view="saved">
+                <a href="/saved" class="menu-item" data-view="saved">
                     <i class="fas fa-bookmark"></i> Saved
                 </a>
             </div>
@@ -66,7 +66,12 @@
             </div>
         </aside>
     </div>
-
+        <div id="authModal" class="modal hidden">
+            <div class="modal-content">
+                <span class="close" id="closeModal">&times;</span>
+                <div id="authForms"></div>
+            </div>
+        </div>
     <!-- Auth Modal -->
     <div id="authModal" class="modal hidden">
         <div class="modal-content">

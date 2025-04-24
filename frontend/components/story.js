@@ -1,95 +1,61 @@
+import { API_BASE_URL } from '../config.mjs';
+
 export class StoryManager {
     constructor() {
-        this.storySection = document.getElementById('storySection');
         this.stories = [];
+        this.storyContainer = document.getElementById('storySection');
+        this.currentUser = this.getCurrentUser();
     }
 
-    init() {
-        this.loadStories();
-        this.render();
+    async init() {
+        await this.fetchStories();
+        this.renderStories();
+        this.setupStoryListeners();
     }
 
-    loadStories() {
-        // Simulate stories data
-        this.stories = [
-            {
-                id: 1,
-                user: 'John Doe',
-                avatar: 'images/Screenshot from 2025-02-25 13-35-47.png',
-                image: 'images/Screenshot from 2025-02-25 13-36-23.png',
-                timestamp: new Date(Date.now() - 3600000)
-            },
-            {
-                id: 2,
-                user: 'Jane Smith',
-                avatar: 'images/Screenshot from 2025-02-25 13-36-46.png',
-                image: 'images/Screenshot from 2025-02-25 13-37-12.png',
-                timestamp: new Date(Date.now() - 7200000)
-            },
-            {
-                id: 3,
-                user: 'Alice Johnson',
-                avatar: 'images/Screenshot from 2025-02-25 13-38-13.png',
-                image: 'images/Screenshot from 2025-02-25 13-39-19.png',
-                timestamp: new Date(Date.now() - 10800000)
-            },
-            {
-                id: 4,
-                user: 'Bob Brown',
-                avatar: 'images/Screenshot from 2025-02-25 13-40-43.png',
-                image: 'images/Screenshot from 2025-02-25 13-40-59.png',
-                timestamp: new Date(Date.now() - 14400000)
-            },
-            {
-                id: 5,
-                user: 'Charlie Green',
-                avatar: 'images/Screenshot from 2025-02-25 13-41-13.png',
-                image: 'images/Screenshot from 2025-02-25 13-48-23.png',
-                timestamp: new Date(Date.now() - 18000000)
-            },
-            {
-                id: 6,
-                user: 'Diana Prince',
-                avatar: 'images/Screenshot from 2025-02-25 13-48-57.png',
-                image: 'images/Screenshot from 2025-02-25 13-49-21.png',
-                timestamp: new Date(Date.now() - 21600000)
-            },
-            {
-                id: 7,
-                user: 'Eve Adams',
-                avatar: 'images/Screenshot from 2025-02-25 13-51-31.png',
-                image: 'images/Screenshot from 2025-02-25 13-53-51.png',
-                timestamp: new Date(Date.now() - 25200000)
-            },
-            {
-                id: 8,
-                user: 'Frank Castle',
-                avatar: 'images/Screenshot from 2025-02-25 13-54-08.png',
-                image: 'images/Screenshot from 2025-02-25 13-54-32.png',
-                timestamp: new Date(Date.now() - 28800000)
-            },
-            {
-                id: 9,
-                user: 'Grace Lee',
-                avatar: 'images/Screenshot from 2025-02-25 13-55-00.png',
-                image: 'images/Screenshot from 2025-02-25 13-55-11.png',
-                timestamp: new Date(Date.now() - 32400000)
-            }
-           
-        ];
+    async fetchStories() {
+        try {
+            const response = await fetch(`${API_BASE_URL}/stories`, {
+                method: 'GET',
+                headers: {
+                    'Authorization': `Bearer ${this.currentUser?.token}`
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to fetch stories');
+            this.stories = await response.json();
+        } catch (error) {
+            console.error('Error fetching stories:', error);
+            this.stories = [];
+        }
     }
-    
-    render() {
-        const user = this.getCurrentUser();
-        const totalStories = this.stories.length;
-        
-        // Determine if the stories need to scroll
-        const shouldScroll = totalStories > 8; // Only scroll if there are more than 4 stories
-    
-        this.storySection.innerHTML = `
+
+    async createStory(formData) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/stories`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${this.currentUser?.token}`
+                },
+                body: formData
+            });
+
+            if (!response.ok) throw new Error('Failed to create story');
+            const newStory = await response.json();
+            this.stories.unshift(newStory);
+            this.renderStories();
+        } catch (error) {
+            console.error('Error creating story:', error);
+            alert('Failed to create story');
+        }
+    }
+
+    renderStories() {
+        const shouldScroll = this.stories.length > 4;
+        this.storyContainer.innerHTML = `
             <div class="story-container">
-                ${user ? `
-                    <div class="story-card create-story" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${user.avatar})">
+                ${this.currentUser ? `
+                    <div class="story-card create-story" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url(${this.currentUser.avatar})">
                         <div class="create-story-button">
                             <i class="fas fa-plus"></i>
                         </div>
@@ -97,13 +63,13 @@ export class StoryManager {
                 ` : ''} 
                 <div class="scrolling-stories">
                     <div class="scroll-stories-container ${shouldScroll ? '' : 'no-scroll'}">
-                        ${this.stories.slice(4).map(story => `
-                            <div class="story-card">
-                                <img src="${story.avatar}" alt="${story.user}'s avatar" class="avatar" onerror="this.onerror=null; this.src='path/to/default-avatar.png';">
-                                <img src="${story.image}" alt="${story.user}'s story" class="story-image" onerror="this.onerror=null; this.src='path/to/default-image.png';">
+                        ${this.stories.map(story => `
+                            <div class="story-card" data-story-id="${story.id}">
+                                <img src="${story.avatar}" alt="${story.username}'s avatar" class="avatar" onerror="this.onerror=null; this.src='/assets/default-avatar.png';">
+                                <img src="${story.imageUrl}" alt="${story.username}'s story" class="story-image" onerror="this.onerror=null; this.src='/assets/default-image.png';">
                                 <div class="story-info">
-                                    <h4>${story.user}</h4>
-                                    <p>${new Date(story.timestamp).toLocaleString()}</p>
+                                    <h4>${story.username}</h4>
+                                    <p>${new Date(story.createdAt).toLocaleString()}</p>
                                 </div>
                             </div>
                         `).join('')}
@@ -112,27 +78,55 @@ export class StoryManager {
             </div>
         `;
     }
-    
 
     setupStoryListeners() {
         const createStory = document.querySelector('.create-story');
         if (createStory) {
-            createStory.addEventListener('click', () => this.handleCreateStory());
+            createStory.addEventListener('click', () => this.showStoryModal());
         }
 
         document.querySelectorAll('.story-card:not(.create-story)').forEach(card => {
-            card.addEventListener('click', () => this.viewStory(card));
+            card.addEventListener('click', () => this.viewStory(card.dataset.storyId));
         });
     }
 
-    handleCreateStory() {
-        // Simulate story creation
-        alert('Story creation coming soon!');
+    async viewStory(storyId) {
+        try {
+            const response = await fetch(`${API_BASE_URL}/stories/${storyId}`, {
+                headers: {
+                    'Authorization': `Bearer ${this.currentUser?.token}`
+                }
+            });
+            
+            if (!response.ok) throw new Error('Failed to fetch story');
+            const story = await response.json();
+            // Implement story viewing modal here
+        } catch (error) {
+            console.error('Error viewing story:', error);
+        }
     }
 
-    viewStory(storyCard) {
-        // Simulate story viewing
-        alert('Story viewer coming soon!');
+    showStoryModal() {
+        const modal = document.createElement('div');
+        modal.innerHTML = `
+            <div class="modal" id="storyModal">
+                <div class="modal-content">
+                    <h2>Create Story</h2>
+                    <form id="storyForm">
+                        <input type="file" accept="image/*" required>
+                        <button type="submit">Share Story</button>
+                    </form>
+                </div>
+            </div>
+        `;
+        document.body.appendChild(modal);
+
+        document.getElementById('storyForm').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+            await this.createStory(formData);
+            modal.remove();
+        });
     }
 
     getCurrentUser() {

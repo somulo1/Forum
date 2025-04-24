@@ -1,7 +1,13 @@
+import { TrendingManager } from './trending.js'; // Adjust the path as needed
+
+// Example of defining trendingManager
+// window.trendingManager = new TrendingManager();
+// Example of defining trendingManager
+window.trendingManager = new TrendingManager(); // Ensure this is executed before navigation.js
 export class NavigationManager {
     constructor(postManager) {
         this.postManager = postManager;
-        console.log("PostManager in NavigationManager:", this.postManager); // Debugging line
+        // console.log("PostManager in NavigationManager:", this.postManager); // Debugging line
         this.menuItems = document.querySelectorAll('.menu-item');
     }
 
