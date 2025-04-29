@@ -52,7 +52,7 @@ export class AuthManager {
             this.currentUser = data.user;
             localStorage.setItem('token', data.token);
             this.setUserCookie(data.user);
-            this.authModal.classList.add('hidden');
+            this.authModal.classList.add('hidden'); // Hide the modal after successful login
             this.renderAuthButtons();
             window.location.reload();
         } catch (error) {
@@ -83,7 +83,7 @@ export class AuthManager {
             this.currentUser = data.user;
             localStorage.setItem('token', data.token);
             this.setUserCookie(data.user);
-            this.authModal.classList.add('hidden');
+            this.authModal.classList.add('hidden'); // Hide the modal after successful registration
             this.renderAuthButtons();
             window.location.reload();
         } catch (error) {
