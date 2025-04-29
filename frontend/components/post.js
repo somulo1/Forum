@@ -137,13 +137,14 @@ export class PostManager {
             // Handle the error appropriately
         }
     }
+    
     createPostHTML(post) {
         if (!post || !post.category_ids) {
             console.error("Post or categories are undefined:", post);
             return '<div class="post-card">Error: Post data is not available.</div>';
         }
     
-        const categories = post.category_ids || []; // Use category_ids if categories are not defined
+        const categories = post.category_ids || []; // Use an empty array if category_ids is null
         const user = this.getCurrentUser();
         const timeAgo = this.getTimeAgo(new Date(post.timestamp));
     
