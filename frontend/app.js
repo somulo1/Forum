@@ -48,6 +48,9 @@ document.addEventListener("DOMContentLoaded", () => {
     const menuItems = document.querySelectorAll('.menu-item');
     const mainContent = document.getElementById('mainContent');
 
+    const app = new App();
+    window.app = app; // Make accessible globally for use inside page loaders
+
     menuItems.forEach(item => {
         item.addEventListener('click', (event) => {
             event.preventDefault(); // Prevent default anchor behavior
@@ -76,26 +79,46 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     function loadFeedPage() {
-        mainContent.innerHTML = '<h1>Feed</h1><p>Loading feed content...</p>';
-        // Here you can call your function to fetch and display posts
+        mainContent.innerHTML = `
+            <section>
+                <h1>Feed</h1>
+                <div id="postList" class="grid gap-4 mt-4"></div>
+            </section>
+        `;
+        app.postManager.renderPosts(document.getElementById('postList'));
     }
 
     function loadProfilePage() {
-        mainContent.innerHTML = '<h1>Profile</h1><p>Loading profile content...</p>';
-        // Here you can call your function to fetch and display user profile
+        mainContent.innerHTML = `
+            <section>
+                <h1>My Profile</h1>
+                <div id="profileDetails" class="mt-4"></div>
+            </section>
+        `;
+        app.profileManager.renderUserProfile(document.getElementById('profileDetails'));
     }
 
     function loadTrendsPage() {
-        mainContent.innerHTML = '<h1>Trends</h1><p>Loading trends content...</p>';
-        // Here you can call your function to fetch and display trends
+        mainContent.innerHTML = `
+            <section>
+                <h1>Trending Now</h1>
+                <div id="trendingPosts" class="grid gap-4 mt-4"></div>
+            </section>
+        `;
+        app.trendingManager.renderTrending(document.getElementById('trendingPosts'));
     }
 
     function loadSavedPage() {
-        mainContent.innerHTML = '<h1>Saved</h1><p>Loading saved content...</p>';
-        // Here you can call your function to fetch and display saved posts
+        mainContent.innerHTML = `
+            <section>
+                <h1>Saved Posts</h1>
+                <div id="savedPosts" class="grid gap-4 mt-4"></div>
+            </section>
+        `;
+        app.postManager.renderSavedPosts(document.getElementById('savedPosts'));
     }
 
-    // Load the default page on initial load
-    loadPage('feed');
+    // Load the default page
+    loadPage('home');
 });
 new App();
