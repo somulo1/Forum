@@ -137,38 +137,54 @@ export class PostManager {
             // Handle the error appropriately
         }
     }
-    
     createPostHTML(post) {
-        if (!post || !post.category_ids) {
-            console.error("Post or categories are undefined:", post);
-            return '<div class="post-card">Error: Post data is not available.</div>';
+        if (!post) {
+            console.error("Post is undefined:", post);
+            return `
+                <div class="post-card error">
+                    <p>Error: Post data is not available.</p>
+                </div>
+            `;
         }
     
-        const categories = post.category_ids || []; // Use an empty array if category_ids is null
+        const categories = Array.isArray(post.category_ids) ? post.category_ids : []; // Fallback to an empty array
         const user = this.getCurrentUser();
         const timeAgo = this.getTimeAgo(new Date(post.timestamp));
     
         return `
             <div class="post-card" data-post-id="${post.id}">
                 <div class="post-header">
-                    <img src="${post.authorAvatar || 'path/to/default-avatar.png'}" alt="${post.author}" class="post-author-img">
+                    <img 
+                        src="${post.authorAvatar || 'path/to/default-avatar.png'}" 
+                        alt="${post.author}" 
+                        class="post-author-img"
+                        onerror="this.onerror=null; this.src='path/to/default-avatar.png';"
+                    >
                     <div class="post-author-info">
                         <span class="post-author">${post.author}</span>
                         <span class="post-time">${timeAgo}</span>
                     </div>
                 </div>
-                <div class="post-content">${post.content}</div>
-                ${post.image ? `<img src="${post.image}" alt="Post image" class="post-image">` : ''}
+                <div class="post-content">
+                    <p>${post.content}</p>
+                    ${post.image ? `<img src="${post.image}" alt="Post image" class="post-image">` : ''}
+                </div>
                 <div class="post-categories">
-                    ${categories.map(cat => `
+                    ${categories.length > 0 ? categories.map(cat => `
                         <span class="category-tag">${cat}</span>
-                    `).join('')}
+                    `).join('') : '<span class="no-categories">No categories</span>'}
                 </div>
                 <div class="post-actions">
                     ${user ? `
-                        <button class="action-btn like-btn ${post.liked ? 'active' : ''}" data-post-id="${post.id}">Like</button>
-                        <button class="action-btn comment-btn" data-post-id="${post.id}">Comment</button>
-                    ` : ''}
+                        <button class="action-btn like-btn ${post.liked ? 'active' : ''}" data-post-id="${post.id}">
+                            <i class="fas fa-thumbs-up"></i> Like
+                        </button>
+                        <button class="action-btn comment-btn" data-post-id="${post.id}">
+                            <i class="fas fa-comment"></i> Comment
+                        </button>
+                    ` : `
+                        <p class="login-prompt">Log in to interact with posts.</p>
+                    `}
                 </div>
             </div>
         `;
