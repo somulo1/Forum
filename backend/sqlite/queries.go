@@ -71,8 +71,18 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	offset := (page - 1) * limit
 
 	rows, err := db.Query(`
-		SELECT id, user_id, title, content, created_at FROM posts
-		ORDER BY created_at DESC
+		SELECT 
+			posts.id, 
+			posts.user_id, 
+			users.username, 
+			posts.title, 
+			posts.content, 
+			posts.category_id, 
+			posts.created_at, 
+			posts.updated_at
+		FROM posts
+		JOIN users ON posts.user_id = users.id
+		ORDER BY posts.created_at DESC
 		LIMIT ? OFFSET ?
 	`, limit, offset)
 	if err != nil {
@@ -82,14 +92,28 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 
 	for rows.Next() {
 		var post models.Post
-		if err := rows.Scan(&post.ID, &post.UserID, &post.Title, &post.Content, &post.CreatedAt); err != nil {
+		err := rows.Scan(
+			&post.ID,
+			&post.UserID,
+			&post.Username, // You'll need to add this to your Post struct
+			&post.Title,
+			&post.Content,
+			&post.CategoryID,
+			&post.CreatedAt,
+			&post.UpdatedAt,
+		)
+		if err != nil {
 			return nil, err
 		}
 		posts = append(posts, post)
 	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
 
 	return posts, nil
 }
+
 
 // DeletePost removes a post by ID
 func DeletePost(db *sql.DB, postID int) error {

@@ -22,7 +22,123 @@
         </div>
     </div>
     
+    <script>
+        const API_BASE_URL = "http://localhost:8080/api";
+        async function fetchPosts() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/posts`, {
+                    method: 'GET',
+                    credentials: 'include', // Ensures cookies are sent for authentication
+                });
 
-    <script type="module" src="./index.mjs" defer></script>
+            if (!response.ok) {
+                throw new Error('Failed to fetch posts');
+            }
+
+            const posts = await response.json();
+            return posts;
+            } catch (error) {
+                console.error('Error fetching posts:', error);
+                return [];
+            }
+        }
+        async function loadPosts() {
+            try {
+                const posts = await fetchPosts();
+                const container = document.getElementById('main-content');
+                container.innerHTML = '';
+
+                if (posts.length === 0) {
+                    container.innerHTML = '<p>No posts available.</p>';
+                    return;
+                }
+
+                posts.forEach(post => {
+                const postElement = document.createElement('div');
+                postElement.classList.add('post');
+                postElement.innerHTML = `
+                    <h2>${post.username}<h2>
+                    <h4>${post.title}<h4>
+                    <p>${post.content}</p>
+                    <button class="like-btn" data-post-id="${post.id}">Like</button>
+                    <button class="comment-btn" data-post-id="${post.id}">Comment</button>
+                    ${post.isOwner ? `<button class="delete-btn" data-post-id="${post.id}">Delete</button>` : ''}
+                    <div id="comments-${post.id}" class="comments-section"></div> <!-- Comments Section Added -->
+                    <hr/>
+                    `;
+                container.appendChild(postElement);
+                });
+    
+
+                attachEventListeners();
+            } catch (error) {
+            console.error('Failed to load posts:', error);
+            }
+        }
+        // Attach event listeners to like, comment, and delete buttons
+        function attachEventListeners() {
+            document.querySelectorAll('.like-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const postId = e.target.dataset.postId;
+                    if (await isAuthenticated()) {
+                        handleLike(postId);
+                    } else {
+                        // promptAuthentication();
+                    }
+                });
+            });
+
+            document.querySelectorAll('.comment-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const postId = e.target.dataset.postId;
+                    alert("Only signed in users can like")
+                    // if (await isAuthenticated()) {
+                    // loadComments(postId);
+                    // } else {
+                    //     alert("Only signed in users can like")
+                    //     // promptAuthentication();
+                    // }
+                });
+            });
+
+            document.querySelectorAll('.delete-btn').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    const postId = e.target.dataset.postId;
+                    if (confirm('Are you sure you want to delete this post?')) {
+                        try {
+                            await deletePost(postId);
+                            alert('Post deleted successfully');
+                            loadPosts();
+                        } catch (error) {
+                            alert(error.message);
+                        }
+                    }
+                });
+            });
+            // Handle logout
+            const logoutBtn = document.getElementById('logout-btn');
+            if (logoutBtn) {
+                logoutBtn.addEventListener('click', async () => {
+                    await logoutUser();
+                });
+            }
+        }
+        async function isAuthenticated() {
+            try {
+                const response = await fetch(`${API_BASE_URL}/user`, { credentials: 'include' });
+                return response.ok;
+            } catch (error) {
+            console.error('Auth Check Error:', error);
+            return false;
+            }
+        }
+        document.addEventListener('DOMContentLoaded', async () => {
+            // await addCreatePostButton();
+             // checkAuthStatus();
+            // renderAuthButtons();
+            loadPosts();
+        });
+    </script>
+    <!-- <script type="module" src="./index.mjs" defer></script> -->
 </body>
 </html>
