@@ -149,19 +149,19 @@ export class PostManager {
     
         const categories = Array.isArray(post.category_ids) ? post.category_ids : []; // Fallback to an empty array
         const user = this.getCurrentUser();
-        const timeAgo = this.getTimeAgo(new Date(post.timestamp));
+        const timeAgo = this.getTimeAgo(new Date(post.created_at));
     
         return `
             <div class="post-card" data-post-id="${post.id}">
                 <div class="post-header">
                     <img 
                         src="${post.authorAvatar || 'path/to/default-avatar.png'}" 
-                        alt="${post.author}" 
+                        alt="${post.username}" 
                         class="post-author-img"
                         onerror="this.onerror=null; this.src='path/to/default-avatar.png';"
                     >
                     <div class="post-author-info">
-                        <span class="post-author">${post.author}</span>
+                        <span class="post-author">${post.username}</span>
                         <span class="post-time">${timeAgo}</span>
                     </div>
                 </div>
