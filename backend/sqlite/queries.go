@@ -70,6 +70,7 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 		&post.ID,
 		&post.UserID,
 		&post.Title,
+		// &post.AvatarURL,
 		&post.Content,
 		&post.ImageURL,
 		&post.CategoryID,
@@ -91,7 +92,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
             posts.user_id,
             users.username,
             posts.title,
-            posts.ImageURL,
+			posts.ImageURL,
             posts.content,
             posts.category_id,
             categories.name as category_name,
@@ -116,12 +117,15 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	var posts []models.Post
 	for rows.Next() {
 		var post models.Post
+		// var user models.User
 		var commentCount, likeCount int
 		err := rows.Scan(
 			&post.ID,
 			&post.UserID,
 			&post.Username,
 			&post.Title,
+			// &user.AvatarURL,
+			// &post.AvatarURL,
 			&post.ImageURL,
 			&post.Content,
 			&post.CategoryID,
