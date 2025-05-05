@@ -91,6 +91,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
             posts.id, 
             posts.user_id,
             users.username,
+			users.AvatarURL, 
             posts.title,
 			posts.ImageURL,
             posts.content,
@@ -110,6 +111,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
         LIMIT ? OFFSET ?
     `, limit, offset)
 	if err != nil {
+		log.Println("Error fetching posts:", err) // Log the error
 		return nil, err
 	}
 	defer rows.Close()
@@ -124,8 +126,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			&post.UserID,
 			&post.Username,
 			&post.Title,
-			// &user.AvatarURL,
-			// &post.AvatarURL,
+			&post.AvatarURL,
 			&post.ImageURL,
 			&post.Content,
 			&post.CategoryID,
@@ -375,9 +376,9 @@ func DeleteSession(db *sql.DB, sessionID string) error {
 func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
 	var user models.User
 
-	query := `SELECT id, username, email, password_hash, created_at, updated_at FROM users WHERE id = ?`
+	query := `SELECT id, username, email, AvatarURL, password_hash, created_at, updated_at FROM users WHERE id = ?`
 	err := db.QueryRow(query, userID).Scan(
-		&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt,
+		&user.ID, &user.Username, &user.Email, &user.AvatarURL, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
