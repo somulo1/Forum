@@ -98,7 +98,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			&post.ImageURL,
 			&post.CreatedAt,
 			&post.UpdatedAt,
-		)		
+		)
 		if err != nil {
 			return nil, err
 		}
