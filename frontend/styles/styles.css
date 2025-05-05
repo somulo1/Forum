@@ -722,3 +722,67 @@ body {
         font-size: 0.8rem;
     }
 }
+
+.category-section {
+    padding: 1rem;
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    margin-bottom: 1.5rem;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.category-section h3 {
+    font-size: 1.2rem;
+    color: #343a40;
+    margin-bottom: 1rem;
+    padding-bottom: 0.5rem;
+    border-bottom: 2px solid #dee2e6;
+}
+
+#categoryFilter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+#categoryFilter button {
+    padding: 0.5rem 1rem;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    background-color: white;
+    color: #495057;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+#categoryFilter button:hover {
+    background-color: #e9ecef;
+    transform: translateY(-1px);
+}
+
+#categoryFilter button.active {
+    background-color: #0d6efd;
+    color: white;
+    border-color: #0d6efd;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+    .category-section {
+        padding: 0.75rem;
+    }
+
+    #categoryFilter {
+        gap: 0.3rem;
+    }
+
+    #categoryFilter button {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+    }
+}
+
+
+/* user profile image */
