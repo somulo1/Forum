@@ -3,7 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
-	"fmt"
 	"log"
 	"strings"
 	"time"
@@ -37,9 +36,9 @@ func CreateUser(db *sql.DB, username, email, passwordHash string) error {
 // CreatePost inserts a new post
 func CreatePost(db *sql.DB, userID int, categoryID *int, title, content string) error {
 	result, err := db.Exec(`
-		INSERT INTO posts (user_id, category_id, title, content, created_at, updated_at)
-		VALUES (?, COALESCE(?, NULL), ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-	`, userID, categoryID, title, content)
+        INSERT INTO posts (user_id, category_id, ImageURL, title, content, created_at, updated_at)
+        VALUES (?, COALESCE(?, NULL), '', ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+    `, userID, categoryID, title, content)
 	if err != nil {
 		log.Println("❌ Error inserting post:", err)
 		return err
@@ -49,7 +48,6 @@ func CreatePost(db *sql.DB, userID int, categoryID *int, title, content string) 
 	if rowsAffected == 0 {
 		log.Println("⚠️ No rows were inserted.")
 	}
-	fmt.Println("\n", result)
 	return nil
 }
 
@@ -57,64 +55,100 @@ func CreatePost(db *sql.DB, userID int, categoryID *int, title, content string) 
 func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	var post models.Post
 	err := db.QueryRow(`
-        SELECT id, user_id, title, content FROM posts WHERE id = ?
-    `, postID).Scan(&post.ID, &post.UserID, &post.Title, &post.Content)
+        SELECT 
+            id,
+            user_id,
+            title,
+            content,
+            ImageURL,
+            category_id,
+            created_at,
+            updated_at
+        FROM posts 
+        WHERE id = ?
+    `, postID).Scan(
+		&post.ID,
+		&post.UserID,
+		&post.Title,
+		&post.Content,
+		&post.ImageURL,
+		&post.CategoryID,
+		&post.CreatedAt,
+		&post.UpdatedAt,
+	)
 	if err != nil {
 		return models.Post{}, err
 	}
 	return post, nil
 }
 
-// GetPosts retrieves posts with pagination
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
-	var posts []models.Post
 	offset := (page - 1) * limit
 
 	rows, err := db.Query(`
-		SELECT 
-			posts.id, 
-			posts.user_id, 
-			users.username, 
-			posts.title, 
-			posts.content, 
-			posts.category_id, 
-			posts.created_at, 
-			posts.updated_at
-		FROM posts
-		JOIN users ON posts.user_id = users.id
-		ORDER BY posts.created_at DESC
-		LIMIT ? OFFSET ?
-	`, limit, offset)
+        SELECT 
+            posts.id, 
+            posts.user_id,
+            users.username,
+            posts.title,
+            posts.ImageURL,
+            posts.content,
+            posts.category_id,
+            categories.name as category_name,
+            posts.created_at,
+            posts.updated_at,
+            COUNT(DISTINCT comments.id) as comment_count,
+            COUNT(DISTINCT likes.user_id) as like_count
+        FROM posts
+        JOIN users ON posts.user_id = users.id
+        LEFT JOIN categories ON posts.category_id = categories.id
+        LEFT JOIN comments ON posts.id = comments.post_id
+        LEFT JOIN likes ON posts.id = likes.post_id
+        GROUP BY posts.id
+        ORDER BY posts.created_at DESC
+        LIMIT ? OFFSET ?
+    `, limit, offset)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
 
+	var posts []models.Post
 	for rows.Next() {
 		var post models.Post
+		var commentCount, likeCount int
 		err := rows.Scan(
 			&post.ID,
 			&post.UserID,
-			&post.Username, // You'll need to add this to your Post struct
+			&post.Username,
 			&post.Title,
+			&post.ImageURL,
 			&post.Content,
 			&post.CategoryID,
+			&post.CategoryName,
 			&post.CreatedAt,
 			&post.UpdatedAt,
+			&commentCount,
+			&likeCount,
 		)
 		if err != nil {
 			return nil, err
 		}
+
+		// Get latest comments
+		comments, err := GetPostComments(db, post.ID)
+		if err != nil {
+			return nil, err
+		}
+		post.Comments = comments
+		post.CommentCount = commentCount
+		post.LikeCount = likeCount
+
 		posts = append(posts, post)
-	}
-	if err := rows.Err(); err != nil {
-		return nil, err
 	}
 
 	return posts, nil
 }
-
-
 
 // DeletePost removes a post by ID
 func DeletePost(db *sql.DB, postID int) error {
@@ -244,6 +278,7 @@ func GetCategories(db *sql.DB) ([]models.Category, error) {
 	}
 	return categories, nil
 }
+
 // trending
 
 func FetchTrendingPosts(db *sql.DB) ([]models.Post, error) {
@@ -332,6 +367,7 @@ func DeleteSession(db *sql.DB, sessionID string) error {
 	`, sessionID)
 	return err
 }
+
 func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
 	var user models.User
 
