@@ -35,20 +35,20 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
-	if !ok || userID == 0 {
+	if !ok || *userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// Create post in database
-	err = sqlite.CreatePost(db, userID, request.CategoryID, request.Title, request.Content, &request.ImageURL)
+	post, err := sqlite.CreatePost(db, userID, request.CategoryID, request.Title, request.Content, request.ImageURL)
 	if err != nil {
 		log.Println("Error creating post:", err) // Debugging
 		utils.SendJSONError(w, "Failed to create post", http.StatusInternalServerError)
 		return
 	}
 
-	utils.SendJSONResponse(w, map[string]string{"message": "Post created successfully"}, http.StatusCreated)
+	utils.SendJSONResponse(w, post, http.StatusCreated)
 }
 
 // GetPosts fetches posts (with optional filters)

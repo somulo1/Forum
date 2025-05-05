@@ -27,20 +27,20 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
-	if !ok || userID == 0 {
+	if !ok || *userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	comment.UserID = userID
+	comment.UserID = *userID
 
-	err = sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.Content)
+	comm, err := sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.Content)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to create comment", http.StatusInternalServerError)
 		return
 	}
 
-	utils.SendJSONResponse(w, comment, http.StatusCreated)
+	utils.SendJSONResponse(w, comm, http.StatusCreated)
 }
 
 // GetComments fetches comments for a post

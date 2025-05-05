@@ -33,7 +33,7 @@ func CreateUser(db *sql.DB, username, email, passwordHash string) error {
 }
 
 // CreatePost inserts a new post
-func CreatePost(db *sql.DB, userID, categoryID int, title, content, imageURL string) (models.Post, error) {
+func CreatePost(db *sql.DB, userID, categoryID *int, title, content, imageURL string) (models.Post, error) {
 	var post models.Post
 	query := `
 		INSERT INTO posts (user_id, category_id, title, content, image_url)
