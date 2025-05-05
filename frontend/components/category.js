@@ -2,8 +2,10 @@ import { API_BASE_URL } from '../config.mjs';
 
 export class CategoryManager {
     constructor() {
-        this.categories = new Set();
+        this.categories = [];
         this.categoryFilter = document.getElementById('categoryFilter');
+        this.loading = false;
+        this.init();
     }
 
     async init() {
@@ -13,47 +15,72 @@ export class CategoryManager {
 
     async fetchCategories() {
         try {
+            this.loading = true;
             const response = await fetch(`${API_BASE_URL}/categories`, {
                 method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${this.getCurrentUser()?.token}`
-                }
+                headers: { 'Content-Type': 'application/json' }
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch categories');
-            }
+            if (!response.ok) throw new Error(`Failed to fetch categories: ${response.status}`);
 
             const categories = await response.json();
-            this.categories = new Set(categories.map(cat => cat.name));
+            if (!Array.isArray(categories)) throw new Error('Invalid categories data format');
+
+            // Cache categories
+            localStorage.setItem('forumCategories', JSON.stringify(categories));
+            this.categories = categories;
+            return categories;
+
         } catch (error) {
             console.error('Error fetching categories:', error);
-            // Fallback to default categories if API fails
-            this.categories = new Set(['General', 'Technology', 'News', 'Introduction']);
+            // Try cached categories
+            const cached = localStorage.getItem('forumCategories');
+            this.categories = cached ? JSON.parse(cached) : [];
+            return this.categories;
+        } finally {
+            this.loading = false;
         }
     }
 
     async renderCategories() {
-        const user = this.getCurrentUser();
-        if (!user) return;
+        if (!this.categoryFilter) return;
 
-        this.categoryFilter.classList.remove('hidden');
-        this.categoryFilter.innerHTML = `
-            <button class="btn btn-secondary" data-category="all">All Posts</button>
-            ${Array.from(this.categories).map(category => `
-                <button class="btn btn-secondary" data-category="${categoryName}">${category}</button>
-            `).join('')}
-        `;
+        try {
+            this.categoryFilter.classList.remove('hidden');
+            this.categoryFilter.innerHTML = `
+                <button class="btn btn-secondary" data-category="all">All Posts</button>
+                ${this.categories.map(cat => `
+                    <button class="btn btn-secondary" 
+                        data-category-id="${cat.id}"
+                        data-category-name="${cat.name}">
+                        ${cat.name}
+                    </button>
+                `).join('')}
+            `;
 
-        this.setupCategoryListeners();
+            this.setupCategoryListeners();
+        } catch (error) {
+            console.error('Error rendering categories:', error);
+            this.categoryFilter.innerHTML = '<p>Failed to load categories</p>';
+        }
     }
 
     setupCategoryListeners() {
         this.categoryFilter.querySelectorAll('button').forEach(btn => {
             btn.addEventListener('click', () => {
-                const category = btn.dataset.category;
-                window.postManager.filterByCategory(category);
+                const categoryId = btn.dataset.categoryId;
+                
+                // Update active state
+                this.categoryFilter.querySelectorAll('button')
+                    .forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+
+                // Filter posts
+                if (categoryId === 'all') {
+                    window.postManager?.filterByCategory(null);
+                } else {
+                    window.postManager?.filterByCategory(parseInt(categoryId));
+                }
             });
         });
     }
@@ -65,7 +92,7 @@ export class CategoryManager {
         return userCookie ? JSON.parse(decodeURIComponent(userCookie.split('=')[1])) : null;
     }
 
-    async addCategory(category) {
+    async addCategory(categoryName) {
         try {
             const response = await fetch(`${API_BASE_URL}/categories`, {
                 method: 'POST',
@@ -73,21 +100,20 @@ export class CategoryManager {
                     'Content-Type': 'application/json',
                     'Authorization': `Bearer ${this.getCurrentUser()?.token}`
                 },
-                body: JSON.stringify({ name: category })
+                body: JSON.stringify({ name: categoryName })
             });
 
-            if (!response.ok) {
-                throw new Error('Failed to add category');
-            }
+            if (!response.ok) throw new Error('Failed to add category');
 
             const newCategory = await response.json();
-            this.categories.add(newCategory.name);
+            this.categories.push(newCategory);
             await this.renderCategories();
+            return newCategory;
         } catch (error) {
             console.error('Error adding category:', error);
-            // Fallback to local addition if API fails
-            this.categories.add(category);
-            await this.renderCategories();
+            throw error;
         }
     }
 }
+
+export default CategoryManager;

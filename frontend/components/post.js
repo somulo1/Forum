@@ -122,6 +122,7 @@ export class PostManager {
        this.mainContent.innerHTML = filteredPosts.map(post => this.createPostHTML(post)).join('');
        this.setupPostInteractions();
    }
+   
     async fetchCategories() {
         try {
             const response = await fetch(`${this.API_BASE_URL}/categories`);
@@ -152,48 +153,54 @@ export class PostManager {
         const timeAgo = this.getTimeAgo(new Date(post.created_at));
     
         return `
-            <div class="post-card" data-post-id="${post.id}">
-                <div class="post-header">
-                    <img 
-                        src="${post.authorAvatar || 'path/to/default-avatar.png'}" 
-                        alt="${post.username}" 
-                        class="post-author-img"
-                        onerror="this.onerror=null; this.src='path/to/default-avatar.png';"
-                    >
-                    <div class="post-author-info">
-                        <span class="post-author">${post.username}</span>
-                        <span class="post-time">${timeAgo}</span>
-                    </div>
-                </div>
-                <div class="post-content">
-                    <p>${post.content}</p>
-                    ${post.image ? `<img src="${post.image}" alt="Post image" class="post-image">` : ''}
-                </div>
-                <div class="post-categories">
-                    ${categories.length > 0 ? categories.map(cat => `
-                        <span class="category-tag">${cat}</span>
-                    `).join('') : '<span class="no-categories">No categories</span>'}
-                </div>
-                <div class="post-actions">
-                    ${user ? `
-                        <button class="action-btn like-btn ${post.liked ? 'active' : ''}" data-post-id="${post.id}">
-                            <i class="fas fa-thumbs-up"></i> Like
-                        </button>
-                        <button class="action-btn comment-btn" data-post-id="${post.id}">
-                            <i class="fas fa-comment"></i> Comment
-                        </button>
-                    ` : `
-                        <p class="login-prompt">Log in to interact with posts.</p>
-                    `}
+        <div class="post-card" data-post-id="${post.id}">
+            <div class="post-header">
+                <img 
+                    src="${post.authorAvatar || 'path/to/default-avatar.png'}" 
+                    alt="${post.username}" 
+                    class="post-author-img"
+                    onerror="this.onerror=null; this.src='path/to/default-avatar.png';"
+                >
+                <div class="post-author-info">
+                    <span class="post-author">${post.username}</span>
+                    <span class="post-time">${timeAgo}</span>
                 </div>
             </div>
-        `;
+            <div class="post-content">
+                <h3 class="post-title">${post.title}</h3>
+                <p>${post.content}</p>
+                ${post.ImageURL ? `<img src="${post.ImageURL}" alt="Post image" class="post-image">` : ''}
+            </div>
+            <div class="post-categories">
+                ${post.category_id && post.category_name ? `
+                    <span class="category-tag" data-category-id="${post.category_id}">
+                        ${post.category_name}
+                    </span>
+                ` : '<span class="no-categories">No category</span>'}
+            </div>
+            <div class="post-actions">
+                ${user ? `
+                    <button class="action-btn like-btn ${post.liked ? 'active' : ''}" data-post-id="${post.id}">
+                        <i class="fas fa-thumbs-up"></i> 
+                        <span class="like-count">${post.like_count || 0}</span>
+                    </button>
+                    <button class="action-btn comment-btn" data-post-id="${post.id}">
+                        <i class="fas fa-comment"></i>
+                        <span class="comment-count">${post.comment_count || 0}</span>
+                    </button>
+                ` : `
+                    <p class="login-prompt">Log in to interact with posts.</p>
+                `}
+            </div>
+        </div>
+    `;
     }
 
     renderComments(comments, level = 0) {
         if (!comments || comments.length === 0) return '';
         
         const user = this.getCurrentUser();
+
         return `
             <div class="comments-section" style="margin-left: ${level * 20}px">
                 ${comments.map(comment => `

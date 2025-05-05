@@ -11,7 +11,7 @@ class App {
         this.authManager = new AuthManager();
         this.postManager = new PostManager();
         this.categoryManager = new CategoryManager();
-        this.profileManager = new ProfileManager();
+        this.ProfileManager = new ProfileManager();
         this.trendingManager = new TrendingManager();
         this.storyManager = new StoryManager();
         this.navigationManager = new NavigationManager(this.postManager);
@@ -24,7 +24,7 @@ class App {
         this.authManager.init();
         this.postManager.init();
         this.categoryManager.init();
-        this.profileManager.init();
+        this.ProfileManager.init();
         this.trendingManager.init();
         this.storyManager.init();
         this.navigationManager.init();
@@ -95,7 +95,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <div id="profileDetails" class="mt-4"></div>
             </section>
         `;
-        app.profileManager.renderUserProfile(document.getElementById('profileDetails'));
+        app.ProfileManager.renderProfile(document.getElementById('profileDetails'));
     }
 
     function loadTrendsPage() {
