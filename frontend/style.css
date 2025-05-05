@@ -1,0 +1,173 @@
+/* Global Styles */
+body {
+    font-family: 'Poppins', sans-serif;
+    color: #333;
+    background-color: #f5f5f5;
+    overflow-y: initial;
+    margin: 0; /* Remove default body margins */
+  }
+  
+  .container {
+    margin: 0 auto;
+    width: 80%;
+  }
+  
+  h2.logo {
+    color: #007bff;
+  }
+  
+  button {
+    padding: 10px 20px;
+    margin-left: 10px;
+    cursor: pointer;
+    border: none;
+    border-radius: 5px;
+    background-color: #007bff;
+    color: white;
+    font-size: 14px;
+  }
+  
+  button.btn-danger {
+    background-color: #dc3545;
+  }
+  
+  button:hover {
+    opacity: 0.9;
+  }
+  
+  /* Profile Picture */
+  .profile-picture img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+  }
+  
+  /* Search Bar */
+  .search-bar input[type="search"] {
+    padding: 10px;
+    border-radius: 20px;
+    border: 1px solid #ccc;
+  }
+  header {
+    position: fixed;
+    width: 100%;
+    top: 0;
+    background-color: white;
+    z-index: 1000;
+  }
+  
+  .search-bar i {
+    margin-left: 8px;
+  }
+  
+  /* Main Content */
+  main .container {
+    margin-top: 50px;
+  }
+  h1 a{
+    text-decoration: none;
+    color: #007bff;
+    /* margin-bottom: 20px; */
+  }
+  /* Post Styles */
+  .feed {
+    background: white;
+    padding: 20px;
+    margin-bottom: 20px;
+    border-radius: 10px;
+    box-shadow: 0 4px 8px #007bff;
+  }
+  
+  .feed .profile-picture img {
+    width: 50px;
+  }
+  
+  .feed .user-info h3 {
+    margin: 0;
+    font-size: 1.1rem;
+  }
+  
+  .feed .content p {
+    font-size: 0.95rem;
+    color: #555;
+  }
+  
+  /* Responsive */
+  @media screen and (max-width: 768px) {
+    .container {
+      width: 95%;
+    }
+  }
+  .body-div {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    border: 1px solid #007bff; /* Optional border for the container */
+  }
+  
+  .inner-div1 {
+    flex-grow: 0;
+    border: 1px solid #007bff; /* Thinner, translucent red border */
+    padding: 10px;
+  }
+  
+  .inner-div2 {
+    flex-grow: 1;
+    overflow-y: auto; /* Enables vertical scrolling */
+    max-height: calc(100vh - 100px); /* Adjust this based on your header height */
+  }
+  
+  
+  .inner-div3 {
+    flex-grow: 0;
+    border: 1px solid #007bff; /* Thinner, translucent red border */
+    padding: 10px;
+  }
+  /* Modal Background */
+.auth-modal-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.6); /* Transparent background */
+  z-index: 999;
+}
+
+/* Modal Container */
+.auth-modal-content {
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  background: white;
+  padding: 20px;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+  z-index: 1000;
+}
+/* Modal Inputs and Buttons */
+.auth-modal-content input,
+.auth-modal-content button {
+  width: 100%;
+  margin-top: 10px;
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+}
+
+.auth-modal-content button {
+  background-color: #007bff;
+  color: white;
+  border: none;
+  cursor: pointer;
+}
+
+.auth-modal-content button#auth-cancel {
+  background-color: #dc3545;
+}
+
+.auth-modal-content button:hover {
+  opacity: 0.9;
+}
