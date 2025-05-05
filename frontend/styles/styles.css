@@ -7,42 +7,6 @@
     --hover-color: #e4e6eb;
 }
 
-.modal.hidden {
-    display: none;
-}
-.modal {
-    display: flex;
-    position: fixed;
-    z-index: 999;
-    left: 0;
-    top: 0;
-    height: 100%;
-    width: 100%;
-    background-color: rgba(0,0,0,0.4);
-    align-items: center;
-    justify-content: center;
-}
-.modal-content {
-    background-color: #fff;
-    padding: 20px;
-    border-radius: 8px;
-    max-width: 400px;
-    width: 100%;
-}
-
-
-
-.modal-content {
-    background-color: #fefefe;
-    margin: 15% auto; /* 15% from the top and centered */
-    padding: 20px;
-    border: 1px solid #888;
-    width: 80%; /* Could be more or less, depending on screen size */
-}
-
-.hidden {
-    display: none;
-}
 * {
     margin: 0;
     padding: 0;
@@ -55,6 +19,10 @@ body {
     color: var(--text-color);
     font-size: 16px;
     line-height: 1.5;
+}
+
+.hidden {
+    display: none;
 }
 
 /* Navbar */
@@ -99,7 +67,7 @@ body {
     gap: 10px;
 }
 
-/* Container and Layout */
+/* Container */
 .container {
     max-width: 1200px;
     margin: 20px auto;
@@ -135,7 +103,6 @@ body {
     display: flex;
     flex-direction: column;
     gap: 8px;
-    padding-left: 0%;
 }
 
 .menu-item {
@@ -159,15 +126,15 @@ body {
     text-align: center;
 }
 
-/* Stories Section */
+/* Stories */
 .story-section {
     display: flex;
     gap: 10px;
     overflow-x: auto;
     padding: 10px 0;
     margin-bottom: 20px;
-    -webkit-overflow-scrolling: touch; /* Smooth scrolling on iOS */
-    scrollbar-width: thin; /* For Firefox */
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
 }
 
 .story-section::-webkit-scrollbar {
@@ -179,13 +146,9 @@ body {
     border-radius: 3px;
 }
 
-.story-container {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: flex-start;
-}
-
-.visible-stories, .scrolling-stories {
+.story-container,
+.visible-stories,
+.scrolling-stories {
     display: flex;
     flex-wrap: nowrap;
     justify-content: flex-start;
@@ -193,7 +156,7 @@ body {
 }
 
 .story-card {
-    border: 1px solid #ccc;
+    border: 1px solid var(--border-color);
     border-radius: 8px;
     padding: 10px;
     margin: 10px;
@@ -228,7 +191,7 @@ body {
     animation: none;
 }
 
-/* Create Post Section */
+/* Create Post */
 .create-post-section {
     background: white;
     border-radius: 8px;
@@ -283,7 +246,6 @@ body {
 /* Post Card */
 .post-card {
     background-color: white;
-    max-width: 100%;
     border-radius: 8px;
     padding: 16px;
     margin-bottom: 16px;
@@ -294,6 +256,7 @@ body {
     display: flex;
     align-items: center;
     margin-bottom: 12px;
+    flex-wrap: wrap;
 }
 
 .post-author-img {
@@ -310,11 +273,12 @@ body {
 .post-author {
     font-weight: 600;
     margin-right: 8px;
+    font-size: 0.9rem;
 }
 
 .post-time {
     color: #65676b;
-    font-size: 0.9rem;
+    font-size: 0.8rem;
 }
 
 .post-content {
@@ -336,6 +300,7 @@ body {
     padding-top: 12px;
     border-top: 1px solid var(--border-color);
     flex-wrap: wrap;
+    justify-content: space-around;
 }
 
 .action-btn {
@@ -349,6 +314,7 @@ body {
     padding: 8px;
     border-radius: 4px;
     transition: background-color 0.2s;
+    font-size: 0.9rem;
 }
 
 .action-btn:hover {
@@ -359,18 +325,17 @@ body {
     color: var(--primary-color);
 }
 
-/* Category Tags */
+/* Tags */
 .category-tag {
     display: inline-block;
     padding: 4px 8px;
     background-color: var(--hover-color);
     border-radius: 12px;
-    margin-right: 8px;
-    margin-bottom: 8px;
+    margin: 0 8px 8px 0;
     font-size: 0.9rem;
 }
 
-/* Trending and Suggested Sections */
+/* Trending & Suggested */
 .trending-section,
 .suggested-section {
     background: white;
@@ -427,12 +392,12 @@ body {
 .modal {
     display: none;
     position: fixed;
+    z-index: 1000;
     top: 0;
     left: 0;
     width: 100%;
     height: 100%;
     background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
     align-items: center;
     justify-content: center;
 }
@@ -447,10 +412,10 @@ body {
     border-radius: 8px;
     width: 90%;
     max-width: 500px;
-    margin: 0 auto;
-    position: relative;
     max-height: 90vh;
     overflow-y: auto;
+    margin: 0 auto;
+    position: relative;
 }
 
 .close {
@@ -484,10 +449,6 @@ body {
     color: #ff4d4d;
     font-size: 0.9rem;
     margin-top: 4px;
-}
-
-.hidden {
-    display: none;
 }
 
 /* Comments */
@@ -554,171 +515,104 @@ body {
     border-radius: 50%;
 }
 
-/* Responsive Design */
-/* Large desktop and up */
-@media (min-width: 1201px) {
-    .container {
-        grid-template-columns: 250px 1fr 300px;
-    }
-}
-
-/* Desktop to large desktops */
-@media (min-width: 992px) and (max-width: 1200px) {
+/* Responsive */
+@media (max-width: 1200px) {
     .container {
         grid-template-columns: 200px 1fr 250px;
     }
-    
-    .story-card {
-        width: 130px;
-    }
 }
 
-/* Tablets and small desktops */
-@media (min-width: 768px) and (max-width: 991px) {
+@media (max-width: 991px) {
     .container {
         grid-template-columns: 180px 1fr;
     }
-    
+
     .trending-section,
     .suggested-section {
         display: none;
     }
-    
-    .story-card {
-        width: 120px;
-    }
-    
+
     .nav-search {
         max-width: 300px;
     }
+
+    .story-card {
+        width: 120px;
+    }
 }
 
-/* Large phones and tablets */
-@media (min-width: 576px) and (max-width: 767px) {
+@media (max-width: 767px) {
     .container {
         grid-template-columns: 1fr;
     }
-    
-    .sidebar {
-        display: none;
-    }
-    
+
+    .sidebar,
     .trending-section,
     .suggested-section {
         display: none;
     }
-    
+
     .nav-search {
         max-width: 250px;
     }
-    
+
     .story-card {
         width: 110px;
     }
-    
+
     .navbar {
         padding: 0.5rem;
     }
-    
+
     .nav-brand {
         font-size: 1.3rem;
     }
 }
 
-/* Small phones and down */
 @media (max-width: 575px) {
-    .container {
-        grid-template-columns: 1fr;
-        padding: 0 10px;
-    }
-    
-    .sidebar {
-        display: none;
-    }
-    
-    .trending-section,
-    .suggested-section {
-        display: none;
-    }
-    
     .nav-search {
         max-width: 150px;
     }
-    
-    .navbar {
-        padding: 0.5rem;
-    }
-    
+
     .nav-brand {
         font-size: 1.2rem;
     }
-    
-    .nav-auth {
-        flex: 0;
-    }
-    
-    .post-actions-bar {
-        justify-content: space-between;
-    }
-    
+
     .post-action {
         padding: 6px;
         font-size: 0.9rem;
     }
-    
-    .story-card {
-        width: 100px;
-        margin: 5px;
-        padding: 8px;
-    }
-    
+
     .btn {
         padding: 6px 12px;
         font-size: 0.9rem;
     }
-    
+
     .comment-content,
     .comment-actions {
         padding-left: 20px;
     }
-    
-    .post-header {
-        flex-wrap: wrap;
-    }
-    
+
     .modal-content {
         padding: 15px;
     }
 }
 
-/* Extra small devices */
 @media (max-width: 375px) {
     .nav-search {
         max-width: 100px;
     }
-    
+
     .nav-brand {
         font-size: 1.1rem;
     }
-    
+
     .story-card {
         width: 90px;
     }
-    
-    .post-actions {
-        justify-content: space-around;
-    }
-    
+
     .action-btn {
         font-size: 0.8rem;
         padding: 6px;
-    }
-    
-    .post-author {
-        font-size: 0.9rem;
-    }
-    
-    .post-time {
-        font-size: 0.8rem;
     }
 }
