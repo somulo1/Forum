@@ -33,12 +33,23 @@ func CreateUser(db *sql.DB, username, email, passwordHash string) error {
 }
 
 // CreatePost inserts a new post
-func CreatePost(db *sql.DB, userID int, categoryID *int, title, content string, imageURL *string) error {
-	_, err := db.Exec(`
-		INSERT INTO posts (user_id, category_id, title, content, image_url, created_at, updated_at)
-		VALUES (?, COALESCE(?, NULL), ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-	`, userID, categoryID, title, content, imageURL)
-	return err
+func CreatePost(db *sql.DB, userID, categoryID int, title, content, imageURL string) (models.Post, error) {
+	var post models.Post
+	query := `
+		INSERT INTO posts (user_id, category_id, title, content, image_url)
+		VALUES (?, ?, ?, ?, ?)
+		RETURNING id, user_id, category_id, title, content, image_url, created_at
+	`
+	err := db.QueryRow(query, userID, categoryID, title, content, imageURL).Scan(
+		&post.ID,
+		&post.UserID,
+		&post.CategoryID,
+		&post.Title,
+		&post.Content,
+		&post.ImageURL,
+		&post.CreatedAt,
+	)
+	return post, err
 }
 
 // GetPost retrieves a single post by ID
