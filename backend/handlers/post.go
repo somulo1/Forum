@@ -70,6 +70,9 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, posts, http.StatusOK)
 }
 
+//handle the user profile pic
+
+
 // UpdatePost updates an existing post
 func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPut {
