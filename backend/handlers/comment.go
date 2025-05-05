@@ -27,12 +27,12 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
-	if !ok || *userID == 0 {
+	if !ok || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
-	comment.UserID = *userID
+	comment.UserID = userID
 
 	comm, err := sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.Content)
 	if err != nil {
