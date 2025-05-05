@@ -66,7 +66,11 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid credentials format", http.StatusBadRequest)
 		return
 	}
-
+	if credentials.Password == "" {
+		utils.SendJSONError(w, "Password cannot be empty", http.StatusBadRequest)
+		return
+	}
+	
 	// Get user from DB
 	user, err := sqlite.GetUserByEmail(db, credentials.Email)
 	if err != nil {
@@ -77,10 +81,7 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		utils.SendJSONError(w, "Database error", http.StatusInternalServerError)
 		return
 	}
-	if credentials.Password == "" {
-		utils.SendJSONError(w, "Password cannot be empty", http.StatusBadRequest)
-		return
-	}
+	
 	// Validate password
 	if !utils.CheckPasswordHash(credentials.Password, user.PasswordHash) {
 		utils.SendJSONError(w, "Invalid email or password", http.StatusUnauthorized)
