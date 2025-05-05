@@ -42,7 +42,7 @@ export class CategoryManager {
         this.categoryFilter.innerHTML = `
             <button class="btn btn-secondary" data-category="all">All Posts</button>
             ${Array.from(this.categories).map(category => `
-                <button class="btn btn-secondary" data-category="${category}">${category}</button>
+                <button class="btn btn-secondary" data-category="${categoryName}">${category}</button>
             `).join('')}
         `;
 
