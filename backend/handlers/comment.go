@@ -26,8 +26,8 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate user session
-	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	userID, ok := RequireAuth(db, w, r)
+	if !ok || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

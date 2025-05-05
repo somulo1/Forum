@@ -61,8 +61,8 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate user session
-	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	userID, ok := RequireAuth(db, w, r)
+	if !ok || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -74,7 +74,7 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the database function to toggle like
-	err = sqlite.ToggleLike(db, userID, request.PostID, request.CommentID)
+	err := sqlite.ToggleLike(db, userID, request.PostID, request.CommentID)
 	if err != nil {
 		utils.SendJSONError(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
 		return

@@ -24,7 +24,7 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		Title      string `json:"title"`
 		Content    string `json:"content"`
 		CategoryID *int   `json:"category_id,omitempty"`
-		ImageURL string `json:"image_url,omitempty"`
+		ImageURL   string `json:"image_url,omitempty"`
 	}
 
 	err := json.NewDecoder(r.Body).Decode(&request)
@@ -34,8 +34,8 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate user session
-	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	userID, ok := RequireAuth(db, w, r)
+	if !ok || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
