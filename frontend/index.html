@@ -52,6 +52,28 @@
         </main>
 
         <aside class="sidebar right-sidebar">
+            <div class="profile-section">
+                <div class="profile-header">
+                    <div class="avatar-container">
+                        <img id="userAvatar" 
+                             src="${user.avatar_url || '/images/default-avatar.png'}" 
+                             alt="Profile" 
+                             class="profile-avatar">
+                        <div class="avatar-upload">
+                            <input type="file" 
+                                   id="avatarUpload" 
+                                   accept="image/*" 
+                                   hidden 
+                                   onchange="handleAvatarUpload(event)">
+                            <label for="avatarUpload" class="avatar-edit">
+                                <i class="fas fa-camera"></i>
+                            </label>
+                        </div>
+                    </div>
+                    <h3 id="profileUsername">Username</h3>
+                </div>
+            </div>  
+
             <div id="categoryFilter" class="category-section">
                 <h3>Categories</h3>
                 <!-- Categories will be inserted here -->
