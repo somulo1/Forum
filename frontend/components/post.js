@@ -20,7 +20,7 @@ export class PostManager {
 
         this.createPostSection.innerHTML = `
             <div class="post-input">
-                <img src="${user.avatar}" alt="${user.username}" class="avatar" onerror="this.onerror=null; this.src='path/to/default-avatar.png';">
+                <img src="${user.avatar}" alt="${user.username}" class="avatar" onerror="this.onerror=null; this.src='frontend/public/pictures/icon7.png';">
                 <input type="text" placeholder="What's on your mind?" id="createPostTrigger">
             </div>
             <div class="post-actions-bar">
@@ -156,10 +156,10 @@ export class PostManager {
         <div class="post-card" data-post-id="${post.id}">
             <div class="post-header">
                 <img 
-                    src="${post.authorAvatar || 'path/to/default-avatar.png'}" 
-                    alt="${post.username}" 
+                    src="${post.AvatarURL || './frontend/public/pictures/icon7.png'}" 
+                    alt="${post.AvatarURL}'s avatar" 
                     class="post-author-img"
-                    onerror="this.onerror=null; this.src='path/to/default-avatar.png';"
+                    onerror="this.onerror=null; this.src='frontend/public/pictures/icon7.png';"
                 >
                 <div class="post-author-info">
                     <span class="post-author">${post.username}</span>
@@ -167,7 +167,7 @@ export class PostManager {
                 </div>
             </div>
             <div class="post-content">
-                <h3 class="post-title">${post.title}</h3>
+                <h3 class="post-title">${post.ImageURL}</h3>
                 <p>${post.content}</p>
                 ${post.ImageURL ? `<img src="${post.ImageURL}" alt="Post image" class="post-image">` : ''}
             </div>
@@ -189,7 +189,7 @@ export class PostManager {
                         <span class="comment-count">${post.comment_count || 0}</span>
                     </button>
                 ` : `
-                    <p class="login-prompt">Log in to interact with posts.</p>
+                    
                 `}
             </div>
         </div>
@@ -206,7 +206,7 @@ export class PostManager {
                 ${comments.map(comment => `
                     <div class="comment" data-comment-id="${comment.id}">
                         <div class="comment-header">
-                            <img src="${comment.authorAvatar}" alt="${comment.author}" class="comment-avatar" onerror="this.onerror=null; this.src='path/to/default-avatar.png';">
+                            <img src="${comment.authorAvatar}" alt="${comment.author}" class="comment-avatar" onerror="this.onerror=null; this.src='frontend/public/pictures/icon7.png';">
                             <strong>${comment.author}</strong>
                             <small>${this.getTimeAgo(new Date(comment.timestamp))}</small>
                         </div>
@@ -230,7 +230,7 @@ export class PostManager {
                         ${comment.replies ? this.renderComments(comment.replies, level + 1) : ''}
                         ${user && comment.showReplyInput ? `
                             <div class="reply-input-container">
-                                <img src="${user.avatar}" alt="${user.username}" class="comment-avatar" onerror="this.onerror=null; this.src='path/to/default-avatar.png';">
+                                <img src="${user.avatar}" alt="${user.username}" class="comment-avatar" onerror="this.onerror=null; this.src='frontend/public/pictures/icon7.png';">
                                 <input type="text" class="reply-input" placeholder="Write a reply..." data-comment-id="${comment.id}">
                                 <button class="btn btn-primary submit-reply" data-comment-id="${comment.id}">Reply</button>
                             </div>
