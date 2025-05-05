@@ -3,8 +3,6 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
-	"fmt"
-	"log"
 	"strings"
 	"time"
 
@@ -35,34 +33,31 @@ func CreateUser(db *sql.DB, username, email, passwordHash string) error {
 }
 
 // CreatePost inserts a new post
-func CreatePost(db *sql.DB, userID int, categoryID *int, title, content string) error {
-	result, err := db.Exec(`
-		INSERT INTO posts (user_id, category_id, title, content, created_at, updated_at)
-		VALUES (?, COALESCE(?, NULL), ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
-	`, userID, categoryID, title, content)
-	if err != nil {
-		log.Println("❌ Error inserting post:", err)
-		return err
-	}
-
-	rowsAffected, _ := result.RowsAffected()
-	if rowsAffected == 0 {
-		log.Println("⚠️ No rows were inserted.")
-	}
-	fmt.Println("\n", result)
-	return nil
+func CreatePost(db *sql.DB, userID int, categoryID *int, title, content string, imageURL *string) error {
+	_, err := db.Exec(`
+		INSERT INTO posts (user_id, category_id, title, content, image_url, created_at, updated_at)
+		VALUES (?, COALESCE(?, NULL), ?, ?, ?, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+	`, userID, categoryID, title, content, imageURL)
+	return err
 }
 
 // GetPost retrieves a single post by ID
 func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	var post models.Post
 	err := db.QueryRow(`
-        SELECT id, user_id, title, content FROM posts WHERE id = ?
-    `, postID).Scan(&post.ID, &post.UserID, &post.Title, &post.Content)
-	if err != nil {
-		return models.Post{}, err
-	}
-	return post, nil
+        SELECT id, user_id, title, content, category_id, image_url, created_at, updated_at
+        FROM posts WHERE id = ?
+    `, postID).Scan(
+		&post.ID,
+		&post.UserID,
+		&post.Title,
+		&post.Content,
+		&post.CategoryID,
+		&post.ImageURL,
+		&post.CreatedAt,
+		&post.UpdatedAt,
+	)
+	return post, err
 }
 
 // GetPosts retrieves posts with pagination
@@ -78,6 +73,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			posts.title, 
 			posts.content, 
 			posts.category_id, 
+			posts.image_url,
 			posts.created_at, 
 			posts.updated_at
 		FROM posts
@@ -95,13 +91,14 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 		err := rows.Scan(
 			&post.ID,
 			&post.UserID,
-			&post.Username, // You'll need to add this to your Post struct
+			&post.Username,
 			&post.Title,
 			&post.Content,
 			&post.CategoryID,
+			&post.ImageURL,
 			&post.CreatedAt,
 			&post.UpdatedAt,
-		)
+		)		
 		if err != nil {
 			return nil, err
 		}
@@ -113,7 +110,6 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 
 	return posts, nil
 }
-
 
 // DeletePost removes a post by ID
 func DeletePost(db *sql.DB, postID int) error {
@@ -292,6 +288,7 @@ func DeleteSession(db *sql.DB, sessionID string) error {
 	`, sessionID)
 	return err
 }
+
 func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
 	var user models.User
 
