@@ -190,12 +190,21 @@ func IsUniqueConstraintError(err error) bool {
 }
 
 // CreateComment inserts a new comment
-func CreateComment(db *sql.DB, userID, postID int, content string) error {
-	_, err := db.Exec(`
+func CreateComment(db *sql.DB, userID, postID int, content string) (models.Comment, error) {
+	var comment models.Comment
+	query := `
 		INSERT INTO comments (user_id, post_id, content)
 		VALUES (?, ?, ?)
-	`, userID, postID, content)
-	return err
+		RETURNING id, user_id, post_id, content, created_at
+	`
+	err := db.QueryRow(query, userID, postID, content).Scan(
+		&comment.ID,
+		&comment.UserID,
+		&comment.PostID,
+		&comment.Content,
+		&comment.CreatedAt,
+	)
+	return comment, err
 }
 
 // GetPostComments retrieves comments for a specific post
