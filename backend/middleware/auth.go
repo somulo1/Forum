@@ -8,6 +8,10 @@ import (
 	"forum/utils"
 )
 
+type contextKey string
+
+const userIDKey contextKey = "userID"
+
 // AuthMiddleware checks if a user is logged in
 func AuthMiddleware(db *sql.DB, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -17,7 +21,13 @@ func AuthMiddleware(db *sql.DB, next http.Handler) http.Handler {
 			return
 		}
 
-		ctx := context.WithValue(r.Context(), "userID", userID)
+		ctx := context.WithValue(r.Context(), userIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetUserID extracts userID from request context
+func GetUserID(r *http.Request) (int, bool) {
+	userID, ok := r.Context().Value(userIDKey).(int)
+	return userID, ok
 }
