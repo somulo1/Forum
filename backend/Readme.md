@@ -21,8 +21,11 @@ Request Body:
 ```json
 {
   "username": "string",
-  "password": "string"
+  "email": "string",
+  "password": "string",
+  "avatar_url": "string (optional)"
 }
+
 ```
 
 Response:
