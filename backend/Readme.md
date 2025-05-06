@@ -21,8 +21,11 @@ Request Body:
 ```json
 {
   "username": "string",
-  "password": "string"
+  "email": "string",
+  "password": "string",
+  "avatar_url": "string (optional)"
 }
+
 ```
 
 Response:
@@ -64,8 +67,15 @@ Protected: Yes (requires authentication)
 
 Response:
 
-```bash
-    200 OK: Returns user data in JSON format
+```json
+{
+  "id": "integer",
+  "username": "string",
+  "email": "string",
+  "avatar_url": "string",
+  "created_at": "string (ISO 8601 format)",
+  "updated_at": "string (ISO 8601 format)"
+}
 ```
 
 ### Post Routes

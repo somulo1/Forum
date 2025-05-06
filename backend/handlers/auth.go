@@ -3,7 +3,11 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"io"
 	"net/http"
+	"os"
+	"path/filepath"
 	"time"
 
 	"forum/sqlite"
@@ -16,28 +20,55 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Temporary struct for decoding JSON
-	var request struct {
-		Username string `json:"username"`
-		Email    string `json:"email"`
-		Password string `json:"password"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&request)
+	// Parse multipart form data (e.g., image + text)
+	err := r.ParseMultipartForm(5 << 20) // 5 MB max
 	if err != nil {
-		utils.SendJSONError(w, "Invalid request body", http.StatusBadRequest)
+		utils.SendJSONError(w, "Error parsing form data", http.StatusBadRequest)
 		return
 	}
 
+	username := r.FormValue("username")
+	email := r.FormValue("email")
+	password := r.FormValue("password")
+
+	if username == "" || email == "" || password == "" {
+		utils.SendJSONError(w, "Missing required fields", http.StatusBadRequest)
+		return
+	}
+
+	// Handle avatar upload
+	var avatarURL string
+	file, handler, err := r.FormFile("avatar")
+	if err == nil {
+		defer file.Close()
+		avatarFilename := fmt.Sprintf("avatar_%d_%s", time.Now().UnixNano(), handler.Filename)
+		avatarPath := filepath.Join("static", avatarFilename)
+		dst, err := os.Create(avatarPath)
+		if err != nil {
+			utils.SendJSONError(w, "Failed to save avatar", http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+		_, err = io.Copy(dst, file)
+		if err != nil {
+			utils.SendJSONError(w, "Error saving avatar", http.StatusInternalServerError)
+			return
+		}
+		avatarURL = "/" + avatarPath
+	} else {
+		// Use default avatar if no image uploaded
+		avatarURL = "/static/default.png"
+	}
+
 	// Hash password
-	hashedPassword, err := utils.HashPassword(request.Password)
+	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
 		utils.SendJSONError(w, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
 
 	// Save user to DB
-	err = sqlite.CreateUser(db, request.Username, request.Email, hashedPassword)
+	err = sqlite.CreateUser(db, username, email, hashedPassword, avatarURL)
 	if err != nil {
 		if sqlite.IsUniqueConstraintError(err) {
 			utils.SendJSONError(w, "Username or email already exists", http.StatusConflict)
@@ -153,6 +184,7 @@ func LogoutUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	utils.SendJSONResponse(w, map[string]string{"message": "Logged out"}, http.StatusOK)
 }
+
 func RequireAuth(db *sql.DB, w http.ResponseWriter, r *http.Request) (int, bool) {
 	userID, err := utils.GetUserIDFromSession(db, r)
 	if err != nil || userID == 0 {

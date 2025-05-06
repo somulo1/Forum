@@ -15,22 +15,33 @@ import (
 func GetUserByUsername(db *sql.DB, username string) (models.User, error) {
 	var user models.User
 	err := db.QueryRow(`
-		SELECT id, username, email, password_hash, created_at FROM users WHERE username = ?
-	`, username).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+		SELECT id, username, email, password_hash, avatar_url, created_at, updated_at
+		FROM users WHERE username = ?
+	`, username).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.AvatarURL,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
 	if err != nil {
 		return models.User{}, err
 	}
 	return user, nil
 }
 
+
 // CreateUser inserts a new user into the database
-func CreateUser(db *sql.DB, username, email, passwordHash string) error {
+func CreateUser(db *sql.DB, username, email, passwordHash, avatarURL string) error {
 	_, err := db.Exec(`
-		INSERT INTO users (username, email, password_hash)
-		VALUES (?, ?, ?)
-	`, username, email, passwordHash)
+		INSERT INTO users (username, email, password_hash, avatar_url)
+		VALUES (?, ?, ?, ?)
+	`, username, email, passwordHash, avatarURL)
 	return err
 }
+
 
 // CreatePost inserts a new post
 func CreatePost(db *sql.DB, userID, categoryID *int, title, content, imageURL string) (models.Post, error) {
@@ -281,8 +292,18 @@ func DeleteComment(db *sql.DB, commentID int) error {
 func GetUserByEmail(db *sql.DB, email string) (models.User, error) {
 	var user models.User
 	err := db.QueryRow(`
-		SELECT id, username, email, password_hash, created_at FROM users WHERE email = ?
-	`, email).Scan(&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt)
+		SELECT id, username, email, password_hash, avatar_url, created_at, updated_at
+		FROM users
+		WHERE email = ?
+	`, email).Scan(
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.AvatarURL,
+		&user.CreatedAt,
+		&user.UpdatedAt,
+	)
 	if err != nil {
 		return models.User{}, err
 	}
@@ -312,9 +333,19 @@ func DeleteSession(db *sql.DB, sessionID string) error {
 func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
 	var user models.User
 
-	query := `SELECT id, username, email, password_hash, created_at, updated_at FROM users WHERE id = ?`
+	query := `
+		SELECT id, username, email, password_hash, avatar_url, created_at, updated_at
+		FROM users
+		WHERE id = ?
+	`
 	err := db.QueryRow(query, userID).Scan(
-		&user.ID, &user.Username, &user.Email, &user.PasswordHash, &user.CreatedAt, &user.UpdatedAt,
+		&user.ID,
+		&user.Username,
+		&user.Email,
+		&user.PasswordHash,
+		&user.AvatarURL,
+		&user.CreatedAt,
+		&user.UpdatedAt,
 	)
 	if err != nil {
 		return nil, err
