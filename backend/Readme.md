@@ -9,7 +9,7 @@ This is the backend for the Forum application. It provides APIs for handling use
 - [Setup Instructions](#setup-instructions)
 - [Docker](#docker-setup)
 - [Makefile](#makefile)
-
+gi
 ## API Endpoints
 
 ### User Routes
@@ -21,8 +21,11 @@ Request Body:
 ```json
 {
   "username": "string",
-  "password": "string"
+  "email": "string",
+  "password": "string",
+  "avatar_url": "string (optional)"
 }
+
 ```
 
 Response:
