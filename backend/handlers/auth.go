@@ -57,7 +57,7 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		avatarURL = "/" + avatarPath
 	} else {
 		// Use default avatar if no image uploaded
-		avatarURL = "/static/default-avatar.png"
+		avatarURL = "/static/default.png"
 	}
 
 	// Hash password
