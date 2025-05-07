@@ -121,4 +121,3 @@ document.addEventListener("DOMContentLoaded", () => {
     // Load the default page
     loadPage('home');
 });
-new App();

@@ -1,93 +1,94 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Forum</title>
-    <link rel="stylesheet" href="styles/styles.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="styles/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-brand">Forum</div>
-        <div class="nav-search">
-            <input type="text" placeholder="Search..." id="searchInput">
+    <!-- Navbar -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="nav-brand" id="navBrand">Forum</div>
+        <div class="nav-search" role="search">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Search..." aria-label="Search forum" />
         </div>
-        <div id="navAuth" class="nav-auth">
+        <div class="nav-auth" id="navAuth" role="group" aria-label="User Authentication">
             <!-- Auth buttons will be inserted here -->
         </div>
     </nav>
 
+    <!-- Main Layout -->
     <div class="container">
-        <aside class="sidebar left-sidebar">
-            <div id="userProfile" class="profile-section">
-                <!-- Profile info will be inserted here -->
+        <!-- Left Sidebar -->
+        <aside class="sidebar left-sidebar" aria-label="Sidebar navigation">
+            <div class="profile-section" id="userProfile">
+                <!-- User profile will load dynamically -->
             </div>
-            <div class="menu-section">
-                <a href="/posts" class="menu-item active" data-view="feed">
-                    <i class="fas fa-home"></i> Home
-                </a>
-                <a href="#" class="menu-item" data-view="profile">
-                    <i class="fas fa-user"></i> Profile
-                </a>
-                <a href="/profile" class="menu-item" data-view="trending">
-                    <i class="fas fa-fire"></i> Trending
-                </a>
-                <a href="/saved" class="menu-item" data-view="saved">
-                    <i class="fas fa-bookmark"></i> Saved
-                </a>
-            </div>
+            <nav class="menu-section" aria-label="Sidebar menu">
+                <a href="/posts" class="menu-item active" data-view="feed"><i class="fas fa-home"></i> Home</a>
+                <a href="#" class="menu-item" data-view="profile"><i class="fas fa-user"></i> Profile</a>
+                <a href="/profile" class="menu-item" data-view="trending"><i class="fas fa-fire"></i> Trending</a>
+                <a href="/saved" class="menu-item" data-view="saved"><i class="fas fa-bookmark"></i> Saved</a>
+            </nav>
         </aside>
 
-        <main class="main-content">
-            <div id="storySection" class="story-section">
-                <!-- Stories will be inserted here -->
-            </div>
-            <div id="createPostSection" class="create-post-section">
-                <!-- Create post area will be inserted here -->
-            </div>
-            <div id="mainContent">
-                <!-- Posts will be loaded here -->
-            </div>
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent" role="main">
+            <section id="storySection" class="story-section">
+                <!-- Stories will be rendered dynamically -->
+            </section>
+            <section id="createPostSection" class="create-post-section">
+                <!-- Create post form will be rendered dynamically -->
+            </section>
+            <section id="postFeed">
+                <!-- Posts will be injected here -->
+            </section>
         </main>
 
-        <aside class="sidebar right-sidebar">
-            <div id="categoryFilter" class="category-section">
+        <!-- Right Sidebar -->
+        <aside class="sidebar right-sidebar" aria-label="Right sidebar">
+            <section id="categoryFilter" class="category-section">
                 <h3>Categories</h3>
-                <!-- Categories will be inserted here -->
-            </div>
-            <div id="trendingSection" class="trending-section">
+                <!-- Dynamic category filters -->
+            </section>
+            <section id="trendingSection" class="trending-section">
                 <h3>Trending</h3>
-                <!-- Trending topics will be inserted here -->
-            </div>
-            <div id="suggestedUsers" class="suggested-section">
+                <!-- Trending topics dynamically -->
+            </section>
+            <section id="suggestedUsers" class="suggested-section">
                 <h3>Suggested Users</h3>
-                <!-- Suggested users will be inserted here -->
-            </div>
+                <!-- Suggested users dynamically -->
+            </section>
         </aside>
     </div>
 
-        <!-- Place this just before your closing </body> -->
-        <div id="authModal" class="modal hidden">
+    <!-- Modals -->
+    <div id="modalsContainer">
+        <!-- Auth Modal -->
+        <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
             <div class="modal-content">
-                <span class="close" id="closeModal">&times;</span>
+                <span class="close" id="closeModal" role="button" aria-label="Close authentication modal">&times;</span>
                 <div id="authForms"></div>
             </div>
         </div>
 
-    <!-- Post Creation Modal -->
-    <div id="createPostModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div id="postForm"></div>
+        <!-- Create Post Modal -->
+        <div id="createPostModal" class="modal hidden" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <span class="close" role="button" aria-label="Close post modal">&times;</span>
+                <div id="postForm"></div>
+            </div>
         </div>
-    </div>
 
-    <!-- Profile Modal -->
-    <div id="profileModal" class="modal hidden">
-        <div class="modal-content">
-            <span class="close">&times;</span>
-            <div id="profileForm"></div>
+        <!-- Profile Modal -->
+        <div id="profileModal" class="modal hidden" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <span class="close" role="button" aria-label="Close profile modal">&times;</span>
+                <div id="profileForm"></div>
+            </div>
         </div>
     </div>
 
