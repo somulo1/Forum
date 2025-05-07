@@ -1,22 +1,41 @@
 
-const api = 'http://localhost:8080/api'
+const api = 'http://localhost:8080/api';
 
-const userData = {
-    username: "baraq",
-    email: "b2araq123@gmail.com",
-    password: "password",
-    avatar_url: '',
-}
+    
+
+document.getElementById('signupForm').addEventListener('submit', async function (e) {
+    e.preventDefault();
+
+    const form = e.target; 
+    const formData = new FormData(form);  
+
+    const avatarFile = form.avatar.files[0];
+    formData.append('avatar_url', avatarFile || '');
+
+    const result = await registerUser(formData);
+
+    if (result) {
+        var res = document.querySelector("#message");
+        res.style.display = "block";
+        res.textContent = result.message;
+        setTimeout(function () {
+            res.style.display = "none";
+        }, 5000);
+    } else {
+        var res = document.querySelector("#message");
+        res.style.color = "red";
+        res.style.display = "block";
+        res.textContent = result.message;
+        setTimeout(function () {
+            res.style.display = "none";
+        }, 5000);
+    }
+
+});
 
 
-async function regiterUser(userData) {
+async function registerUser(formData) {
     try {
-        const formData = new FormData();
-
-        formData.append('username', userData.username);
-        formData.append('email', userData.email);
-        formData.append('password', userData.password);
-        formData.append('avatar_url', userData.avatar_url);
 
         const response = await fetch(api+'/register', {
             method: 'POST',
@@ -30,12 +49,13 @@ async function regiterUser(userData) {
             throw new Error(result.error);
         }
 
+        console.log(result.message)
+
         return result;
         
     } catch (error) {
         console.log('Error registering user: ', error);
-        return null;
+        return {error: error.message || 'Something went wrong'};
     }
 }
 
-regiterUser(userData);
