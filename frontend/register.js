@@ -1,37 +1,48 @@
 
-const api = 'http://localhost:8080/api';
+const api = 'http://localhost:8080/api'; 
 
-    
 
-document.getElementById('signupForm').addEventListener('submit', async function (e) {
-    e.preventDefault();
+const signupForm = document.getElementById('signupForm');
+const loginForm = document.getElementById('loginForm');
 
-    const form = e.target; 
-    const formData = new FormData(form);  
+if (signupForm) {
+        signupForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+        const form = e.target; 
+        const formData = new FormData(form);  
 
-    const avatarFile = form.avatar.files[0];
-    formData.append('avatar_url', avatarFile || '');
+        const avatarFile = form.avatar.files[0];
+        formData.append('avatar_url', avatarFile || '');
 
-    const result = await registerUser(formData);
+        const result = await registerUser(formData);
 
-    if (result) {
-        var res = document.querySelector("#message");
-        res.style.display = "block";
-        res.textContent = result.message;
-        setTimeout(function () {
-            res.style.display = "none";
-        }, 5000);
-    } else {
-        var res = document.querySelector("#message");
-        res.style.color = "red";
-        res.style.display = "block";
-        res.textContent = result.message;
-        setTimeout(function () {
-            res.style.display = "none";
-        }, 5000);
-    }
+        if (!result.error) {
+            showMessage("#message", result.message);
+        } else {
+            showMessage("#message", result.error, true);
+        }
+    });
+}
 
-});
+
+if (loginForm){
+        loginForm.addEventListener('submit', async function (e) {
+        e.preventDefault();
+
+        const form = e.target; 
+        const formData = new FormData(form); 
+
+        const result = await loginUser(formData);
+
+        if (!result.error) {
+            showMessage("#message", result.message);
+        } else {
+            showMessage("#message", result.error, true);
+        }       
+
+    });
+}
+
 
 
 async function registerUser(formData) {
@@ -59,3 +70,41 @@ async function registerUser(formData) {
     }
 }
 
+async function loginUser(formData) {
+    const jsonObject = {};
+    formData.forEach((value, key) => {
+        jsonObject[key] = value;
+    });
+
+    try {
+
+        const response = await fetch(api+'/login', {
+            method: 'POST',
+            credentials: 'include',
+            body: JSON.stringify(jsonObject),
+        });
+
+        const result = await response.text();
+        console.log(result);
+
+        if (!response.ok) {
+            throw new Error(result.error);
+        }
+
+        console.log(result.message)
+
+        return result;
+        
+    } catch (error) {
+        console.log('Error registering user: ', error);
+        return {error: error.message || 'Something went wrong'};
+    }
+}
+
+function showMessage(selector, message, isError = false) {
+    const el = document.querySelector(selector);
+    el.style.color = isError ? "red" : "green";
+    el.style.display = "block";
+    el.textContent = message;
+    setTimeout(() => el.style.display = "none", 5000);
+}
