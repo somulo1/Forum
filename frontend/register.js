@@ -91,7 +91,7 @@ async function loginUser(formData) {
             throw new Error(result.error);
         }
 
-        console.log(result.message)
+        console.log(result.message);
 
         return result;
         

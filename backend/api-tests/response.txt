@@ -1,0 +1,14 @@
+HTTP/1.1 200 OK
+Access-Control-Allow-Credentials: true
+Access-Control-Allow-Headers: Content-Type, Authorization
+Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS
+Access-Control-Allow-Origin: http://127.0.0.1:8000
+Content-Type: application/json
+Set-Cookie: session_id=be45cfa0-c1b4-4ff2-80d4-4e31b4e789b7; Path=/; Expires=Thu, 08 May 2025 15:16:55 GMT; HttpOnly
+Date: Wed, 07 May 2025 15:16:55 GMT
+Content-Length: 24
+Connection: close
+
+{
+  "message": "Logged in"
+}

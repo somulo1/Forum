@@ -1,0 +1,11 @@
+### Create Post Request with Cookie-based Auth
+POST http://localhost:8080/api/posts/create
+Content-Type: application/x-www-form-urlencoded
+Cookie: session_id=2341b1d2-406f-484e-8cbf-065cbd7bbc5e
+
+title=first+test&content=Would+you+like+a+version+that+also+lets+users+add+comments+or+likes+dynamically+using+JavaScript%3F
+
+# {
+#   "title": "first test",
+#   "content": "Would you like a version that also lets users add comments or likes dynamically using JavaScript?"
+# }
