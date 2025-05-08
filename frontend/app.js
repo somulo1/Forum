@@ -19,17 +19,18 @@ async function renderPosts() {
             postDiv.classList.add("post-card");
             postDiv.innerHTML = `
                 <div class="post-header">
-                    <img class="post-author-img" src="${post.avatar_url || '/backend/static/pictures/icon1.png'}" alt="Profile">
                     <div class="post-author-info">
+                        <img class="post-author-img" src="${post.avatar_url || '/backend/static/pictures/icon1.png'}" alt="Profile">
                         <span class="post-author-name">${post.username}</span>
-                        <span class="post-time">${new Date(post.created_at).toLocaleString()}</span>
                     </div>
+                    <span class="post-time">${new Date(post.created_at).toLocaleString()}</span>
                 </div>
                 <div class="post-content">${post.content}</div>
                 <div class="post-actions">
                     <button class="like-btn" data-id="${post.id}"><i class="fas fa-thumbs-up"></i> Like</button>
                     <button class="comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i> Comment</button>
                 </div>
+                
             `;
             postContainer.appendChild(postDiv);
         });
