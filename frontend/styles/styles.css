@@ -191,7 +191,7 @@ img {
 
 /* Avatar styling */
 .post-author-img {
-    width: 50px; /* Slightly larger avatar */
+    width: 50px; 
     height: 50px;
     border-radius: 50%;
     object-fit: cover;
@@ -227,12 +227,26 @@ img {
 
 /* Post content */
 .post-content {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.post-content .post-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    line-height: 1.4;
+    color: var(--text-color);
+    margin-bottom: 0.25rem;
+}
+
+
+.post-content .post-body {
     font-size: 1rem;
     line-height: 1.7;
     color: var(--text-color);
     white-space: pre-wrap;
     word-break: break-word;
-    margin-bottom: 0.5rem;
 }
 
 /* Post actions */

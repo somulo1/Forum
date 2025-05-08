@@ -50,7 +50,10 @@ async function renderPosts() {
                     </div>
                     <span class="post-time">${getTimeAgo(post.created_at)}</span>
                 </div>
-                <div class="post-content">${post.content}</div>
+                <div class="post-content">
+                    <div class="post-title">${post.title}</div>
+                    <div class="post-body">${post.content}</div>
+                </div>
                 <div class="post-actions">
                     <button class="like-btn" data-id="${post.id}"><i class="fas fa-thumbs-up"></i> Like</button>
                     <button class="comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i> Comment</button>
