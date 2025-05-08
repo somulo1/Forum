@@ -4,6 +4,30 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupAuthButtons();
 });
 
+// getTimeAgo() returns the time that has passed (i.e "1 day ago.")
+function getTimeAgo(date) {
+    const seconds = Math.floor((Date.now() - new Date(date))/1000);
+
+    const timePeriods = {
+        year: 365 * 24 * 60 * 60,       // 31536000
+        month: 30 * 24 * 60 * 60,       // 2592000
+        week: 7 * 24 * 60 * 60,         // 604800
+        day: 24 * 60 * 60,              // 86400
+        hour: 60 * 60,                  // 3600
+        minute: 60,                     // 60
+        second: 1                       // 1
+      };
+
+    for (const [timePeriod, unitSeconds] of Object.entries(timePeriods)) {
+        const periodValue = Math.floor(seconds/unitSeconds);
+        if (periodValue >= 1) {
+            return `${periodValue} ${timePeriod} ${periodValue === 1 ? '': 's'} ago.`;
+        }
+    }
+    return 'Just now.';
+}
+
+
 // Fetch & Render Forum Posts
 async function renderPosts() {
     try {
@@ -15,6 +39,10 @@ async function renderPosts() {
         postContainer.innerHTML = "";
 
         posts.forEach(post => {
+            console.log("post.created_at", post.created_at);
+            console.log("new Date(post.created_at)", new Date(post.created_at));
+            console.log("new Date(post.created_at).toLocaleString()", new Date(post.created_at).toLocaleString());
+            console.log("========================================================");
             const postDiv = document.createElement("div");
             postDiv.classList.add("post-card");
             postDiv.innerHTML = `
@@ -23,7 +51,7 @@ async function renderPosts() {
                         <img class="post-author-img" src="${post.avatar_url || '/backend/static/pictures/icon1.png'}" alt="Profile">
                         <span class="post-author-name">${post.username}</span>
                     </div>
-                    <span class="post-time">${new Date(post.created_at).toLocaleString()}</span>
+                    <span class="post-time">${getTimeAgo(post.created_at)}</span>
                 </div>
                 <div class="post-content">${post.content}</div>
                 <div class="post-actions">
