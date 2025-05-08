@@ -39,10 +39,7 @@ async function renderPosts() {
         postContainer.innerHTML = "";
 
         posts.forEach(post => {
-            console.log("post.created_at", post.created_at);
-            console.log("new Date(post.created_at)", new Date(post.created_at));
-            console.log("new Date(post.created_at).toLocaleString()", new Date(post.created_at).toLocaleString());
-            console.log("========================================================");
+
             const postDiv = document.createElement("div");
             postDiv.classList.add("post-card");
             postDiv.innerHTML = `
