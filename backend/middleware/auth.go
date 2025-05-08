@@ -8,7 +8,6 @@ import (
 	"forum/utils"
 )
 
-// Define a custom type to avoid key collisions
 type contextKey string
 
 const userIDKey contextKey = "userID"
@@ -22,8 +21,13 @@ func AuthMiddleware(db *sql.DB, next http.Handler) http.Handler {
 			return
 		}
 
-		// Use the custom key type
 		ctx := context.WithValue(r.Context(), userIDKey, userID)
 		next.ServeHTTP(w, r.WithContext(ctx))
 	})
+}
+
+// GetUserID extracts userID from request context
+func GetUserID(r *http.Request) (int, bool) {
+	userID, ok := r.Context().Value(userIDKey).(int)
+	return userID, ok
 }
