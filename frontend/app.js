@@ -1,123 +1,112 @@
-import { AuthManager } from './components/auth.js';
-import { PostManager } from './components/post.js';
-import { CategoryManager } from './components/category.js';
-import { ProfileManager } from './components/profile.js';
-import { TrendingManager } from './components/trending.js';
-import { StoryManager } from './components/story.js';
-import { NavigationManager } from './components/navigation.js';
+document.addEventListener("DOMContentLoaded", async () => {
+    await renderPosts();
+    await renderCategories();
+    setupAuthButtons();
+});
 
-class App {
-    constructor() {
-        this.authManager = new AuthManager();
-        this.postManager = new PostManager();
-        this.categoryManager = new CategoryManager();
-        this.profileManager = new ProfileManager();
-        this.trendingManager = new TrendingManager();
-        this.storyManager = new StoryManager();
-        this.navigationManager = new NavigationManager(this.postManager);
-        
-        this.init();
-    }
+// Fetch & Render Forum Posts
+async function renderPosts() {
+    try {
+        const response = await fetch("http://localhost:8080/api/posts");
+        if (!response.ok) throw new Error("Failed to fetch posts");
+        const posts = await response.json();
 
-    init() {
-        // Initialize all managers
-        this.authManager.init();
-        this.postManager.init();
-        this.categoryManager.init();
-        this.profileManager.init();
-        this.trendingManager.init();
-        this.storyManager.init();
-        this.navigationManager.init();
-        
-        // Setup global event listeners
-        this.setupEventListeners();
-    }
+        const postContainer = document.getElementById("postFeed");
+        postContainer.innerHTML = "";
 
-    setupEventListeners() {
-        // Close modals when clicking outside
-        window.addEventListener('click', (e) => {
-            if (e.target.classList.contains('modal')) {
-                e.target.classList.add('hidden');
-            }
+        posts.forEach(post => {
+            const postDiv = document.createElement("div");
+            postDiv.classList.add("post-card");
+            postDiv.innerHTML = `
+                <div class="post-header">
+                    <img class="post-author-img" src="${post.avatar_url || '/backend/static/pictures/icon1.png'}" alt="Profile">
+                    <div class="post-author-info">
+                        <span class="post-author-name">${post.username}</span>
+                        <span class="post-time">${new Date(post.created_at).toLocaleString()}</span>
+                    </div>
+                </div>
+                <div class="post-content">${post.content}</div>
+                <div class="post-actions">
+                    <button class="like-btn" data-id="${post.id}"><i class="fas fa-thumbs-up"></i> Like</button>
+                    <button class="comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i> Comment</button>
+                </div>
+            `;
+            postContainer.appendChild(postDiv);
         });
+    } catch (error) {
+        console.error("Error fetching posts:", error);
     }
 }
 
-// Initialize the application
-document.addEventListener("DOMContentLoaded", () => {
-    const menuItems = document.querySelectorAll('.menu-item');
-    const mainContent = document.getElementById('mainContent');
+// Fetch & Render Categories
+async function renderCategories() {
+    try {
+        const response = await fetch("http://localhost:8080/api/categories");
+        if (!response.ok) throw new Error("Failed to fetch categories");
+        const categories = await response.json();
 
-    const app = new App();
-    window.app = app; // Make accessible globally for use inside page loaders
+        const categoryContainer = document.getElementById("categoryFilter");
+        categoryContainer.innerHTML = "<h3>Categories</h3>";
 
-    menuItems.forEach(item => {
-        item.addEventListener('click', (event) => {
-            event.preventDefault(); // Prevent default anchor behavior
-            const view = item.getAttribute('data-view');
-            loadPage(view);
+        categories.forEach(category => {
+            const categoryItem = document.createElement("div");
+            categoryItem.classList.add("menu-item");
+            categoryItem.innerHTML = `<i class="fas fa-tag"></i> ${category.name}`;
+            categoryContainer.appendChild(categoryItem);
         });
-    });
+    } catch (error) {
+        console.error("Error fetching categories:", error);
+    }
+}
 
-    function loadPage(view) {
-        switch(view) {
-            case 'home':
-                loadFeedPage();
-                break;
-            case 'profile':
-                loadProfilePage();
-                break;
-            case 'trending':
-                loadTrendsPage();
-                break;
-            case 'saved':
-                loadSavedPage();
-                break;
-            default:
-                loadFeedPage(); // Default to feed if view is not recognized
+// Setup Authentication UI
+async function setupAuthButtons() {
+    const navAuth = document.getElementById("navAuth");
+
+    try {
+        const response = await fetch("http://localhost:8080/api/user");
+        if (response.ok) {
+            const user = await response.json();
+            navAuth.innerHTML = `<button class="logout-btn">Logout (${user.username})</button>`;
+            document.querySelector(".logout-btn").addEventListener("click", logoutUser);
+        } else {
+            navAuth.innerHTML = `<button class="login-btn">Login</button>`;
+            document.querySelector(".login-btn").addEventListener("click", showLoginModal);
         }
+    } catch (error) {
+        console.error("Error checking authentication:", error);
+        navAuth.innerHTML = `<button class="login-btn">Login</button>`;
     }
+}
 
-    function loadFeedPage() {
-        mainContent.innerHTML = `
-            <section>
-                <h1>Feed</h1>
-                <div id="postList" class="grid gap-4 mt-4"></div>
-            </section>
-        `;
-        app.postManager.renderPosts(document.getElementById('postList'));
+// Logout Functionality
+async function logoutUser() {
+    try {
+        await fetch("http://localhost:8080/api/logout", { method: "POST" });
+        location.reload();
+    } catch (error) {
+        console.error("Error logging out:", error);
     }
+}
 
-    function loadProfilePage() {
-        mainContent.innerHTML = `
-            <section>
-                <h1>My Profile</h1>
-                <div id="profileDetails" class="mt-4"></div>
-            </section>
-        `;
-        app.profileManager.renderUserProfile(document.getElementById('profileDetails'));
+// Show Login Modal
+function showLoginModal() {
+    document.getElementById("authModal").classList.add("show");
+}
+
+// Event Delegation for Likes & Comments
+document.addEventListener("click", async (event) => {
+    if (event.target.matches(".like-btn")) {
+        const postID = event.target.dataset.id;
+        await fetch(`http://localhost:8080/api/likes/toggle`, {
+            method: "POST",
+            body: JSON.stringify({ post_id: parseInt(postID) }),
+            headers: { "Content-Type": "application/json" }
+        });
+        renderPosts();
     }
-
-    function loadTrendsPage() {
-        mainContent.innerHTML = `
-            <section>
-                <h1>Trending Now</h1>
-                <div id="trendingPosts" class="grid gap-4 mt-4"></div>
-            </section>
-        `;
-        app.trendingManager.renderTrending(document.getElementById('trendingPosts'));
+    if (event.target.matches(".comment-btn")) {
+        // Open comment modal (You can expand this function)
+        alert("Commenting feature coming soon!");
     }
-
-    function loadSavedPage() {
-        mainContent.innerHTML = `
-            <section>
-                <h1>Saved Posts</h1>
-                <div id="savedPosts" class="grid gap-4 mt-4"></div>
-            </section>
-        `;
-        app.postManager.renderSavedPosts(document.getElementById('savedPosts'));
-    }
-
-    // Load the default page
-    loadPage('home');
 });
