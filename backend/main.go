@@ -40,17 +40,6 @@ func main() {
 	mux := routes.SetupRoutes(sqlite.DB)
 	handler := middleware.CORS(mux)
 
-	// Serve static files securely (prevent directory listing)
-	fs := http.FileServer(http.Dir("./static"))
-	http.Handle("/static/", http.StripPrefix("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" || r.URL.Path == "" || r.URL.Path[len(r.URL.Path)-1] == '/' {
-			log.Printf("⚠️  Directory listing blocked: /static/%s", r.URL.Path)
-			http.NotFound(w, r)
-			return
-		}
-		fs.ServeHTTP(w, r)
-	})))
-
 	// Start daily session cleanup in background
 	go scheduleDailyCleanup()
 

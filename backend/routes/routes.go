@@ -2,6 +2,7 @@ package routes
 
 import (
 	"database/sql"
+	"log"
 	"net/http"
 
 	"forum/handlers"
@@ -43,5 +44,15 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Like routes (protected by auth middleware)
 	mux.Handle("/api/likes/toggle", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.ToggleLike)))
 
+	// Serve static files securely (prevent directory listing)
+	fs := http.FileServer(http.Dir("./static"))
+	mux.Handle("/static/", http.StripPrefix("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" || r.URL.Path == "" || r.URL.Path[len(r.URL.Path)-1] == '/' {
+			log.Printf("⚠️  Directory listing blocked: /static/%s", r.URL.Path)
+			http.NotFound(w, r)
+			return
+		}
+		fs.ServeHTTP(w, r)
+	})))
 	return mux
 }
