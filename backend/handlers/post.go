@@ -3,9 +3,14 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
+	"fmt"
+	"io"
 	"log"
 	"net/http"
+	"os"
+	"path/filepath"
 	"strconv"
+	"time"
 
 	"forum/models"
 	"forum/sqlite"
@@ -19,35 +24,65 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use a temporary struct for decoding JSON
-	var request struct {
-		Title      string `json:"title"`
-		Content    string `json:"content"`
-		CategoryID *int   `json:"category_id,omitempty"`
-	}
-
-	err := json.NewDecoder(r.Body).Decode(&request)
+	// Parse multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB limit
 	if err != nil {
-		http.Error(w, "Invalid post data", http.StatusBadRequest)
+		http.Error(w, "Could not parse form data", http.StatusBadRequest)
 		return
 	}
 
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+
+	var categoryID *int
+	if cidStr := r.FormValue("category_id"); cidStr != "" {
+		cid, err := strconv.Atoi(cidStr)
+		if err == nil {
+			categoryID = &cid
+		}
+	}
+
 	// Validate user session
-	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	userID, ok := RequireAuth(db, w, r)
+	if !ok || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
+	// Handle optional image upload
+	var imageURL string
+	file, header, err := r.FormFile("image")
+	if err == nil {
+		defer file.Close()
+
+		ext := filepath.Ext(header.Filename)
+		filename := fmt.Sprintf("post_%d_%d%s", userID, time.Now().UnixNano(), ext)
+		dstPath := filepath.Join("static", filename)
+
+		dst, err := os.Create(dstPath)
+		if err != nil {
+			http.Error(w, "Unable to save image", http.StatusInternalServerError)
+			return
+		}
+		defer dst.Close()
+
+		if _, err := io.Copy(dst, file); err != nil {
+			http.Error(w, "Failed to write image", http.StatusInternalServerError)
+			return
+		}
+
+		imageURL = "/" + dstPath // e.g., "/static/..."
+	}
+
 	// Create post in database
-	err = sqlite.CreatePost(db, userID, request.CategoryID, request.Title, request.Content)
+	post, err := sqlite.CreatePost(db, &userID, categoryID, title, content, imageURL)
 	if err != nil {
-		log.Println("Error creating post:", err) // Debugging
+		log.Println("Error creating post:", err)
 		utils.SendJSONError(w, "Failed to create post", http.StatusInternalServerError)
 		return
 	}
 
-	utils.SendJSONResponse(w, map[string]string{"message": "Post created successfully"}, http.StatusCreated)
+	utils.SendJSONResponse(w, post, http.StatusCreated)
 }
 
 // GetPosts fetches posts (with optional filters)

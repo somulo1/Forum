@@ -14,7 +14,7 @@ clean:
 
 # Docker Commands
 docker-up:
-	docker-compose up --build -d
+	docker-compose up --build
 
 docker-down:
 	docker-compose down

@@ -6,42 +6,41 @@ import (
 	"fmt"
 	"net/http"
 
-	"forum/models"
 	"forum/sqlite"
 	"forum/utils"
 )
 
-// LikePost handles liking/disliking a post
-func LikePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodPost {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+// // LikePost handles liking/disliking a post
+// func LikePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodPost {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
 
-	var like models.Like
-	err := json.NewDecoder(r.Body).Decode(&like)
-	if err != nil {
-		http.Error(w, "Invalid request body", http.StatusBadRequest)
-		return
-	}
+// 	var like models.Like
+// 	err := json.NewDecoder(r.Body).Decode(&like)
+// 	if err != nil {
+// 		http.Error(w, "Invalid request body", http.StatusBadRequest)
+// 		return
+// 	}
 
-	// Validate user session
-	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
-		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return
-	}
+// 	// Validate user session
+// 	userID, err := utils.GetUserIDFromSession(db, r)
+// 	if err != nil || userID == 0 {
+// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+// 		return
+// 	}
 
-	like.UserID = userID
+// 	like.UserID = userID
 
-	err = sqlite.ToggleLike(db, like.UserID, like.PostID, like.CommentID)
-	if err != nil {
-		utils.SendJSONError(w, "Failed to toggle like", http.StatusInternalServerError)
-		return
-	}
+// 	err = sqlite.ToggleLike(db, like.UserID, like.PostID, like.CommentID)
+// 	if err != nil {
+// 		utils.SendJSONError(w, "Failed to toggle like", http.StatusInternalServerError)
+// 		return
+// 	}
 
-	utils.SendJSONResponse(w, like, http.StatusCreated)
-}
+// 	utils.SendJSONResponse(w, like, http.StatusCreated)
+// }
 
 func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
@@ -62,8 +61,8 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Validate user session
-	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	userID, ok := RequireAuth(db, w, r)
+	if !ok || userID == 0 {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -75,7 +74,7 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Call the database function to toggle like
-	err = sqlite.ToggleLike(db, userID, request.PostID, request.CommentID)
+	err := sqlite.ToggleLike(db, userID, request.PostID, request.CommentID)
 	if err != nil {
 		utils.SendJSONError(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
 		return

@@ -4,6 +4,26 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupAuthButtons();
 });
 
+// function to render nav logo
+function renderNavLogo() {
+    const navLogoContainer = document.getElementById("navLogoContainer");
+
+    if (!navLogoContainer) {
+        console.error("Missing #navLogoContainer in index.html");
+        return;
+    }
+
+    navLogoContainer.innerHTML = `
+        <img src="../static/pictures/forum-logo.png" alt="Forum Logo" class="nav-logo">
+    `;
+}
+
+// Ensure the logo is injected when the page loads
+document.addEventListener("DOMContentLoaded", () => {
+    renderNavLogo();
+});
+
+
 // getTimeAgo() returns the time that has passed (i.e "1 day ago.")
 function getTimeAgo(date) {
     const seconds = Math.floor((Date.now() - new Date(date))/1000);
@@ -68,7 +88,7 @@ async function renderPosts() {
 }
 // render create post
 function renderCreatePostSection() {
-    const createPostContainer = document.getElementById("createPostContainer");
+    const createPostContainer = document.getElementById("createPostSection");
 
     if (!createPostContainer) {
         console.error("Missing #createPostContainer in index.html");
