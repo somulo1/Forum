@@ -45,7 +45,7 @@ async function renderPosts() {
             postDiv.innerHTML = `
                 <div class="post-header">
                     <div class="post-author-info">
-                        <img class="post-author-img" src="${post.avatar_url || '/backend/static/pictures/icon1.png'}" alt="Profile">
+                        <img class="post-author-img" src="${post.avatar_url || '../static/pictures/icon1.png'}" alt="Profile">
                         <span class="post-author-name">${post.username}</span>
                     </div>
                     <span class="post-time">${getTimeAgo(post.created_at)}</span>
@@ -66,6 +66,48 @@ async function renderPosts() {
         console.error("Error fetching posts:", error);
     }
 }
+// render create post
+function renderCreatePostSection() {
+    const createPostContainer = document.getElementById("createPostContainer");
+
+    if (!createPostContainer) {
+        console.error("Missing #createPostContainer in index.html");
+        return;
+    }
+
+    createPostContainer.innerHTML = `
+        <div class="create-post-box">
+            <input type="text" id="postInput" placeholder="What's on your mind?" aria-label="Create a post" />
+            <div class="post-options">
+                <button class="post-option photo-btn"><i class="fas fa-camera"></i> Photo</button>
+                <button class="post-option video-btn"><i class="fas fa-video"></i> Video</button>
+                <button class="post-option event-btn"><i class="fas fa-calendar"></i> Event</button>
+            </div>
+        </div>
+    `;
+
+    // Attach event listeners for interactivity
+    document.querySelector(".photo-btn").addEventListener("click", () => {
+        alert("Photo upload coming soon!");
+    });
+
+    document.querySelector(".video-btn").addEventListener("click", () => {
+        alert("Video upload feature coming soon!");
+    });
+
+    document.querySelector(".event-btn").addEventListener("click", () => {
+        alert("Event creation feature coming soon!");
+    });
+}
+
+// Ensure the section loads on page startup
+document.addEventListener("DOMContentLoaded", async () => {
+    renderCreatePostSection(); // Inject post creation section
+    await renderPosts();
+    await renderCategories();
+    setupAuthButtons();
+});
+
 
 // Fetch & Render Categories
 async function renderCategories() {
@@ -99,14 +141,22 @@ async function setupAuthButtons() {
             navAuth.innerHTML = `<button class="logout-btn">Logout (${user.username})</button>`;
             document.querySelector(".logout-btn").addEventListener("click", logoutUser);
         } else {
-            navAuth.innerHTML = `<button class="login-btn">Login</button>`;
+            navAuth.innerHTML = `
+                <button class="login-btn">Login</button>
+                <button class="signup-btn">Sign Up</button>
+            `;
             document.querySelector(".login-btn").addEventListener("click", showLoginModal);
+            document.querySelector(".signup-btn").addEventListener("click", showSignupModal);
         }
     } catch (error) {
         console.error("Error checking authentication:", error);
-        navAuth.innerHTML = `<button class="login-btn">Login</button>`;
+        navAuth.innerHTML = `
+            <button class="login-btn">Login</button>
+            <button class="signup-btn">Sign Up</button>
+        `;
     }
 }
+
 
 // Logout Functionality
 async function logoutUser() {
