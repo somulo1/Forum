@@ -1,3 +1,29 @@
+
+
+function getTimeAgo(date) {
+    const seconds = Math.floor((Date.now() - new Date(date))/1000);
+
+    const timePeriods = {
+        year: 365 * 24 * 60 * 60,       // 31536000
+        month: 30 * 24 * 60 * 60,       // 2592000
+        week: 7 * 24 * 60 * 60,         // 604800
+        day: 24 * 60 * 60,              // 86400
+        hour: 60 * 60,                  // 3600
+        minute: 60,                     // 60
+        second: 1                       // 1
+      };
+
+    for (const [timePeriod, unitSeconds] of Object.entries(timePeriods)) {
+        const periodValue = Math.floor(seconds/unitSeconds);
+        if (periodValue >= 1) {
+            return `${periodValue} ${timePeriod}${periodValue === 1 ? '': 's'} ago.`;
+        }
+    }
+    return 'Just now.';
+}
+
+
+
 async function renderPosts() {
     try {
         const response = await fetch("http://localhost:8080/api/posts");
@@ -22,7 +48,7 @@ async function renderPosts() {
     
             const createdAtElement = document.createElement('p');
             createdAtElement.classList.add('created-at');
-            createdAtElement.textContent = `Created At: ${new Date(post.created_at).toLocaleString()}`;
+            createdAtElement.textContent = `Created At: ${getTimeAgo(post.created_at)}`;
     
             const updatedAtElement = document.createElement('p');
             updatedAtElement.classList.add('updated-at');
