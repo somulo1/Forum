@@ -3,142 +3,97 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Social Posting Forum</title>
-    <link rel="icon" href="chat.png" type="image/png">
-    <link rel="stylesheet" type="text/css" href="./style.css" />
+    <title>Forum</title>
+    <link rel="icon" href="./chat.png">
+    <link rel="stylesheet" href="/styles.css" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
 </head>
 <body>
-    <header>
-        <h1><a href="/">Social Posting Forum</a></h1>
-        <div id="auth-buttons"></div>
-    </header>
-    <div class="body-div">
-        <div class="inner-div1">
-            <p>this is a side bar(left)</p>
+    <!-- Navbar -->
+    <nav class="navbar" role="navigation" aria-label="Main navigation">
+        <div class="nav-brand" id="navBrand">Forum</div>
+        <div class="nav-search" role="search">
+            <i class="fas fa-search search-icon"></i>
+            <input type="text" id="searchInput" placeholder="Search..." aria-label="Search forum" />
         </div>
-        <div class="inner-div2"><main id="main-content"></main></div>
-        <div class="inner-div3">
-            <p>this is also a side bar(right)</p>
+        <div class="nav-auth" id="navAuth" role="group" aria-label="User Authentication">
+            <!-- Auth buttons will be inserted here -->
+        </div>
+    </nav>
+
+    <!-- Main Layout -->
+    <div class="container">
+        <!-- Left Sidebar -->
+        <aside class="sidebar left-sidebar" aria-label="Sidebar navigation">
+            <div class="profile-section" id="userProfile">
+                <!-- User profile will load dynamically -->
+            </div>
+            <nav class="menu-section" aria-label="Sidebar menu">
+                <a href="/posts" class="menu-item active" data-view="feed"><i class="fas fa-home"></i> Home</a>
+                <a href="#" class="menu-item" data-view="profile"><i class="fas fa-user"></i> Profile</a>
+                <a href="/profile" class="menu-item" data-view="trending"><i class="fas fa-fire"></i> Trending</a>
+                <a href="/saved" class="menu-item" data-view="saved"><i class="fas fa-bookmark"></i> Saved</a>
+            </nav>
+        </aside>
+
+        <!-- Main Content -->
+        <main class="main-content" id="mainContent" role="main">
+            <section id="storySection" class="story-section">
+                <!-- Stories will be rendered dynamically -->
+            </section>
+            <section id="createPostSection" class="create-post-section">
+                <!-- Create post form will be rendered dynamically -->
+            </section>
+            <section id="postFeed">
+                <!-- Posts will be injected here -->
+                 
+            </section>
+        </main>
+
+        <!-- Right Sidebar -->
+        <aside class="sidebar right-sidebar" aria-label="Right sidebar">
+            <section id="categoryFilter" class="category-section">
+                <h3>Categories</h3>
+                <!-- Dynamic category filters -->
+            </section>
+            <section id="trendingSection" class="trending-section">
+                <h3>Trending</h3>
+                <!-- Trending topics dynamically -->
+            </section>
+            <section id="suggestedUsers" class="suggested-section">
+                <h3>Suggested Users</h3>
+                <!-- Suggested users dynamically -->
+            </section>
+        </aside>
+    </div>
+
+    <!-- Modals -->
+    <div id="modalsContainer">
+        <!-- Auth Modal -->
+        <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <span class="close" id="closeModal" role="button" aria-label="Close authentication modal">&times;</span>
+                <div id="authForms"></div>
+            </div>
+        </div>
+
+        <!-- Create Post Modal -->
+        <div id="createPostModal" class="modal hidden" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <span class="close" role="button" aria-label="Close post modal">&times;</span>
+                <div id="postForm"></div>
+            </div>
+        </div>
+
+        <!-- Profile Modal -->
+        <div id="profileModal" class="modal hidden" role="dialog" aria-modal="true">
+            <div class="modal-content">
+                <span class="close" role="button" aria-label="Close profile modal">&times;</span>
+                <div id="profileForm"></div>
+            </div>
         </div>
     </div>
-    
-    <script>
-        const API_BASE_URL = "http://localhost:8080/api";
-        async function fetchPosts() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/posts`, {
-                    method: 'GET',
-                    credentials: 'include', // Ensures cookies are sent for authentication
-                });
 
-            if (!response.ok) {
-                throw new Error('Failed to fetch posts');
-            }
-
-            const posts = await response.json();
-            return posts;
-            } catch (error) {
-                console.error('Error fetching posts:', error);
-                return [];
-            }
-        }
-        async function loadPosts() {
-            try {
-                const posts = await fetchPosts();
-                const container = document.getElementById('main-content');
-                container.innerHTML = '';
-
-                if (posts.length === 0) {
-                    container.innerHTML = '<p>No posts available.</p>';
-                    return;
-                }
-
-                posts.forEach(post => {
-                const postElement = document.createElement('div');
-                postElement.classList.add('post');
-                postElement.innerHTML = `
-                    <h2>${post.username}<h2>
-                    <h4>${post.title}<h4>
-                    <p>${post.content}</p>
-                    <button class="like-btn" data-post-id="${post.id}">Like</button>
-                    <button class="comment-btn" data-post-id="${post.id}">Comment</button>
-                    ${post.isOwner ? `<button class="delete-btn" data-post-id="${post.id}">Delete</button>` : ''}
-                    <div id="comments-${post.id}" class="comments-section"></div> <!-- Comments Section Added -->
-                    <hr/>
-                    `;
-                container.appendChild(postElement);
-                });
-    
-
-                attachEventListeners();
-            } catch (error) {
-            console.error('Failed to load posts:', error);
-            }
-        }
-        // Attach event listeners to like, comment, and delete buttons
-        function attachEventListeners() {
-            document.querySelectorAll('.like-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const postId = e.target.dataset.postId;
-                    if (await isAuthenticated()) {
-                        handleLike(postId);
-                    } else {
-                        // promptAuthentication();
-                    }
-                });
-            });
-
-            document.querySelectorAll('.comment-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const postId = e.target.dataset.postId;
-                    alert("Only signed in users can like")
-                    // if (await isAuthenticated()) {
-                    // loadComments(postId);
-                    // } else {
-                    //     alert("Only signed in users can like")
-                    //     // promptAuthentication();
-                    // }
-                });
-            });
-
-            document.querySelectorAll('.delete-btn').forEach(button => {
-                button.addEventListener('click', async (e) => {
-                    const postId = e.target.dataset.postId;
-                    if (confirm('Are you sure you want to delete this post?')) {
-                        try {
-                            await deletePost(postId);
-                            alert('Post deleted successfully');
-                            loadPosts();
-                        } catch (error) {
-                            alert(error.message);
-                        }
-                    }
-                });
-            });
-            // Handle logout
-            const logoutBtn = document.getElementById('logout-btn');
-            if (logoutBtn) {
-                logoutBtn.addEventListener('click', async () => {
-                    await logoutUser();
-                });
-            }
-        }
-        async function isAuthenticated() {
-            try {
-                const response = await fetch(`${API_BASE_URL}/user`, { credentials: 'include' });
-                return response.ok;
-            } catch (error) {
-            console.error('Auth Check Error:', error);
-            return false;
-            }
-        }
-        document.addEventListener('DOMContentLoaded', async () => {
-            // await addCreatePostButton();
-             // checkAuthStatus();
-            // renderAuthButtons();
-            loadPosts();
-        });
-    </script>
-    <!-- <script type="module" src="./index.mjs" defer></script> -->
+    <script type="module" src="app.js"></script>
 </body>
 </html>
