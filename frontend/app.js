@@ -72,6 +72,9 @@ async function renderPosts() {
                 </div>
                 <div class="post-content">
                     <div class="post-title">${post.title}</div>
+                    <div class="post-image hidden">
+                        <img src="http://localhost:8080${post.image_url || ''}" alt="post-image"/>
+                    </div>
                     <div class="post-body">${post.content}</div>
                 </div>
                 <div class="post-actions">
@@ -80,6 +83,11 @@ async function renderPosts() {
                 </div>
                 
             `;
+
+            if (post.image_url) {
+                const el = postDiv.querySelector(".post-image");
+                el.classList.remove("hidden");
+            }
             postContainer.appendChild(postDiv);
         });
     } catch (error) {

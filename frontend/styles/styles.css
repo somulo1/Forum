@@ -329,7 +329,7 @@ img {
     gap: 0.75rem;
 }
 
-.post-content .post-title {
+.post-title {
     font-size: 1.2rem;
     font-weight: 600;
     line-height: 1.4;
@@ -338,7 +338,7 @@ img {
 }
 
 
-.post-content .post-body {
+.post-body {
     font-size: 1rem;
     line-height: 1.7;
     color: var(--text-color);
