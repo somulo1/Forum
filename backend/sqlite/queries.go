@@ -115,7 +115,6 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	return post, nil
 }
 
-
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	var posts []models.Post
 	offset := (page - 1) * limit
@@ -209,6 +208,29 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 func DeletePost(db *sql.DB, postID int) error {
 	_, err := db.Exec(`DELETE FROM posts WHERE id = ?`, postID)
 	return err
+}
+
+// GetOrCreateCategoryIDs resolves category names to IDs, creating new ones if needed.
+func GetOrCreateCategoryIDs(db *sql.DB, names []string) ([]int, error) {
+	var ids []int
+
+	for _, name := range names {
+		var id int
+		err := db.QueryRow(`SELECT id FROM categories WHERE name = ?`, name).Scan(&id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				// Create new category
+				err = db.QueryRow(`INSERT INTO categories (name) VALUES (?) RETURNING id`, name).Scan(&id)
+				if err != nil {
+					return nil, fmt.Errorf("could not create category %q: %w", name, err)
+				}
+			} else {
+				return nil, fmt.Errorf("failed to fetch category %q: %w", name, err)
+			}
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
 }
 
 // ToggleLike toggles a like for a post or comment

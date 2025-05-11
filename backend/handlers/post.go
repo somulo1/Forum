@@ -34,13 +34,8 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	content := r.FormValue("content")
 
-	var categoryID *int
-	if cidStr := r.FormValue("category_id"); cidStr != "" {
-		cid, err := strconv.Atoi(cidStr)
-		if err == nil {
-			categoryID = &cid
-		}
-	}
+	// Get category names from the form
+	categoryNames := r.Form["category_names[]"]
 
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
@@ -71,17 +66,25 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		imageURL = "/" + dstPath // e.g., "/static/..."
+		imageURL = "/" + dstPath
 	}
 
-	// Create post in database
-	post, err := sqlite.CreatePost(db, &userID, categoryID, title, content, imageURL)
+	// Get category IDs by resolving category names
+	categoryIDs, err := sqlite.GetOrCreateCategoryIDs(db, categoryNames)
+	if err != nil {
+		http.Error(w, "Failed to resolve categories", http.StatusInternalServerError)
+		return
+	}
+
+	// Create the post with categories
+	post, err := sqlite.CreatePost(db, userID, categoryIDs, title, content, imageURL)
 	if err != nil {
 		log.Println("Error creating post:", err)
 		utils.SendJSONError(w, "Failed to create post", http.StatusInternalServerError)
 		return
 	}
 
+	// Send response
 	utils.SendJSONResponse(w, post, http.StatusCreated)
 }
 
