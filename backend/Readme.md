@@ -189,23 +189,53 @@ Response:
 
 ### Like Routes
 
-- **POST /api/likes/toggle**: Toggle like on a post (protected)
+- **POST /api/likes/toggle**: Toggle a like or dislike on a post or comment. Protected: Yes (requires authentication)
+
 Request Body:
 
 ```json
 {
-  "post_id": 1
+  "post_id": 1,
+  "type": "like" // or "dislike"
 }
 ```
 
-Protected: Yes (requires authentication)
+post_id or comment_id is required **(but not both)**.
+
+**type** must be "like" or "dislike".
+
+Responses:
+
+```bash
+200 OK: Reaction toggled successfully
+
+400 Bad Request: Must provide either post_id or comment_id, and a valid type
+
+401 Unauthorized: User not authenticated
+```
+
+- **GET /api/likes/reactions?post_id=1**: Get the total number of likes and dislikes for a post or comment.
+Protected: No
+
+Query Parameters:
+
+post_id or comment_id (required, only one)
 
 Response:
 
-```bash
-    200 OK: Like toggled successfully
+```json
+{
+  "likes": 5,
+  "dislikes": 2
+}
+```
 
-    400 Bad Request: Invalid data
+Errors:
+
+```bash
+400 Bad Request: Missing or invalid post_id/comment_id
+
+500 Internal Server Error: Database error
 ```
 
 ### File Routes
