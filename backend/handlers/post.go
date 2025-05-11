@@ -51,7 +51,7 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		defer file.Close()
 
 		ext := filepath.Ext(header.Filename)
-		filename := fmt.Sprintf("post_%d_%d%s", userID, time.Now().UnixNano(), ext)
+		filename := fmt.Sprintf("post_%s_%d%s", userID, time.Now().UnixNano(), ext)
 		dstPath := filepath.Join("static", filename)
 
 		dst, err := os.Create(dstPath)
