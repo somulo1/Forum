@@ -80,25 +80,36 @@ Response:
 
 ### Post Routes
 
-- **POST /api/posts/create**: Create a new post (protected)
-Request Body:
+- **POST /api/posts/create**  
+Create a new post (protected)
+
+**Request Type**: `multipart/form-data`  
+**Fields**:
+
+| Field              | Type     | Description                                     |
+|-------------------|----------|-------------------------------------------------|
+| `title`           | string   | Title of the post                               |
+| `content`         | string   | Content/body of the post                        |
+| `category_names[]`| array    | Names of the categories (e.g., "tech", "go")    |
+| `image`           | file     | Optional image upload                           |
+
+**Protected**: Yes (requires authentication)
+
+**Example (form-data)**:
 
 ```json
-{
-  "title": "string",
-  "content": "string",
-  "category_id": 1,
-  "image_url": "url_to_image"
-}
+title: "Exploring Go Interfaces"
+content: "Here's how interfaces work in Go..."
+category_names[]: "golang" "backend"
+image: [file upload]
 ```
 
-Response:
+**Responses**:
 
-```bash
-    201 Created: Post created successfully
-
-    400 Bad Request: Invalid data
-```
+- `201 Created`: Post created successfully  
+- `400 Bad Request`: Invalid data  
+- `401 Unauthorized`: User not authenticated  
+- `500 Internal Server Error`: Database or server failure  
 
 - **GET /api/posts**: Get all posts (public)
 Response:
