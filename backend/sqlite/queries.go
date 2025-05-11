@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -41,24 +42,38 @@ func CreateUser(db *sql.DB, username, email, passwordHash, avatarURL string) err
 	return err
 }
 
-// CreatePost inserts a new post
-func CreatePost(db *sql.DB, userID, categoryID *int, title, content, imageURL string) (models.Post, error) {
+// CreatePost inserts a new post and its category associations
+func CreatePost(db *sql.DB, userID int, categoryIDs []int, title, content, imageURL string) (models.Post, error) {
 	var post models.Post
+
+	// Insert into posts table
 	query := `
-		INSERT INTO posts (user_id, category_id, title, content, image_url)
-		VALUES (?, ?, ?, ?, ?)
-		RETURNING id, user_id, category_id, title, content, image_url, created_at
+		INSERT INTO posts (user_id, title, content, image_url)
+		VALUES (?, ?, ?, ?)
+		RETURNING id, user_id, title, content, image_url, created_at
 	`
-	err := db.QueryRow(query, userID, categoryID, title, content, imageURL).Scan(
+	err := db.QueryRow(query, userID, title, content, imageURL).Scan(
 		&post.ID,
 		&post.UserID,
-		&post.CategoryID,
 		&post.Title,
 		&post.Content,
 		&post.ImageURL,
 		&post.CreatedAt,
 	)
-	return post, err
+	if err != nil {
+		return post, err
+	}
+
+	// Insert into post_categories table
+	for _, catID := range categoryIDs {
+		_, err := db.Exec(`INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)`, post.ID, catID)
+		if err != nil {
+			return post, fmt.Errorf("failed to insert into post_categories: %w", err)
+		}
+	}
+
+	post.CategoryIDs = categoryIDs
+	return post, nil
 }
 
 // GetPost retrieves a single post by ID
@@ -188,6 +203,7 @@ func ToggleLike(db *sql.DB, userID int, postID *int, commentID *int, reactionTyp
 
 	return err
 }
+
 func CountLikesAndDislikes(db *sql.DB, postID *int, commentID *int) (likes int, dislikes int, err error) {
 	if (postID == nil && commentID == nil) || (postID != nil && commentID != nil) {
 		return 0, 0, errors.New("must provide either postID or commentID, but not both")
