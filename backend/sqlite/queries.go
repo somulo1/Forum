@@ -188,6 +188,36 @@ func ToggleLike(db *sql.DB, userID int, postID *int, commentID *int, reactionTyp
 
 	return err
 }
+func CountLikesAndDislikes(db *sql.DB, postID *int, commentID *int) (likes int, dislikes int, err error) {
+	if (postID == nil && commentID == nil) || (postID != nil && commentID != nil) {
+		return 0, 0, errors.New("must provide either postID or commentID, but not both")
+	}
+
+	var rows *sql.Rows
+	if postID != nil {
+		rows, err = db.Query(`SELECT type, COUNT(*) FROM likes WHERE post_id = ? GROUP BY type`, *postID)
+	} else {
+		rows, err = db.Query(`SELECT type, COUNT(*) FROM likes WHERE comment_id = ? GROUP BY type`, *commentID)
+	}
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var typ string
+		var count int
+		if err = rows.Scan(&typ, &count); err != nil {
+			return
+		}
+		if typ == "like" {
+			likes = count
+		} else if typ == "dislike" {
+			dislikes = count
+		}
+	}
+	return
+}
 
 // CleanupSessions removes expired sessions
 func CleanupSessions(db *sql.DB, expiryHours int) error {
