@@ -46,7 +46,7 @@ func CreateUser(db *sql.DB, username, email, passwordHash, avatarURL string) err
 }
 
 // CreatePost inserts a new post and its category associations
-func CreatePost(db *sql.DB, userID int, categoryIDs []int, title, content, imageURL string) (models.Post, error) {
+func CreatePost(db *sql.DB, userID string, categoryIDs []int, title, content, imageURL string) (models.Post, error) {
 	var post models.Post
 
 	// Insert into posts table
@@ -237,7 +237,7 @@ func GetOrCreateCategoryIDs(db *sql.DB, names []string) ([]int, error) {
 }
 
 // ToggleLike toggles a like for a post or comment
-func ToggleLike(db *sql.DB, userID int, postID *int, commentID *int, reactionType string) error {
+func ToggleLike(db *sql.DB, userID string, postID *int, commentID *int, reactionType string) error {
 	if reactionType != "like" && reactionType != "dislike" {
 		return errors.New("invalid reaction type")
 	}
@@ -351,7 +351,7 @@ func IsUniqueConstraintError(err error) bool {
 }
 
 // CreateComment inserts a new comment
-func CreateComment(db *sql.DB, userID, postID int, content string) (models.Comment, error) {
+func CreateComment(db *sql.DB, userID string, postID int, content string) (models.Comment, error) {
 	var comment models.Comment
 	query := `
 		INSERT INTO comments (user_id, post_id, content)
@@ -461,7 +461,7 @@ func GetUserByEmail(db *sql.DB, email string) (models.User, error) {
 }
 
 // CreateSession creates a new session for a user and returns the session ID
-func CreateSession(db *sql.DB, userID int) (string, error) {
+func CreateSession(db *sql.DB, userID string) (string, error) {
 	sessionID := uuid.New().String()
 	_, err := db.Exec(`
 		INSERT INTO sessions (id, user_id, created_at) VALUES (?, ?, ?)
@@ -480,7 +480,7 @@ func DeleteSession(db *sql.DB, sessionID string) error {
 	return err
 }
 
-func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
+func GetUserByID(db *sql.DB, userID string) (*models.User, error) {
 	var user models.User
 
 	query := `
