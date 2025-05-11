@@ -49,11 +49,12 @@ CREATE TABLE IF NOT EXISTS comments (
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
 
--- Likes Table (Supports both post and comment likes)
+-- Likes Table (Supports both post and comment likes and allows dislikes)
 CREATE TABLE IF NOT EXISTS likes (
     user_id INTEGER NOT NULL,
     post_id INTEGER,
     comment_id INTEGER,
+    type TEXT NOT NULL CHECK(type IN ('like', 'dislike')),
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (user_id, post_id, comment_id),
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
