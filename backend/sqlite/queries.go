@@ -76,24 +76,45 @@ func CreatePost(db *sql.DB, userID int, categoryIDs []int, title, content, image
 	return post, nil
 }
 
-// GetPost retrieves a single post by ID
+// GetPost retrieves a single post by ID with its category IDs
 func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	var post models.Post
+
+	// Fetch main post data
 	err := db.QueryRow(`
-        SELECT id, user_id, title, content, category_id, image_url, created_at, updated_at
+        SELECT id, user_id, title, content, image_url, created_at, updated_at
         FROM posts WHERE id = ?
     `, postID).Scan(
 		&post.ID,
 		&post.UserID,
 		&post.Title,
 		&post.Content,
-		&post.CategoryID,
 		&post.ImageURL,
 		&post.CreatedAt,
 		&post.UpdatedAt,
 	)
-	return post, err
+	if err != nil {
+		return post, err
+	}
+
+	// Fetch category IDs from join table
+	rows, err := db.Query(`SELECT category_id FROM post_categories WHERE post_id = ?`, postID)
+	if err != nil {
+		return post, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var catID int
+		if err := rows.Scan(&catID); err != nil {
+			return post, err
+		}
+		post.CategoryIDs = append(post.CategoryIDs, catID)
+	}
+
+	return post, nil
 }
+
 
 // GetPosts retrieves posts with pagination
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
