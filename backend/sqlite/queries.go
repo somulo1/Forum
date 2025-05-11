@@ -35,10 +35,13 @@ func GetUserByUsername(db *sql.DB, username string) (models.User, error) {
 
 // CreateUser inserts a new user into the database
 func CreateUser(db *sql.DB, username, email, passwordHash, avatarURL string) error {
+	userID := uuid.New().String()
+
 	_, err := db.Exec(`
-		INSERT INTO users (username, email, password_hash, avatar_url)
-		VALUES (?, ?, ?, ?)
-	`, username, email, passwordHash, avatarURL)
+		INSERT INTO users (id, username, email, password_hash, avatar_url)
+		VALUES (?, ?, ?, ?, ?)
+	`, userID, username, email, passwordHash, avatarURL)
+
 	return err
 }
 
