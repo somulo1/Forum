@@ -5,43 +5,13 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strconv"
 
 	"forum/sqlite"
 	"forum/utils"
 )
 
-// // LikePost handles liking/disliking a post
-// func LikePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodPost {
-// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-// 		return
-// 	}
-
-// 	var like models.Like
-// 	err := json.NewDecoder(r.Body).Decode(&like)
-// 	if err != nil {
-// 		http.Error(w, "Invalid request body", http.StatusBadRequest)
-// 		return
-// 	}
-
-// 	// Validate user session
-// 	userID, err := utils.GetUserIDFromSession(db, r)
-// 	if err != nil || userID == 0 {
-// 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-// 		return
-// 	}
-
-// 	like.UserID = userID
-
-// 	err = sqlite.ToggleLike(db, like.UserID, like.PostID, like.CommentID)
-// 	if err != nil {
-// 		utils.SendJSONError(w, "Failed to toggle like", http.StatusInternalServerError)
-// 		return
-// 	}
-
-// 	utils.SendJSONResponse(w, like, http.StatusCreated)
-// }
-
+// ToggleLike handles liking/disliking a post or comment
 func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -50,8 +20,9 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Define the request struct
 	var request struct {
-		PostID    *int `json:"post_id,omitempty"`
-		CommentID *int `json:"comment_id,omitempty"`
+		PostID    *int   `json:"post_id,omitempty"`
+		CommentID *int   `json:"comment_id,omitempty"`
+		Type      string `json:"type"` // like or dislike
 	}
 
 	// Decode request body
@@ -73,12 +44,66 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Call the database function to toggle like
-	err := sqlite.ToggleLike(db, userID, request.PostID, request.CommentID)
+	// Validate type
+	if request.Type != "like" && request.Type != "dislike" {
+		http.Error(w, "Invalid type. Must be 'like' or 'dislike'", http.StatusBadRequest)
+		return
+	}
+
+	// Call the updated toggle function with type
+	err := sqlite.ToggleLike(db, userID, request.PostID, request.CommentID, request.Type)
 	if err != nil {
 		utils.SendJSONError(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
 		return
 	}
 
-	utils.SendJSONResponse(w, map[string]string{"message": "Like toggled successfully"}, http.StatusOK)
+	utils.SendJSONResponse(w, map[string]string{"message": "Reaction toggled successfully"}, http.StatusOK)
+}
+
+// GetReactions returns the total number of likes and dislikes for a post or comment
+func GetReactions(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	query := r.URL.Query()
+	postIDStr := query.Get("post_id")
+	commentIDStr := query.Get("comment_id")
+
+	var (
+		postID    *int
+		commentID *int
+		err       error
+	)
+
+	if postIDStr != "" {
+		var id int
+		if id, err = strconv.Atoi(postIDStr); err != nil {
+			http.Error(w, "Invalid post_id", http.StatusBadRequest)
+			return
+		}
+		postID = &id
+	} else if commentIDStr != "" {
+		var id int
+		if id, err = strconv.Atoi(commentIDStr); err != nil {
+			http.Error(w, "Invalid comment_id", http.StatusBadRequest)
+			return
+		}
+		commentID = &id
+	} else {
+		http.Error(w, "Must provide post_id or comment_id", http.StatusBadRequest)
+		return
+	}
+
+	likes, dislikes, err := sqlite.CountLikesAndDislikes(db, postID, commentID)
+	if err != nil {
+		utils.SendJSONError(w, fmt.Sprintf("Database error: %v", err), http.StatusInternalServerError)
+		return
+	}
+
+	utils.SendJSONResponse(w, map[string]int{
+		"likes":    likes,
+		"dislikes": dislikes,
+	}, http.StatusOK)
 }
