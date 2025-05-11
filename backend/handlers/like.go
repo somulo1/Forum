@@ -33,7 +33,7 @@ func ToggleLike(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
-	if !ok || userID == 0 {
+	if !ok || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
