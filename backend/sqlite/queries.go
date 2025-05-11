@@ -328,16 +328,16 @@ func CleanupSessions(db *sql.DB, expiryHours int) error {
 }
 
 // GetUserIDFromSession retrieves a user ID from a session ID
-func GetUserIDFromSession(db *sql.DB, sessionID string) (int, error) {
-	var userID int
+func GetUserIDFromSession(db *sql.DB, sessionID string) (string, error) {
+	var userID string
 	err := db.QueryRow(`
 		SELECT user_id FROM sessions WHERE id = ?
 	`, sessionID).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, nil // No user found
+			return "", nil // No user found
 		}
-		return 0, err
+		return "", err
 	}
 	return userID, nil
 }
