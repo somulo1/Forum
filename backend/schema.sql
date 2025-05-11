@@ -22,19 +22,27 @@ CREATE TABLE IF NOT EXISTS sessions (
 -- Index for faster session lookup
 CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 
--- Posts Table
+-- Updated Posts Table (remove category_id)
 CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
-    category_id INTEGER NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     image_url TEXT,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
+
+-- Post-Categories Join Table
+CREATE TABLE IF NOT EXISTS post_categories (
+    post_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL,
+    PRIMARY KEY (post_id, category_id),
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+
 
 
 -- Comments Table

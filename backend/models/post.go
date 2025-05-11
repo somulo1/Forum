@@ -8,8 +8,7 @@ type Post struct {
 	Content     string    `json:"content" validate:"required" gorm:"not null"`
 	Username    string    `json:"username" gorm:"-"`
 	UserID      int       `json:"user_id" gorm:"not null"`
-	CategoryID  *int      `json:"category_id,omitempty"` // Supports both single & multiple categories
-	CategoryIDs []int     `json:"category_ids" gorm:"-"` // Excluded from DB, handled manually
+	CategoryIDs []int     `json:"category_ids" gorm:"-"` // For multiple categories
 	ImageURL    *string   `json:"image_url,omitempty"`
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt   time.Time `json:"updated_at" gorm:"autoUpdateTime"`
