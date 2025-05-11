@@ -116,11 +116,11 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 }
 
 
-// GetPosts retrieves posts with pagination
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	var posts []models.Post
 	offset := (page - 1) * limit
 
+	// Query basic post data
 	rows, err := db.Query(`
 		SELECT 
 			posts.id, 
@@ -128,7 +128,6 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			users.username, 
 			posts.title, 
 			posts.content, 
-			posts.category_id, 
 			posts.image_url,
 			posts.created_at, 
 			posts.updated_at
@@ -142,6 +141,8 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	}
 	defer rows.Close()
 
+	postMap := make(map[int]*models.Post)
+
 	for rows.Next() {
 		var post models.Post
 		err := rows.Scan(
@@ -150,7 +151,6 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			&post.Username,
 			&post.Title,
 			&post.Content,
-			&post.CategoryID,
 			&post.ImageURL,
 			&post.CreatedAt,
 			&post.UpdatedAt,
@@ -158,10 +158,48 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 		if err != nil {
 			return nil, err
 		}
+		post.CategoryIDs = []int{}
+		postMap[post.ID] = &post
 		posts = append(posts, post)
 	}
-	if err := rows.Err(); err != nil {
+
+	// Collect category IDs for all posts
+	postIDs := []any{}
+	for _, post := range posts {
+		postIDs = append(postIDs, post.ID)
+	}
+
+	// Early return if no posts
+	if len(postIDs) == 0 {
+		return posts, nil
+	}
+
+	// Prepare IN clause placeholders (?, ?, ?)
+	placeholders := make([]string, len(postIDs))
+	for i := range placeholders {
+		placeholders[i] = "?"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT post_id, category_id
+		FROM post_categories
+		WHERE post_id IN (%s)
+	`, strings.Join(placeholders, ","))
+
+	catRows, err := db.Query(query, postIDs...)
+	if err != nil {
 		return nil, err
+	}
+	defer catRows.Close()
+
+	for catRows.Next() {
+		var postID, categoryID int
+		if err := catRows.Scan(&postID, &categoryID); err != nil {
+			return nil, err
+		}
+		if post, ok := postMap[postID]; ok {
+			post.CategoryIDs = append(post.CategoryIDs, categoryID)
+		}
 	}
 
 	return posts, nil
