@@ -32,7 +32,6 @@ func GetUserByUsername(db *sql.DB, username string) (models.User, error) {
 	return user, nil
 }
 
-
 // CreateUser inserts a new user into the database
 func CreateUser(db *sql.DB, username, email, passwordHash, avatarURL string) error {
 	_, err := db.Exec(`
@@ -41,7 +40,6 @@ func CreateUser(db *sql.DB, username, email, passwordHash, avatarURL string) err
 	`, username, email, passwordHash, avatarURL)
 	return err
 }
-
 
 // CreatePost inserts a new post
 func CreatePost(db *sql.DB, userID, categoryID *int, title, content, imageURL string) (models.Post, error) {
@@ -140,32 +138,54 @@ func DeletePost(db *sql.DB, postID int) error {
 }
 
 // ToggleLike toggles a like for a post or comment
-func ToggleLike(db *sql.DB, userID int, postID *int, commentID *int) error {
+func ToggleLike(db *sql.DB, userID int, postID *int, commentID *int, reactionType string) error {
+	if reactionType != "like" && reactionType != "dislike" {
+		return errors.New("invalid reaction type")
+	}
 	if (postID == nil && commentID == nil) || (postID != nil && commentID != nil) {
 		return errors.New("must provide either postID or commentID, but not both")
 	}
 
-	var res sql.Result
-	var err error
+	var existingType string
+	var query string
+	var args []interface{}
 
-	if commentID == nil {
-		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, postID)
+	if postID != nil {
+		query = `SELECT type FROM likes WHERE user_id = ? AND post_id = ?`
+		args = []interface{}{userID, *postID}
 	} else {
-		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, commentID)
+		query = `SELECT type FROM likes WHERE user_id = ? AND comment_id = ?`
+		args = []interface{}{userID, *commentID}
 	}
 
-	if err != nil {
+	err := db.QueryRow(query, args...).Scan(&existingType)
+
+	switch {
+	case err == sql.ErrNoRows:
+		// No existing reaction — insert
+		if postID != nil {
+			_, err = db.Exec(`INSERT INTO likes (user_id, post_id, type) VALUES (?, ?, ?)`, userID, *postID, reactionType)
+		} else {
+			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id, type) VALUES (?, ?, ?)`, userID, *commentID, reactionType)
+		}
+	case err == nil && existingType == reactionType:
+		// Same reaction exists — toggle off (delete)
+		if postID != nil {
+			_, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, *postID)
+		} else {
+			_, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, *commentID)
+		}
+	case err == nil:
+		// Different reaction — update
+		if postID != nil {
+			_, err = db.Exec(`UPDATE likes SET type = ? WHERE user_id = ? AND post_id = ?`, reactionType, userID, *postID)
+		} else {
+			_, err = db.Exec(`UPDATE likes SET type = ? WHERE user_id = ? AND comment_id = ?`, reactionType, userID, *commentID)
+		}
+	default:
 		return err
 	}
 
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
-		if commentID == nil {
-			_, err = db.Exec(`INSERT INTO likes (user_id, post_id) VALUES (?, ?)`, userID, postID)
-		} else {
-			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, commentID)
-		}
-	}
 	return err
 }
 
