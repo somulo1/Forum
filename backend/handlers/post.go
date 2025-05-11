@@ -39,7 +39,7 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
-	if !ok || userID == 0 {
+	if !ok || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -124,7 +124,7 @@ func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	if err != nil || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -166,7 +166,7 @@ func DeletePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	if err != nil || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
