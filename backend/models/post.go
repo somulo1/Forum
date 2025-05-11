@@ -7,7 +7,7 @@ type Post struct {
 	Title       string    `json:"title" validate:"required" gorm:"not null"`
 	Content     string    `json:"content" validate:"required" gorm:"not null"`
 	Username    string    `json:"username" gorm:"-"`
-	UserID      int       `json:"user_id" gorm:"not null"`
+	UserID      string      `json:"user_id" gorm:"not null"`
 	CategoryIDs []int     `json:"category_ids" gorm:"-"` // For multiple categories
 	ImageURL    *string   `json:"image_url,omitempty"`
 	CreatedAt   time.Time `json:"created_at" gorm:"autoCreateTime"`
