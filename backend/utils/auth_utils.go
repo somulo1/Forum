@@ -24,8 +24,8 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 // IsAuthor checks if the given user is the author of a specific comment
-func IsAuthor(db *sql.DB, userID, id int, isPost bool) (bool, error) {
-	var authorID int
+func IsAuthor(db *sql.DB, userID string, id int, isPost bool) (bool, error) {
+	var authorID string
 	query := "SELECT user_id FROM comments WHERE id = ?"
 	if isPost {
 		query = "SELECT user_id FROM posts WHERE id = ?"
