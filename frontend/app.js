@@ -2,6 +2,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await renderPosts();
     await renderCategories();
     setupAuthButtons();
+    loadLikes();
 });
 
 // function to render nav logo
@@ -41,7 +42,7 @@ function getTimeAgo(date) {
     for (const [timePeriod, unitSeconds] of Object.entries(timePeriods)) {
         const periodValue = Math.floor(seconds/unitSeconds);
         if (periodValue >= 1) {
-            return `${periodValue} ${timePeriod} ${periodValue === 1 ? '': 's'} ago.`;
+            return `${periodValue} ${timePeriod}${periodValue === 1 ? '': 's'} ago.`;
         }
     }
     return 'Just now.';
@@ -78,8 +79,9 @@ async function renderPosts() {
                     <div class="post-body">${post.content}</div>
                 </div>
                 <div class="post-actions">
-                    <button class="like-btn" data-id="${post.id}"><i class="fas fa-thumbs-up"></i> Like</button>
-                    <button class="comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i> Comment</button>
+                    <button class="reaction-btn like-btn" data-id="${post.id}"><i class="fas fa-thumbs-up"></i></button>
+                    <button class="reaction-btn dislike-btn" data-id="${post.id}"><i class="fas fa-thumbs-down"></i></button>
+                    <button class="reaction-btn comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i></button>
                 </div>
                 
             `;
@@ -217,3 +219,34 @@ document.addEventListener("click", async (event) => {
         alert("Commenting feature coming soon!");
     }
 });
+
+
+// post likes & dislikes
+
+async function loadLikes() {
+
+    const reactionBtns = document.querySelectorAll(".reaction-btn");
+
+    for (const btn of reactionBtns) {
+        const postId = btn.getAttribute('data-id'); 
+        try {
+            const response = await fetch(`http://localhost:8080/api/likes/reactions?post_id=${postId}`); 
+            const result = await response.json(); 
+
+            if (result.error) {
+                throw new Error(result.error.message || "Unknown error"); 
+            }
+
+            if (btn.classList.contains('like-btn')) {
+                btn.insertAdjacentHTML("beforeend", ` ${result.likes} Likes`);
+            }
+            if (btn.classList.contains('dislike-btn')) {
+                btn.insertAdjacentHTML("beforeend", ` ${result.dislikes} Dislikes`);
+            }
+            
+        } catch (error) {
+            console.log(error);
+        }
+    }
+}
+    
