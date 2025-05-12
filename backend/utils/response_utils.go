@@ -6,7 +6,7 @@ import (
 )
 
 // JSONResponse sends a JSON response with the given status code and data
-func JSONResponse(w http.ResponseWriter, statusCode int, data interface{}) {
+func JSONResponse(w http.ResponseWriter, statusCode int, data any) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(statusCode)
 	json.NewEncoder(w).Encode(data)
@@ -28,6 +28,6 @@ func SendJSONError(w http.ResponseWriter, message string, statusCode int) {
 }
 
 // SendJSONResponse sends a JSON response with a success message
-func SendJSONResponse(w http.ResponseWriter, data interface{}, statusCode int) {
+func SendJSONResponse(w http.ResponseWriter, data any, statusCode int) {
 	JSONResponse(w, statusCode, data)
 }

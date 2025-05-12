@@ -119,7 +119,6 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 }
 
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
-	var posts []models.Post
 	offset := (page - 1) * limit
 
 	// Query basic post data
@@ -144,6 +143,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	defer rows.Close()
 
 	postMap := make(map[int]*models.Post)
+	var postIDs []any
 
 	for rows.Next() {
 		var post models.Post
@@ -162,21 +162,14 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 		}
 		post.CategoryIDs = []int{}
 		postMap[post.ID] = &post
-		posts = append(posts, post)
-	}
-
-	// Collect category IDs for all posts
-	postIDs := []any{}
-	for _, post := range posts {
 		postIDs = append(postIDs, post.ID)
 	}
 
-	// Early return if no posts
 	if len(postIDs) == 0 {
-		return posts, nil
+		return []models.Post{}, nil
 	}
 
-	// Prepare IN clause placeholders (?, ?, ?)
+	// Build query for categories
 	placeholders := make([]string, len(postIDs))
 	for i := range placeholders {
 		placeholders[i] = "?"
@@ -204,8 +197,15 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 		}
 	}
 
+	// Build final slice from postMap
+	posts := make([]models.Post, 0, len(postMap))
+	for _, post := range postMap {
+		posts = append(posts, *post)
+	}
+
 	return posts, nil
 }
+
 
 // DeletePost removes a post by ID
 func DeletePost(db *sql.DB, postID int) error {
@@ -247,14 +247,14 @@ func ToggleLike(db *sql.DB, userID string, postID *int, commentID *int, reaction
 
 	var existingType string
 	var query string
-	var args []interface{}
+	var args []any
 
 	if postID != nil {
 		query = `SELECT type FROM likes WHERE user_id = ? AND post_id = ?`
-		args = []interface{}{userID, *postID}
+		args = []any{userID, *postID}
 	} else {
 		query = `SELECT type FROM likes WHERE user_id = ? AND comment_id = ?`
-		args = []interface{}{userID, *commentID}
+		args = []any{userID, *commentID}
 	}
 
 	err := db.QueryRow(query, args...).Scan(&existingType)
