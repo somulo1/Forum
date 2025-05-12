@@ -34,17 +34,12 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	content := r.FormValue("content")
 
-	var categoryID *int
-	if cidStr := r.FormValue("category_id"); cidStr != "" {
-		cid, err := strconv.Atoi(cidStr)
-		if err == nil {
-			categoryID = &cid
-		}
-	}
+	// Get category names from the form
+	categoryNames := r.Form["category_names[]"]
 
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
-	if !ok || userID == 0 {
+	if !ok || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -56,7 +51,7 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		defer file.Close()
 
 		ext := filepath.Ext(header.Filename)
-		filename := fmt.Sprintf("post_%d_%d%s", userID, time.Now().UnixNano(), ext)
+		filename := fmt.Sprintf("post_%s_%d%s", userID, time.Now().UnixNano(), ext)
 		dstPath := filepath.Join("static", filename)
 
 		dst, err := os.Create(dstPath)
@@ -71,17 +66,25 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		imageURL = "/" + dstPath // e.g., "/static/..."
+		imageURL = "/" + dstPath
 	}
 
-	// Create post in database
-	post, err := sqlite.CreatePost(db, &userID, categoryID, title, content, imageURL)
+	// Get category IDs by resolving category names
+	categoryIDs, err := sqlite.GetOrCreateCategoryIDs(db, categoryNames)
+	if err != nil {
+		http.Error(w, "Failed to resolve categories", http.StatusInternalServerError)
+		return
+	}
+
+	// Create the post with categories
+	post, err := sqlite.CreatePost(db, userID, categoryIDs, title, content, imageURL)
 	if err != nil {
 		log.Println("Error creating post:", err)
 		utils.SendJSONError(w, "Failed to create post", http.StatusInternalServerError)
 		return
 	}
 
+	// Send response
 	utils.SendJSONResponse(w, post, http.StatusCreated)
 }
 
@@ -121,7 +124,7 @@ func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	if err != nil || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
@@ -163,7 +166,7 @@ func DeletePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate user session
 	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	if err != nil || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}

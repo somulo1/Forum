@@ -80,25 +80,36 @@ Response:
 
 ### Post Routes
 
-- **POST /api/posts/create**: Create a new post (protected)
-Request Body:
+- **POST /api/posts/create**  
+Create a new post (protected)
+
+**Request Type**: `multipart/form-data`  
+**Fields**:
+
+| Field              | Type     | Description                                     |
+|-------------------|----------|-------------------------------------------------|
+| `title`           | string   | Title of the post                               |
+| `content`         | string   | Content/body of the post                        |
+| `category_names[]`| array    | Names of the categories (e.g., "tech", "go")    |
+| `image`           | file     | Optional image upload                           |
+
+**Protected**: Yes (requires authentication)
+
+**Example (form-data)**:
 
 ```json
-{
-  "title": "string",
-  "content": "string",
-  "category_id": 1,
-  "image_url": "url_to_image"
-}
+title: "Exploring Go Interfaces"
+content: "Here's how interfaces work in Go..."
+category_names[]: "golang" "backend"
+image: [file upload]
 ```
 
-Response:
+**Responses**:
 
-```bash
-    201 Created: Post created successfully
-
-    400 Bad Request: Invalid data
-```
+- `201 Created`: Post created successfully  
+- `400 Bad Request`: Invalid data  
+- `401 Unauthorized`: User not authenticated  
+- `500 Internal Server Error`: Database or server failure  
 
 - **GET /api/posts**: Get all posts (public)
 Response:
@@ -189,23 +200,53 @@ Response:
 
 ### Like Routes
 
-- **POST /api/likes/toggle**: Toggle like on a post (protected)
+- **POST /api/likes/toggle**: Toggle a like or dislike on a post or comment. Protected: Yes (requires authentication)
+
 Request Body:
 
 ```json
 {
-  "post_id": 1
+  "post_id": 1,
+  "type": "like" // or "dislike"
 }
 ```
 
-Protected: Yes (requires authentication)
+post_id or comment_id is required **(but not both)**.
+
+**type** must be "like" or "dislike".
+
+Responses:
+
+```bash
+200 OK: Reaction toggled successfully
+
+400 Bad Request: Must provide either post_id or comment_id, and a valid type
+
+401 Unauthorized: User not authenticated
+```
+
+- **GET /api/likes/reactions?post_id=1**: Get the total number of likes and dislikes for a post or comment.
+Protected: No
+
+Query Parameters:
+
+post_id or comment_id (required, only one)
 
 Response:
 
-```bash
-    200 OK: Like toggled successfully
+```json
+{
+  "likes": 5,
+  "dislikes": 2
+}
+```
 
-    400 Bad Request: Invalid data
+Errors:
+
+```bash
+400 Bad Request: Missing or invalid post_id/comment_id
+
+500 Internal Server Error: Database error
 ```
 
 ### File Routes

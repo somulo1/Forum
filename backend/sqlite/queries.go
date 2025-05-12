@@ -3,6 +3,7 @@ package sqlite
 import (
 	"database/sql"
 	"errors"
+	"fmt"
 	"strings"
 	"time"
 
@@ -32,61 +33,96 @@ func GetUserByUsername(db *sql.DB, username string) (models.User, error) {
 	return user, nil
 }
 
-
 // CreateUser inserts a new user into the database
 func CreateUser(db *sql.DB, username, email, passwordHash, avatarURL string) error {
+	userID := uuid.New().String()
+
 	_, err := db.Exec(`
-		INSERT INTO users (username, email, password_hash, avatar_url)
-		VALUES (?, ?, ?, ?)
-	`, username, email, passwordHash, avatarURL)
+		INSERT INTO users (id, username, email, password_hash, avatar_url)
+		VALUES (?, ?, ?, ?, ?)
+	`, userID, username, email, passwordHash, avatarURL)
+
 	return err
 }
 
-
-// CreatePost inserts a new post
-func CreatePost(db *sql.DB, userID, categoryID *int, title, content, imageURL string) (models.Post, error) {
+// CreatePost inserts a new post and its category associations
+func CreatePost(db *sql.DB, userID string, categoryIDs []int, title, content, imageURL string) (models.Post, error) {
 	var post models.Post
+
+	// Insert into posts table
 	query := `
-		INSERT INTO posts (user_id, category_id, title, content, image_url)
-		VALUES (?, ?, ?, ?, ?)
-		RETURNING id, user_id, category_id, title, content, image_url, created_at
+		INSERT INTO posts (user_id, title, content, image_url)
+		VALUES (?, ?, ?, ?)
+		RETURNING id, user_id, title, content, image_url, created_at
 	`
-	err := db.QueryRow(query, userID, categoryID, title, content, imageURL).Scan(
+	err := db.QueryRow(query, userID, title, content, imageURL).Scan(
 		&post.ID,
 		&post.UserID,
-		&post.CategoryID,
 		&post.Title,
 		&post.Content,
 		&post.ImageURL,
 		&post.CreatedAt,
 	)
-	return post, err
+	if err != nil {
+		return post, err
+	}
+
+	// Insert into post_categories table
+	for _, catID := range categoryIDs {
+		_, err := db.Exec(`INSERT INTO post_categories (post_id, category_id) VALUES (?, ?)`, post.ID, catID)
+		if err != nil {
+			return post, fmt.Errorf("failed to insert into post_categories: %w", err)
+		}
+	}
+
+	post.CategoryIDs = categoryIDs
+	return post, nil
 }
 
-// GetPost retrieves a single post by ID
+// GetPost retrieves a single post by ID with its category IDs
 func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	var post models.Post
+
+	// Fetch main post data
 	err := db.QueryRow(`
-        SELECT id, user_id, title, content, category_id, image_url, created_at, updated_at
+        SELECT id, user_id, title, content, image_url, created_at, updated_at
         FROM posts WHERE id = ?
     `, postID).Scan(
 		&post.ID,
 		&post.UserID,
 		&post.Title,
 		&post.Content,
-		&post.CategoryID,
 		&post.ImageURL,
 		&post.CreatedAt,
 		&post.UpdatedAt,
 	)
-	return post, err
+	if err != nil {
+		return post, err
+	}
+
+	// Fetch category IDs from join table
+	rows, err := db.Query(`SELECT category_id FROM post_categories WHERE post_id = ?`, postID)
+	if err != nil {
+		return post, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var catID int
+		if err := rows.Scan(&catID); err != nil {
+			return post, err
+		}
+		post.CategoryIDs = append(post.CategoryIDs, catID)
+	}
+
+	return post, nil
 }
 
-// GetPosts retrieves posts with pagination
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	var posts []models.Post
 	offset := (page - 1) * limit
 
+	// Query basic post data
 	rows, err := db.Query(`
 		SELECT 
 			posts.id, 
@@ -94,7 +130,6 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			users.username, 
 			posts.title, 
 			posts.content, 
-			posts.category_id, 
 			posts.image_url,
 			posts.created_at, 
 			posts.updated_at
@@ -108,6 +143,8 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	}
 	defer rows.Close()
 
+	postMap := make(map[int]*models.Post)
+
 	for rows.Next() {
 		var post models.Post
 		err := rows.Scan(
@@ -116,7 +153,6 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			&post.Username,
 			&post.Title,
 			&post.Content,
-			&post.CategoryID,
 			&post.ImageURL,
 			&post.CreatedAt,
 			&post.UpdatedAt,
@@ -124,10 +160,48 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 		if err != nil {
 			return nil, err
 		}
+		post.CategoryIDs = []int{}
+		postMap[post.ID] = &post
 		posts = append(posts, post)
 	}
-	if err := rows.Err(); err != nil {
+
+	// Collect category IDs for all posts
+	postIDs := []any{}
+	for _, post := range posts {
+		postIDs = append(postIDs, post.ID)
+	}
+
+	// Early return if no posts
+	if len(postIDs) == 0 {
+		return posts, nil
+	}
+
+	// Prepare IN clause placeholders (?, ?, ?)
+	placeholders := make([]string, len(postIDs))
+	for i := range placeholders {
+		placeholders[i] = "?"
+	}
+
+	query := fmt.Sprintf(`
+		SELECT post_id, category_id
+		FROM post_categories
+		WHERE post_id IN (%s)
+	`, strings.Join(placeholders, ","))
+
+	catRows, err := db.Query(query, postIDs...)
+	if err != nil {
 		return nil, err
+	}
+	defer catRows.Close()
+
+	for catRows.Next() {
+		var postID, categoryID int
+		if err := catRows.Scan(&postID, &categoryID); err != nil {
+			return nil, err
+		}
+		if post, ok := postMap[postID]; ok {
+			post.CategoryIDs = append(post.CategoryIDs, categoryID)
+		}
 	}
 
 	return posts, nil
@@ -139,34 +213,110 @@ func DeletePost(db *sql.DB, postID int) error {
 	return err
 }
 
+// GetOrCreateCategoryIDs resolves category names to IDs, creating new ones if needed.
+func GetOrCreateCategoryIDs(db *sql.DB, names []string) ([]int, error) {
+	var ids []int
+
+	for _, name := range names {
+		var id int
+		err := db.QueryRow(`SELECT id FROM categories WHERE name = ?`, name).Scan(&id)
+		if err != nil {
+			if err == sql.ErrNoRows {
+				// Create new category
+				err = db.QueryRow(`INSERT INTO categories (name) VALUES (?) RETURNING id`, name).Scan(&id)
+				if err != nil {
+					return nil, fmt.Errorf("could not create category %q: %w", name, err)
+				}
+			} else {
+				return nil, fmt.Errorf("failed to fetch category %q: %w", name, err)
+			}
+		}
+		ids = append(ids, id)
+	}
+	return ids, nil
+}
+
 // ToggleLike toggles a like for a post or comment
-func ToggleLike(db *sql.DB, userID int, postID *int, commentID *int) error {
+func ToggleLike(db *sql.DB, userID string, postID *int, commentID *int, reactionType string) error {
+	if reactionType != "like" && reactionType != "dislike" {
+		return errors.New("invalid reaction type")
+	}
 	if (postID == nil && commentID == nil) || (postID != nil && commentID != nil) {
 		return errors.New("must provide either postID or commentID, but not both")
 	}
 
-	var res sql.Result
-	var err error
+	var existingType string
+	var query string
+	var args []interface{}
 
-	if commentID == nil {
-		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, postID)
+	if postID != nil {
+		query = `SELECT type FROM likes WHERE user_id = ? AND post_id = ?`
+		args = []interface{}{userID, *postID}
 	} else {
-		res, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, commentID)
+		query = `SELECT type FROM likes WHERE user_id = ? AND comment_id = ?`
+		args = []interface{}{userID, *commentID}
 	}
 
-	if err != nil {
+	err := db.QueryRow(query, args...).Scan(&existingType)
+
+	switch {
+	case err == sql.ErrNoRows:
+		// No existing reaction — insert
+		if postID != nil {
+			_, err = db.Exec(`INSERT INTO likes (user_id, post_id, type) VALUES (?, ?, ?)`, userID, *postID, reactionType)
+		} else {
+			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id, type) VALUES (?, ?, ?)`, userID, *commentID, reactionType)
+		}
+	case err == nil && existingType == reactionType:
+		// Same reaction exists — toggle off (delete)
+		if postID != nil {
+			_, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND post_id = ?`, userID, *postID)
+		} else {
+			_, err = db.Exec(`DELETE FROM likes WHERE user_id = ? AND comment_id = ?`, userID, *commentID)
+		}
+	case err == nil:
+		// Different reaction — update
+		if postID != nil {
+			_, err = db.Exec(`UPDATE likes SET type = ? WHERE user_id = ? AND post_id = ?`, reactionType, userID, *postID)
+		} else {
+			_, err = db.Exec(`UPDATE likes SET type = ? WHERE user_id = ? AND comment_id = ?`, reactionType, userID, *commentID)
+		}
+	default:
 		return err
 	}
 
-	rowsAffected, _ := res.RowsAffected()
-	if rowsAffected == 0 {
-		if commentID == nil {
-			_, err = db.Exec(`INSERT INTO likes (user_id, post_id) VALUES (?, ?)`, userID, postID)
-		} else {
-			_, err = db.Exec(`INSERT INTO likes (user_id, comment_id) VALUES (?, ?)`, userID, commentID)
+	return err
+}
+
+func CountLikesAndDislikes(db *sql.DB, postID *int, commentID *int) (likes int, dislikes int, err error) {
+	if (postID == nil && commentID == nil) || (postID != nil && commentID != nil) {
+		return 0, 0, errors.New("must provide either postID or commentID, but not both")
+	}
+
+	var rows *sql.Rows
+	if postID != nil {
+		rows, err = db.Query(`SELECT type, COUNT(*) FROM likes WHERE post_id = ? GROUP BY type`, *postID)
+	} else {
+		rows, err = db.Query(`SELECT type, COUNT(*) FROM likes WHERE comment_id = ? GROUP BY type`, *commentID)
+	}
+	if err != nil {
+		return
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var typ string
+		var count int
+		if err = rows.Scan(&typ, &count); err != nil {
+			return
+		}
+		if typ == "like" {
+			likes = count
+		} else if typ == "dislike" {
+			dislikes = count
 		}
 	}
-	return err
+	return
 }
 
 // CleanupSessions removes expired sessions
@@ -178,16 +328,16 @@ func CleanupSessions(db *sql.DB, expiryHours int) error {
 }
 
 // GetUserIDFromSession retrieves a user ID from a session ID
-func GetUserIDFromSession(db *sql.DB, sessionID string) (int, error) {
-	var userID int
+func GetUserIDFromSession(db *sql.DB, sessionID string) (string, error) {
+	var userID string
 	err := db.QueryRow(`
 		SELECT user_id FROM sessions WHERE id = ?
 	`, sessionID).Scan(&userID)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			return 0, nil // No user found
+			return "", nil // No user found
 		}
-		return 0, err
+		return "", err
 	}
 	return userID, nil
 }
@@ -201,7 +351,7 @@ func IsUniqueConstraintError(err error) bool {
 }
 
 // CreateComment inserts a new comment
-func CreateComment(db *sql.DB, userID, postID int, content string) (models.Comment, error) {
+func CreateComment(db *sql.DB, userID string, postID int, content string) (models.Comment, error) {
 	var comment models.Comment
 	query := `
 		INSERT INTO comments (user_id, post_id, content)
@@ -311,7 +461,7 @@ func GetUserByEmail(db *sql.DB, email string) (models.User, error) {
 }
 
 // CreateSession creates a new session for a user and returns the session ID
-func CreateSession(db *sql.DB, userID int) (string, error) {
+func CreateSession(db *sql.DB, userID string) (string, error) {
 	sessionID := uuid.New().String()
 	_, err := db.Exec(`
 		INSERT INTO sessions (id, user_id, created_at) VALUES (?, ?, ?)
@@ -330,7 +480,7 @@ func DeleteSession(db *sql.DB, sessionID string) error {
 	return err
 }
 
-func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
+func GetUserByID(db *sql.DB, userID string) (*models.User, error) {
 	var user models.User
 
 	query := `

@@ -185,11 +185,11 @@ func LogoutUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, map[string]string{"message": "Logged out"}, http.StatusOK)
 }
 
-func RequireAuth(db *sql.DB, w http.ResponseWriter, r *http.Request) (int, bool) {
+func RequireAuth(db *sql.DB, w http.ResponseWriter, r *http.Request) (string, bool) {
 	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == 0 {
+	if err != nil || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
-		return 0, false
+		return "", false
 	}
 	return userID, true
 }
