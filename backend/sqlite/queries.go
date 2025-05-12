@@ -371,7 +371,7 @@ func CreateComment(db *sql.DB, userID string, postID int, content string) (model
 // GetPostComments retrieves comments for a specific post
 func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 	rows, err := db.Query(`
-		SELECT id, user_id, content, created_at
+		SELECT id, user_id, content, created_at, post_id
 		FROM comments
 		WHERE post_id = ?
 		ORDER BY created_at ASC
@@ -384,7 +384,7 @@ func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 	var comments []models.Comment
 	for rows.Next() {
 		var comment models.Comment
-		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.Content, &comment.CreatedAt); err != nil {
+		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.Content, &comment.CreatedAt, &comment.PostID); err != nil {
 			return nil, err
 		}
 		comments = append(comments, comment)

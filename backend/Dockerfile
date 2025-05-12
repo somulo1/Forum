@@ -1,5 +1,8 @@
 # --- Stage 1: Build Stage ---
-    FROM golang:1.20-alpine AS builder
+    FROM golang:1.23.0-alpine AS builder
+
+    # Install required build tools for CGO
+    RUN apk add --no-cache gcc musl-dev sqlite-dev
 
     # Set working directory inside container
     WORKDIR /app
@@ -11,9 +14,12 @@
     # Copy application source code
     COPY . .
     
+    # Set CGO enabled for sqlite
+    ENV CGO_ENABLED=1
+
     # Build the Go binary
     RUN go build -o forum-server main.go
-    
+
     # --- Stage 2: Final Minimal Image ---
     FROM alpine:latest
     
@@ -29,7 +35,7 @@
     
     # Copy the built binary from the builder stage
     COPY --from=builder /app/forum-server /app/
-    
+    COPY --from=builder /app/schema.sql /app/
     # Copy static files if you have any pre-existing static content in the project
     # COPY ./static /app/static
     
