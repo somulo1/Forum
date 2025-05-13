@@ -284,7 +284,14 @@ async function loadComments() {
                 const ownerName = await fetchOwner(comment.user_id);     
                 commentItem.innerHTML = `
                     <p class="comment-content"> <strong>${ownerName}:</strong> ${comment.content} </p>
-                    <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
+                    <div class="comment-footer">
+                        <div class="comment-actions">
+                            <button class="reaction-btn like-btn"><i class="fas fa-thumbs-up"></i></button>
+                            <button class="reaction-btn dislike-btn"><i class="fas fa-thumbs-down"></i></button>
+                            <button class="reaction-btn comment-btn"><i class="fas fa-comment"></i></button>
+                        </div>
+                        <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
+                    </div>
                 `;
                 commentArea.appendChild(commentItem);
             }

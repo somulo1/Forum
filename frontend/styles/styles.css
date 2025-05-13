@@ -36,6 +36,9 @@ img {
 .hidden {
     display: none !important;
 }
+.liked {
+    color: limegreen !important;
+}
 
 /* ===== Navbar ===== */
 .navbar {
@@ -400,6 +403,30 @@ img {
     font-size: small;
     color: var(--muted-text);
     text-align: right;
+}
+
+.comment-actions {
+    display: flex;
+    gap: 4rem;
+}
+
+.comment-actions button {
+    background: none;
+    border: none;
+    color: var(--muted-text);
+    font-size: small;
+    cursor: pointer;
+    padding: 0.5rem 0.5rem;
+    border-radius: var(--radius);
+    transition: var(--transition);
+    display: flex;
+    align-items: center;
+    /* gap: 1rem; */
+}
+
+.comment-footer {
+    display: flex;
+    justify-content: space-between;
 }
 
 
