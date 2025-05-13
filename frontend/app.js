@@ -7,6 +7,8 @@ document.addEventListener("DOMContentLoaded", async () => {
     loadCommentsLikes();
 });
 
+
+
 // function to render nav logo
 function renderNavLogo() {
     const navLogoContainer = document.getElementById("navLogoContainer");
@@ -85,7 +87,7 @@ async function renderPosts() {
                     <button class="reaction-btn dislike-btn" data-id="${post.id}"><i class="fas fa-thumbs-down"></i></button>
                     <button class="reaction-btn comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i></button>
                 </div>
-                <div class="post-comment" data-id="${post.id}">
+                <div class="post-comment hidden" data-id="${post.id}">
                 <h4>Comments</h4>
                 </div>
                 
@@ -220,8 +222,9 @@ document.addEventListener("click", async (event) => {
         renderPosts();
     }
     if (event.target.matches(".comment-btn")) {
-        // Open comment modal (You can expand this function)
-        alert("Commenting feature coming soon!");
+        const postId = event.target.getAttribute('data-id');
+        const commentSection = document.querySelector(`.post-comment[data-id="${postId}"`);
+        commentSection.classList.toggle('hidden');
     }
 });
 
@@ -335,7 +338,6 @@ async function loadCommentsLikes() {
             }
 
             const result = await response.json();
-            console.log("result of comment reactions:", result);
 
             if (btn.classList.contains('comment-like-btn')) {
                 btn.insertAdjacentHTML("beforeend", ` ${result.likes === 0 ? '' : result.likes}`);

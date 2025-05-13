@@ -411,6 +411,7 @@ img {
 }
 
 .comment-actions button {
+    width: 1rem;
     background: none;
     border: none;
     color: var(--muted-text);
