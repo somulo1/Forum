@@ -84,13 +84,15 @@ async function renderPosts() {
                     <button class="reaction-btn dislike-btn" data-id="${post.id}"><i class="fas fa-thumbs-down"></i></button>
                     <button class="reaction-btn comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i></button>
                 </div>
+                <div class="post-comment" data-id="${post.id}">
+                </div>
                 
             `;
 
-            if (post.image_url) {
-                const el = postDiv.querySelector(".post-image");
-                el.classList.remove("hidden");
-            }
+            // if (post.image_url) {
+            //     const el = postDiv.querySelector(".post-image");
+            //     el.classList.remove("hidden");
+            // }
             postContainer.appendChild(postDiv);
         });
     } catch (error) {
@@ -270,6 +272,21 @@ async function loadComments() {
             const result = await response.json();
 
             btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
+
+            const commentArea = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
+
+            result.forEach(comment => {
+                const commentItem = document.createElement('div');
+                commentItem.classList.add('comment');
+                commentItem.innerHTML = `
+                    <p> <em>${comment.user_id}</em> ${comment.content} </p>
+                    <p>${getTimeAgo(comment.created_at)}</p>                
+                `;
+                commentArea.appendChild(commentItem);
+            });
+            console.log(commentArea);
+
+            
 
 
             console.log(result);           
