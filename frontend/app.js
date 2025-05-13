@@ -89,10 +89,10 @@ async function renderPosts() {
                 
             `;
 
-            // if (post.image_url) {
-            //     const el = postDiv.querySelector(".post-image");
-            //     el.classList.remove("hidden");
-            // }
+            if (post.image_url) {
+                const el = postDiv.querySelector(".post-image");
+                el.classList.remove("hidden");
+            }
             postContainer.appendChild(postDiv);
         });
     } catch (error) {
@@ -269,21 +269,24 @@ async function loadComments() {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
+
             const result = await response.json();
 
             btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
 
             const commentArea = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
 
-            result.forEach(comment => {
+
+            for (const comment of result) {
                 const commentItem = document.createElement('div');
                 commentItem.classList.add('comment');
+                const ownerName = await fetchOwner(comment.user_id);     
                 commentItem.innerHTML = `
-                    <p> <em>${comment.user_id}</em> ${comment.content} </p>
-                    <p>${getTimeAgo(comment.created_at)}</p>                
+                    <p> <strong>${ownerName}:</strong> ${comment.content} </p>
+                    <p>${getTimeAgo(comment.created_at)}</p>
                 `;
                 commentArea.appendChild(commentItem);
-            });
+            }
             console.log(commentArea);
 
             
@@ -296,4 +299,19 @@ async function loadComments() {
         }
     }
 }
+
+async function fetchOwner(Oid) {
+    try {
+        const response = await fetch(`http://localhost:8080/api/owner?user_id=${Oid}`); 
+        if (!response.ok) {
+            throw new Error(`HTTP error! Status: ${response.status}`);
+        }
+        const Ownresult = await response.json();
+        return Ownresult.username;
+
+} catch (error) {
+    console.log(error);
+}
+}
+
     
