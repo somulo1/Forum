@@ -45,6 +45,9 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.Handle("/api/likes/toggle", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.ToggleLike))) // Protected
 	mux.HandleFunc("/api/likes/reactions", HandlerWrapper(db, handlers.GetReactions))                       // Public
 
+	// comment, post and likes owner
+	mux.Handle("/api/owner", HandlerWrapper(db, handlers.GetOwner))
+
 	// Serve static files securely (prevent directory listing)
 	fs := http.FileServer(http.Dir("./static"))
 	mux.Handle("/static/", http.StripPrefix("/static/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
