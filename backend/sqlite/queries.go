@@ -206,7 +206,6 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	return posts, nil
 }
 
-
 // DeletePost removes a post by ID
 func DeletePost(db *sql.DB, postID int) error {
 	_, err := db.Exec(`DELETE FROM posts WHERE id = ?`, postID)
