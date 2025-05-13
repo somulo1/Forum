@@ -85,6 +85,7 @@ async function renderPosts() {
                     <button class="reaction-btn comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i></button>
                 </div>
                 <div class="post-comment" data-id="${post.id}">
+                <h4>Comments</h4>
                 </div>
                 
             `;
@@ -282,8 +283,8 @@ async function loadComments() {
                 commentItem.classList.add('comment');
                 const ownerName = await fetchOwner(comment.user_id);     
                 commentItem.innerHTML = `
-                    <p> <strong>${ownerName}:</strong> ${comment.content} </p>
-                    <p>${getTimeAgo(comment.created_at)}</p>
+                    <p class="comment-content"> <strong>${ownerName}:</strong> ${comment.content} </p>
+                    <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
                 `;
                 commentArea.appendChild(commentItem);
             }

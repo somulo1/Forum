@@ -346,6 +346,14 @@ img {
     word-break: break-word;
 }
 
+.post-image {
+    display: flex;
+    justify-content: center;
+    border-radius: var(--radius);
+    background: rgba(0, 0, 0, 1);
+}
+
+
 /* Post actions */
 .post-actions {
     display: flex;
@@ -376,6 +384,25 @@ img {
 .post-actions button i {
     font-size: 1rem;
 }
+
+/* ========== comment section =========== */
+
+.post-comment h4, .post-comment .comment {
+    margin: 1rem 0.5rem;
+    padding: 0.5rem 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+
+}
+
+
+.post-comment .comment .comment-time {
+    margin-top: 0.3rem;
+    font-size: small;
+    color: var(--muted-text);
+    text-align: right;
+}
+
+
 
 /* ===== Modals ===== */
 .modal {
