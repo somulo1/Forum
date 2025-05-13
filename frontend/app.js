@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await renderCategories();
     setupAuthButtons();
     loadLikes();
+    loadComments()
 });
 
 // function to render nav logo
@@ -221,7 +222,7 @@ document.addEventListener("click", async (event) => {
 });
 
 
-// post likes & dislikes
+// load post likes & dislikes
 
 async function loadLikes() {
 
@@ -231,11 +232,11 @@ async function loadLikes() {
         const postId = btn.getAttribute('data-id'); 
         try {
             const response = await fetch(`http://localhost:8080/api/likes/reactions?post_id=${postId}`); 
-            const result = await response.json(); 
-
-            if (result.error) {
-                throw new Error(result.error.message || "Unknown error"); 
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
             }
+
+            const result = await response.json();
 
             if (btn.classList.contains('like-btn')) {
                 btn.insertAdjacentHTML("beforeend", ` ${result.likes} Likes`);
@@ -243,6 +244,35 @@ async function loadLikes() {
             if (btn.classList.contains('dislike-btn')) {
                 btn.insertAdjacentHTML("beforeend", ` ${result.dislikes} Dislikes`);
             }
+            
+        } catch (error) {
+            console.log(error);
+        }
+    }
+}
+
+
+
+// load comments
+
+async function loadComments() {
+
+    const commentBtns = document.querySelectorAll(".comment-btn");
+
+    for (const btn of commentBtns) {
+        const postId = btn.getAttribute('data-id'); 
+        try {
+            const response = await fetch(`http://localhost:8080/api/comments/get?post_id=${postId}`); 
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
+
+
+            console.log(result);           
             
         } catch (error) {
             console.log(error);
