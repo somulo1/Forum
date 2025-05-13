@@ -193,3 +193,12 @@ func RequireAuth(db *sql.DB, w http.ResponseWriter, r *http.Request) (string, bo
 	}
 	return userID, true
 }
+
+func GetOwner(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	userId := r.URL.Query().Get("user_id")
+	user, err := sqlite.GetUserByID(db, userId)
+	if err != nil {
+		utils.SendJSONError(w, "Wrong User Id", http.StatusBadRequest)
+	}
+	utils.SendJSONResponse(w, user, http.StatusOK)
+}
