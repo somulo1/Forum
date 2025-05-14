@@ -118,6 +118,18 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	return post, nil
 }
 
+func GetAvatar(db *sql.DB, userId string, post models.Post) error {
+	fmt.Println("profile avatar before:", post.ProfileAvatar)
+
+	query := `SELECT avatar_url FROM users  WHERE id = ? `
+	err := db.QueryRow(query, userId).Scan(
+		&post.ProfileAvatar,
+	)
+
+	fmt.Println("profile avatar:", post.ProfileAvatar)
+	return err
+}
+
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	offset := (page - 1) * limit
 
@@ -158,6 +170,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			&post.UpdatedAt,
 		)
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 		}
 		post.CategoryIDs = []int{}
@@ -203,6 +216,10 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 		posts = append(posts, *post)
 	}
 
+	// for k, v := range posts {
+	// 	fmt.Println(k,v)
+	// 	fmt.Println("----------------------------------------------")
+	// }
 	return posts, nil
 }
 

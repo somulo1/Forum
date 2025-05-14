@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    await renderPosts();
+    renderPosts();
     await renderCategories();
     setupAuthButtons();
     loadPostsLikes();
@@ -59,20 +59,21 @@ async function renderPosts() {
         const response = await fetch("http://localhost:8080/api/posts");
         if (!response.ok) throw new Error("Failed to fetch posts");
         const posts = await response.json();
+        console.log(posts);
 
         const postContainer = document.getElementById("postFeed");
         postContainer.innerHTML = "";
 
         for( const post of posts) {
 
-            const author = await fetchOwner(post.user_id);
-            console.log("Author informations:", author);
+            // const author = await fetchOwner(post.user_id);
+            // console.log("Author informations:", author);
 ;            const postDiv = document.createElement("div");
             postDiv.classList.add("post-card");
             postDiv.innerHTML = `
                 <div class="post-header">
                     <div class="post-author-info">
-                        <img class="post-author-img" src="http://localhost:8080${author.avatar_url || '../static/pictures/icon1.png'}" alt="Profile">
+                        <img class="post-author-img" src="http://localhost:8080${post.avatar_url || '../static/pictures/icon1.png'}" alt="Profile">
                         <span class="post-author-name">${post.username}</span>
                     </div>
                     <span class="post-time">${getTimeAgo(post.created_at)}</span>
