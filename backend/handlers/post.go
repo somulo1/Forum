@@ -109,14 +109,12 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	var fullPosts []models.Post
 
 	for _, post := range posts {
-		avatarURL, err := sqlite.GetAvatar(db, post.UserID)
+		userInfo, err := sqlite.GetUserByID(db, post.UserID)
 		if err != nil {
-			utils.SendJSONError(w, "Failed to fetch avatar", http.StatusInternalServerError)
+			utils.SendJSONError(w, "Failed to fetch post user information", http.StatusInternalServerError)
 			return
 		}
-		post.ProfileAvatar = avatarURL
-	fmt.Println("profile avatar in get posts:", post.ProfileAvatar)
- 
+		post.ProfileAvatar = userInfo.AvatarURL 
 		fullPosts = append(fullPosts, post)
 	}
 
@@ -229,5 +227,20 @@ func GetPostComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SendJSONResponse(w, comments, http.StatusOK)
+	var fullComments []models.Comment
+
+	for _, comment := range comments {
+		userInfo, err := sqlite.GetUserByID(db, comment.UserID)
+		if err != nil {
+			utils.SendJSONError(w, "Failed to fetch comment user information", http.StatusInternalServerError)
+			return
+		}
+		comment.UserName =userInfo.Username
+		comment.ProfileAvatar = userInfo.AvatarURL
+
+		fullComments = append(fullComments, comment)
+
+	}
+
+	utils.SendJSONResponse(w, fullComments, http.StatusOK)
 }
