@@ -2,9 +2,12 @@ document.addEventListener("DOMContentLoaded", async () => {
     await renderPosts();
     await renderCategories();
     setupAuthButtons();
-    loadLikes();
-    loadComments()
+    loadPostsLikes();
+    await loadPostsComments();
+    loadCommentsLikes();
 });
+
+
 
 // function to render nav logo
 function renderNavLogo() {
@@ -84,7 +87,8 @@ async function renderPosts() {
                     <button class="reaction-btn dislike-btn" data-id="${post.id}"><i class="fas fa-thumbs-down"></i></button>
                     <button class="reaction-btn comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i></button>
                 </div>
-                <div class="post-comment" data-id="${post.id}">
+                <div class="post-comment hidden" data-id="${post.id}">
+                <h4>Comments</h4>
                 </div>
                 
             `;
@@ -218,15 +222,16 @@ document.addEventListener("click", async (event) => {
         renderPosts();
     }
     if (event.target.matches(".comment-btn")) {
-        // Open comment modal (You can expand this function)
-        alert("Commenting feature coming soon!");
+        const postId = event.target.getAttribute('data-id');
+        const commentSection = document.querySelector(`.post-comment[data-id="${postId}"`);
+        commentSection.classList.toggle('hidden');
     }
 });
 
 
 // load post likes & dislikes
 
-async function loadLikes() {
+async function loadPostsLikes() {
 
     const reactionBtns = document.querySelectorAll(".reaction-btn");
 
@@ -241,10 +246,10 @@ async function loadLikes() {
             const result = await response.json();
 
             if (btn.classList.contains('like-btn')) {
-                btn.insertAdjacentHTML("beforeend", ` ${result.likes} Likes`);
+                btn.insertAdjacentHTML("beforeend", ` ${result.likes === 0 ? '' : result.likes} Likes`);
             }
             if (btn.classList.contains('dislike-btn')) {
-                btn.insertAdjacentHTML("beforeend", ` ${result.dislikes} Dislikes`);
+                btn.insertAdjacentHTML("beforeend", ` ${result.dislikes === 0 ? '' : result.dislikes} Dislikes`);
             }
             
         } catch (error) {
@@ -257,7 +262,7 @@ async function loadLikes() {
 
 // load comments
 
-async function loadComments() {
+async function loadPostsComments() {
 
     const commentBtns = document.querySelectorAll(".comment-btn");
 
@@ -282,17 +287,18 @@ async function loadComments() {
                 commentItem.classList.add('comment');
                 const ownerName = await fetchOwner(comment.user_id);     
                 commentItem.innerHTML = `
-                    <p> <strong>${ownerName}:</strong> ${comment.content} </p>
-                    <p>${getTimeAgo(comment.created_at)}</p>
+                    <p class="comment-content"> <strong>${ownerName}:</strong> ${comment.content} </p>
+                    <div class="comment-footer">
+                        <div class="comment-actions">
+                            <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
+                            <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
+                            <button class="reaction-btn comment-comment-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                        </div>
+                        <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
+                    </div>
                 `;
                 commentArea.appendChild(commentItem);
-            }
-            console.log(commentArea);
-
-            
-
-
-            console.log(result);           
+            }            
             
         } catch (error) {
             console.log(error);
@@ -315,3 +321,33 @@ async function fetchOwner(Oid) {
 }
 
     
+
+
+// comments reactions
+async function loadCommentsLikes() {
+
+    const reactionBtns = document.querySelectorAll(".comment-actions .reaction-btn");
+    console.log("comment reaction btns:", reactionBtns);
+
+    for (const btn of reactionBtns) {
+        const commentId = btn.getAttribute('data-id'); 
+        try {
+            const response = await fetch(`http://localhost:8080/api/likes/reactions?comment_id=${commentId}`); 
+            if (!response.ok) {
+                throw new Error(`HTTP error! Status: ${response.status}`);
+            }
+
+            const result = await response.json();
+
+            if (btn.classList.contains('comment-like-btn')) {
+                btn.insertAdjacentHTML("beforeend", ` ${result.likes === 0 ? '' : result.likes}`);
+            }
+            if (btn.classList.contains('comment-dislike-btn')) {
+                btn.insertAdjacentHTML("beforeend", ` ${result.dislikes === 0 ? '' : result.dislikes}`);
+            }
+            
+        } catch (error) {
+            console.log(error);
+        }
+    }
+}
