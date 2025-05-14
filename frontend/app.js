@@ -287,14 +287,19 @@ async function loadPostsComments() {
                 const commentItem = document.createElement('div');
                 commentItem.classList.add('comment');
                 commentItem.innerHTML = `
-                    <p class="comment-content"> <strong>${comment.username}:</strong> ${comment.content} </p>
-                    <div class="comment-footer">
-                        <div class="comment-actions">
-                            <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
-                            <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
-                            <button class="reaction-btn comment-comment-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                    <div class="comment-avatar">
+                        <img class="post-author-img" src="http://localhost:8080${comment.avatar_url}" />
+                    </div>
+                    <div class="comment-details">
+                        <p class="comment-content"> <strong>${comment.username}:</strong> ${comment.content} </p>
+                        <div class="comment-footer">
+                            <div class="comment-actions">
+                                <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
+                                <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
+                                <button class="reaction-btn comment-comment-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                            </div>
+                            <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
                         </div>
-                        <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
                     </div>
                 `;
                 commentArea.appendChild(commentItem);
