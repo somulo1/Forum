@@ -118,16 +118,19 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	return post, nil
 }
 
-func GetAvatar(db *sql.DB, userId string, post models.Post) error {
-	fmt.Println("profile avatar before:", post.ProfileAvatar)
+func GetAvatar(db *sql.DB, userId string) (string, error) {
 
+	var url string
 	query := `SELECT avatar_url FROM users  WHERE id = ? `
 	err := db.QueryRow(query, userId).Scan(
-		&post.ProfileAvatar,
+		&url,
 	)
 
-	fmt.Println("profile avatar:", post.ProfileAvatar)
-	return err
+	if err != nil {
+		return "", err
+	}
+
+	return url, nil
 }
 
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {

@@ -109,11 +109,12 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	var fullPosts []models.Post
 
 	for _, post := range posts {
-		err := sqlite.GetAvatar(db, post.UserID, post)
+		avatarURL, err := sqlite.GetAvatar(db, post.UserID)
 		if err != nil {
-			utils.SendJSONError(w, "failed to get avatar", http.StatusInternalServerError)
+			utils.SendJSONError(w, "Failed to fetch avatar", http.StatusInternalServerError)
 			return
 		}
+		post.ProfileAvatar = avatarURL
 	fmt.Println("profile avatar in get posts:", post.ProfileAvatar)
  
 		fullPosts = append(fullPosts, post)

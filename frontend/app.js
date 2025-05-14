@@ -1,5 +1,5 @@
 document.addEventListener("DOMContentLoaded", async () => {
-    renderPosts();
+    await renderPosts();
     await renderCategories();
     setupAuthButtons();
     loadPostsLikes();
@@ -65,10 +65,7 @@ async function renderPosts() {
         postContainer.innerHTML = "";
 
         for( const post of posts) {
-
-            // const author = await fetchOwner(post.user_id);
-            // console.log("Author informations:", author);
-;            const postDiv = document.createElement("div");
+            const postDiv = document.createElement("div");
             postDiv.classList.add("post-card");
             postDiv.innerHTML = `
                 <div class="post-header">
@@ -286,11 +283,11 @@ async function loadPostsComments() {
 
 
             for (const comment of result) {
+                console.log("comment: ", comment);
                 const commentItem = document.createElement('div');
                 commentItem.classList.add('comment');
-                const ownerName = await fetchOwner(comment.user_id);     
                 commentItem.innerHTML = `
-                    <p class="comment-content"> <strong>${ownerName.username}:</strong> ${comment.content} </p>
+                    <p class="comment-content"> <strong>${comment.username}:</strong> ${comment.content} </p>
                     <div class="comment-footer">
                         <div class="comment-actions">
                             <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
