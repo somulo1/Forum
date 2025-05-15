@@ -18,7 +18,7 @@ function renderNavLogo() {
     }
 
     navLogoContainer.innerHTML = `
-        <img src="../static/pictures/forum-logo.png" alt="Forum Logo" class="nav-logo">
+        <img src="http://localhost:8080/static/pictures/forum-logo.png" alt="Forum" class="nav-logo">
     `;
 }
 
