@@ -1,10 +1,9 @@
 document.addEventListener("DOMContentLoaded", async () => {
+    renderCreatePostSection();
     await renderPosts();
     await renderCategories();
     setupAuthButtons();
-    loadPostsLikes();
-    await loadPostsComments();
-    loadCommentsLikes();
+    
 });
 
 
@@ -19,7 +18,7 @@ function renderNavLogo() {
     }
 
     navLogoContainer.innerHTML = `
-        <img src="../static/pictures/forum-logo.png" alt="Forum Logo" class="nav-logo">
+        <img src="http://localhost:8080/static/pictures/forum-logo.png" alt="Forum" class="nav-logo">
     `;
 }
 
@@ -99,6 +98,9 @@ async function renderPosts() {
             }
             postContainer.appendChild(postDiv);
         }
+        await loadPostsLikes();
+        await loadPostsComments();
+        await loadCommentsLikes();
     } catch (error) {
         console.error("Error fetching posts:", error);
     }
@@ -137,13 +139,13 @@ function renderCreatePostSection() {
     });
 }
 
-// Ensure the section loads on page startup
-document.addEventListener("DOMContentLoaded", async () => {
-    renderCreatePostSection(); // Inject post creation section
-    await renderPosts();
-    await renderCategories();
-    setupAuthButtons();
-});
+// // Ensure the section loads on page startup
+// document.addEventListener("DOMContentLoaded", async () => {
+//      // Inject post creation section
+//     await renderPosts();
+//     await renderCategories();
+//     setupAuthButtons();
+// });
 
 
 // Fetch & Render Categories
@@ -210,29 +212,53 @@ function showLoginModal() {
     document.getElementById("authModal").classList.add("show");
 }
 
-// Event Delegation for Likes & Comments
 document.addEventListener("click", async (event) => {
-    if (event.target.matches(".like-btn")) {
-        const postID = event.target.dataset.id;
-        await fetch(`http://localhost:8080/api/likes/toggle`, {
+    const likeBtn = event.target.closest(".like-btn");
+    const dislikeBtn = event.target.closest(".dislike-btn");
+    const commentBtn = event.target.closest(".comment-btn");
+
+    if (likeBtn) {
+        const postID = likeBtn.dataset.id;
+        const response = await fetch(`http://localhost:8080/api/likes/toggle`, {
             method: "POST",
-            body: JSON.stringify({ post_id: parseInt(postID) }),
+            body: JSON.stringify({ post_id: parseInt(postID), type: "like" }),
             headers: { "Content-Type": "application/json" }
         });
-        renderPosts();
+        if (!response.ok){
+            alert("User not logged in");
+        }
+        await loadPostsLikes();
+        return; // prevent double-handling
     }
-    if (event.target.matches(".comment-btn")) {
-        const postId = event.target.getAttribute('data-id');
-        const commentSection = document.querySelector(`.post-comment[data-id="${postId}"`);
-        commentSection.classList.toggle('hidden');
+
+    if (dislikeBtn) {
+        const postID = dislikeBtn.dataset.id;
+        const response = await fetch(`http://localhost:8080/api/likes/toggle`, {
+            method: "POST",
+            body: JSON.stringify({ post_id: parseInt(postID), type: "dislike" }),
+            headers: { "Content-Type": "application/json" }
+        });
+        if (!response.ok){
+            alert("User not logged in");
+        }
+        await loadPostsLikes();
+        return;
+    }
+
+    if (commentBtn) {
+        const postId = commentBtn.dataset.id;
+        const commentSection = document.querySelector(`.post-comment[data-id="${postId}"]`);
+        if (commentSection) {
+            commentSection.classList.toggle('hidden');
+        }
     }
 });
+
 
 
 // load post likes & dislikes
 
 async function loadPostsLikes() {
-
     const reactionBtns = document.querySelectorAll(".reaction-btn");
 
     for (const btn of reactionBtns) {
@@ -246,17 +272,32 @@ async function loadPostsLikes() {
             const result = await response.json();
 
             if (btn.classList.contains('like-btn')) {
-                btn.insertAdjacentHTML("beforeend", ` ${result.likes === 0 ? '' : result.likes} Likes`);
+                // Optional: similar dynamic span logic for likes
+                let span = btn.querySelector(".like-count");
+                if (!span) {
+                    span = document.createElement("span");
+                    span.className = "like-count";
+                    btn.appendChild(span);
+                }
+                span.textContent = `${result.likes === 0 ? '' : result.likes + ' '}Likes`;
             }
+
             if (btn.classList.contains('dislike-btn')) {
-                btn.insertAdjacentHTML("beforeend", ` ${result.dislikes === 0 ? '' : result.dislikes} Dislikes`);
+                let span = btn.querySelector(".dislike-count");
+                if (!span) {
+                    span = document.createElement("span");
+                    span.className = "dislike-count";
+                    btn.appendChild(span);
+                }
+                span.textContent = `${result.dislikes === 0 ? '' : result.dislikes + ' '}Dislikes`;
             }
-            
+
         } catch (error) {
             console.log(error);
         }
     }
 }
+
 
 
 
@@ -279,7 +320,7 @@ async function loadPostsComments() {
 
             btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
 
-            const commentArea = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
+            const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
 
 
             for (const comment of result) {
@@ -302,8 +343,19 @@ async function loadPostsComments() {
                         </div>
                     </div>
                 `;
-                commentArea.appendChild(commentItem);
-            }            
+                commentSection.appendChild(commentItem);
+            }
+            
+            const commentBox = document.createElement('div');
+            commentBox.classList.add('comment-box');
+            commentBox.innerHTML = `
+                <form class="comment-box-form">
+                    <textarea type="text" placeholder="Write comment..." col="30" rows="1" required autocomplete="off"></textarea>
+                    <button type="submit">send</button>
+                </form>
+            `;
+
+            commentSection.appendChild(commentBox);
             
         } catch (error) {
             console.log(error);
