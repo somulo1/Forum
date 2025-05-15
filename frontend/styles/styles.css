@@ -448,6 +448,50 @@ img {
     width: auto;
  }
 
+.comment-box-form {
+    display: flex;
+    justify-content: space-evenly;
+    align-items: center;
+ }
+
+ .comment-box-form button {
+    background: none;
+    color: var(--muted-text);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    width: 6rem;
+
+ }
+
+ .comment-box-form button:hover {
+    background: var(--border-color);
+    color: var(--text-color);
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    border-radius: var(--radius);
+    transition: var(--transition);
+ }
+
+ .comment-box-form textarea, .comment-box-form button {
+    height: 40px;
+    padding: 0.6rem;
+    margin: 0.3rem 0.3rem;
+ }
+
+.comment-box-form textarea {
+    resize: none;
+    overflow: hidden;
+    padding: 0.6rem;
+    overflow-wrap: break-word;    
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    flex: 1;
+ }
+
+ .comment-box-form textarea:actifocusve {
+    outline:none;
+ }
+
 
 
 /* ===== Modals ===== */

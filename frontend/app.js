@@ -320,7 +320,7 @@ async function loadPostsComments() {
 
             btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
 
-            const commentArea = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
+            const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
 
 
             for (const comment of result) {
@@ -343,8 +343,19 @@ async function loadPostsComments() {
                         </div>
                     </div>
                 `;
-                commentArea.appendChild(commentItem);
-            }            
+                commentSection.appendChild(commentItem);
+            }
+            
+            const commentBox = document.createElement('div');
+            commentBox.classList.add('comment-box');
+            commentBox.innerHTML = `
+                <form class="comment-box-form">
+                    <textarea type="text" placeholder="Write comment..." col="30" rows="1" required autocomplete="off"></textarea>
+                    <button type="submit">send</button>
+                </form>
+            `;
+
+            commentSection.appendChild(commentBox);
             
         } catch (error) {
             console.log(error);
