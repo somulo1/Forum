@@ -87,7 +87,9 @@ async function renderPosts() {
                     <button class="reaction-btn comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i></button>
                 </div>
                 <div class="post-comment hidden" data-id="${post.id}">
-                <h4>Comments</h4>
+                    <div class="comments-container">
+                        <h4>Comments</h4>
+                    </div>              
                 </div>
                 
             `;
@@ -139,13 +141,6 @@ function renderCreatePostSection() {
     });
 }
 
-// // Ensure the section loads on page startup
-// document.addEventListener("DOMContentLoaded", async () => {
-//      // Inject post creation section
-//     await renderPosts();
-//     await renderCategories();
-//     setupAuthButtons();
-// });
 
 
 // Fetch & Render Categories
@@ -320,7 +315,7 @@ async function loadPostsComments() {
 
             btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
 
-            const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
+            const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"] .comments-container`);
 
 
             for (const comment of result) {
@@ -345,6 +340,9 @@ async function loadPostsComments() {
                 `;
                 commentSection.appendChild(commentItem);
             }
+
+            const userComment = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
+
             
             const commentBox = document.createElement('div');
             commentBox.classList.add('comment-box');
@@ -355,7 +353,8 @@ async function loadPostsComments() {
                 </form>
             `;
 
-            commentSection.appendChild(commentBox);
+            userComment.appendChild(commentBox);
+
             
         } catch (error) {
             console.log(error);

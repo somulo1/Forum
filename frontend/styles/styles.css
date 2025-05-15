@@ -506,6 +506,11 @@ img {
  }
 
 
+ .comments-container {
+    max-height: 45dvh;
+    overflow: scroll;
+ }
+
 
 /* ===== Modals ===== */
 .modal {

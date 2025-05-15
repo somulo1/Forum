@@ -135,16 +135,16 @@ CREATE TABLE IF NOT EXISTS categories (
 
 -- -- -- Insert sample comments
 -- INSERT INTO comments (user_id, post_id, content) VALUES
--- ('014b3423-b8a2-4129-ba20-85efea98e119', 2, 'Great insights on mobile security!'),
--- ('3a094c34-a8bd-4514-82dc-48b306c987eb', 1, 'This visualization guide is very helpful.'),
--- ('5f38b9c6-0dec-4075-a145-6716d85ca219', 4, 'Docker optimization tips are spot on.'),
--- ('eddca3a0-45a0-4559-a55d-63480eccaeb0', 5, 'Ethical hacking is an essential skill.'),
--- ('0bbdb9ae-5955-4269-aff1-dcf1a57a03fc', 3, 'Neural networks explained clearly.'),
--- ('5fc3bda1-8832-46fc-a26f-367954b3de36', 9, 'API design patterns are well covered.The issue is most likely due to the attribute value not being quoted. In CSS selectors, if an attribute value is purely numeric or contains special characters, it should be quoted.'),
+-- ('014b3423-b8a2-4129-ba20-85efea98e119', 8, 'Great insights on mobile security!'),
+-- ('3a094c34-a8bd-4514-82dc-48b306c987eb', 10, 'This visualization guide is very helpful.'),
+-- ('5f38b9c6-0dec-4075-a145-6716d85ca219', 9, 'Docker optimization tips are spot on.'),
+-- ('eddca3a0-45a0-4559-a55d-63480eccaeb0', 7, 'Ethical hacking is an essential skill.'),
+-- ('0bbdb9ae-5955-4269-aff1-dcf1a57a03fc', 6, 'Neural networks explained clearly.'),
+-- ('5fc3bda1-8832-46fc-a26f-367954b3de36', 5, 'API design patterns are well covered.The issue is most likely due to the attribute value not being quoted. In CSS selectors, if an attribute value is purely numeric or contains special characters, it should be quoted.'),
 -- ('16dbbb7c-46fe-4036-9cec-6d978d3d02bd', 6, 'Unreal Engine tips are very practical.'),
--- ('8cab6c13-6f8f-4a30-90db-d34c37e90457', 10, 'Serverless architecture is the future.'),
+-- ('8cab6c13-6f8f-4a30-90db-d34c37e90457', 3, 'Serverless architecture is the future.'),
 -- ('7426e07d-577f-48fe-b968-636dcfab6307', 7, 'Smart contract security is crucial.'),
--- ('71caaa69-9ae5-46e7-b77c-335bf371c6a9', 8, 'Advanced TypeScriptThe issue is most likely due to the attribute value not being quoted. In CSS selectors, if an attribute value is purely numeric or contains special characters, it should be quoted. types are fascinating.');
+-- ('71caaa69-9ae5-46e7-b77c-335bf371c6a9', 3, 'Advanced TypeScriptThe issue is most likely due to the attribute value not being quoted. In CSS selectors, if an attribute value is purely numeric or contains special characters, it should be quoted. types are fascinating.');
 
 -- -- Insert sample sessions
 -- INSERT INTO sessions (id, user_id) VALUES
