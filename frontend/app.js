@@ -59,18 +59,18 @@ async function renderPosts() {
         const response = await fetch("http://localhost:8080/api/posts");
         if (!response.ok) throw new Error("Failed to fetch posts");
         const posts = await response.json();
+        console.log(posts);
 
         const postContainer = document.getElementById("postFeed");
         postContainer.innerHTML = "";
 
-        posts.forEach(post => {
-
+        for( const post of posts) {
             const postDiv = document.createElement("div");
             postDiv.classList.add("post-card");
             postDiv.innerHTML = `
                 <div class="post-header">
                     <div class="post-author-info">
-                        <img class="post-author-img" src="${post.avatar_url || '../static/pictures/icon1.png'}" alt="Profile">
+                        <img class="post-author-img" src="http://localhost:8080${post.avatar_url || '../static/pictures/icon1.png'}" alt="Profile">
                         <span class="post-author-name">${post.username}</span>
                     </div>
                     <span class="post-time">${getTimeAgo(post.created_at)}</span>
@@ -98,7 +98,7 @@ async function renderPosts() {
                 el.classList.remove("hidden");
             }
             postContainer.appendChild(postDiv);
-        });
+        }
     } catch (error) {
         console.error("Error fetching posts:", error);
     }
@@ -283,18 +283,23 @@ async function loadPostsComments() {
 
 
             for (const comment of result) {
+                console.log("comment: ", comment);
                 const commentItem = document.createElement('div');
                 commentItem.classList.add('comment');
-                const ownerName = await fetchOwner(comment.user_id);     
                 commentItem.innerHTML = `
-                    <p class="comment-content"> <strong>${ownerName}:</strong> ${comment.content} </p>
-                    <div class="comment-footer">
-                        <div class="comment-actions">
-                            <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
-                            <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
-                            <button class="reaction-btn comment-comment-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                    <div class="comment-avatar">
+                        <img class="post-author-img" src="http://localhost:8080${comment.avatar_url}" />
+                    </div>
+                    <div class="comment-details">
+                        <p class="comment-content"> <strong>${comment.username}:</strong> ${comment.content} </p>
+                        <div class="comment-footer">
+                            <div class="comment-actions">
+                                <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
+                                <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
+                                <button class="reaction-btn comment-comment-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                            </div>
+                            <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
                         </div>
-                        <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
                     </div>
                 `;
                 commentArea.appendChild(commentItem);
@@ -313,8 +318,7 @@ async function fetchOwner(Oid) {
             throw new Error(`HTTP error! Status: ${response.status}`);
         }
         const Ownresult = await response.json();
-        return Ownresult.username;
-
+        return Ownresult;
 } catch (error) {
     console.log(error);
 }

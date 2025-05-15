@@ -118,6 +118,7 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	return post, nil
 }
 
+
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	offset := (page - 1) * limit
 
@@ -158,6 +159,7 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			&post.UpdatedAt,
 		)
 		if err != nil {
+			fmt.Println(err)
 			return nil, err
 		}
 		post.CategoryIDs = []int{}

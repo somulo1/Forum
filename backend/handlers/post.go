@@ -101,11 +101,24 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	// Fetch posts with pagination
 	posts, err := sqlite.GetPosts(db, page, limit)
 	if err != nil {
+		fmt.Println("THE ERROR IS HERE")
 		utils.SendJSONError(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
 	}
 
-	utils.SendJSONResponse(w, posts, http.StatusOK)
+	var fullPosts []models.Post
+
+	for _, post := range posts {
+		userInfo, err := sqlite.GetUserByID(db, post.UserID)
+		if err != nil {
+			utils.SendJSONError(w, "Failed to fetch post user information", http.StatusInternalServerError)
+			return
+		}
+		post.ProfileAvatar = userInfo.AvatarURL 
+		fullPosts = append(fullPosts, post)
+	}
+
+	utils.SendJSONResponse(w, fullPosts, http.StatusOK)
 }
 
 // UpdatePost updates an existing post
@@ -214,5 +227,20 @@ func GetPostComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	utils.SendJSONResponse(w, comments, http.StatusOK)
+	var fullComments []models.Comment
+
+	for _, comment := range comments {
+		userInfo, err := sqlite.GetUserByID(db, comment.UserID)
+		if err != nil {
+			utils.SendJSONError(w, "Failed to fetch comment user information", http.StatusInternalServerError)
+			return
+		}
+		comment.UserName =userInfo.Username
+		comment.ProfileAvatar = userInfo.AvatarURL
+
+		fullComments = append(fullComments, comment)
+
+	}
+
+	utils.SendJSONResponse(w, fullComments, http.StatusOK)
 }

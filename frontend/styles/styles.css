@@ -431,6 +431,23 @@ img {
     justify-content: space-between;
 }
 
+.comment {
+    display: flex;
+    flex-direction: row;
+
+    gap: 0.7rem;
+}
+
+.comment-avatar {
+    width: 50px;
+    height: auto;
+    margin-top: -10px;
+}
+ .comment-details {
+    flex: 1;
+    width: auto;
+ }
+
 
 
 /* ===== Modals ===== */
