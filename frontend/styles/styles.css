@@ -8,7 +8,8 @@
     --text-color: #1f1f1f;
     --muted-text: #777;
     --border-color: #e0e0e0;
-    --hover-color: #f1f3f5;
+    --hover-color: #1d5c7e;
+    --hover-color2: #f1f3f5;
     --radius: 12px;
     --shadow: 0 2px 10px rgba(0,0,0,0.1);
     --transition: 0.3s ease-in-out;
@@ -195,13 +196,14 @@ img {
     background: white;
     outline: none;
     transition: var(--transition);
+    resize: vertical;
 }
 .post-btn {
     white-space: nowrap;
     padding: 10px 20px;
     height: 100%;
     font-size: 1rem;
-    background: var(--nav-bar-color);
+    background: var(--bg-color);
     color: white;
     font-weight: bold;
     border: none;
@@ -215,7 +217,7 @@ img {
 }
 
 .post-btn:hover {
-    background: darken(var(--muted-text), 80%);
+    background: var(--hover-color);
 }
 .rounded-input {
     width: 100%;
@@ -252,7 +254,7 @@ img {
 #postInput:focus {
     border-color: var(--accent-color);
     box-shadow: 0px 3px 8px rgba(0, 0, 0, 0.3);
-    background: var(--hover-color);
+    
 }
 
 /* Post Option Buttons */
@@ -438,7 +440,7 @@ img {
 }
 
 .post-actions button:hover {
-    background: var(--hover-color);
+    background: var(--hover-color2);
     color: var(--text-color);
 }
 
@@ -514,7 +516,7 @@ img {
 
  .comment-box-form button {
     background: none;
-    color: var(--muted-text);
+    color: var(--bg-color); 
     border: 1px solid var(--border-color);
     border-radius: var(--radius);
     width: 6rem;
@@ -522,8 +524,8 @@ img {
  }
 
  .comment-box-form button:hover {
-    background: var(--border-color);
-    color: var(--text-color);
+    background: var(--hover-color);
+    color: var(--primary-color);
     border: 1px solid var(--border-color);
     cursor: pointer;
     border-radius: var(--radius);

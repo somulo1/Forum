@@ -128,48 +128,60 @@ function renderCreatePostSection() {
     const createPostContainer = document.getElementById("createPostSection");
 
     if (!createPostContainer) {
-        console.error("Missing #createPostSection in index.html");
+        console.error("Missing #createPostForm in index.html");
         return;
     }
 
     createPostContainer.innerHTML = `
-        <div class="create-post-box">
+        <form id="postForm" class="create-post-box" method="post" enctype="multipart/form-data">
             <!-- Title Field -->
             <div class="form-group" style="margin-bottom: 0rem;">
-               <input type="text" id="postTitle" placeholder="Post title" style="width: 100%; padding: 8px; margin-bottom: 0px; border: 1px solid #ccc; border-radius: 8px;" />
-
+                <input type="text" id="postTitle" name="title" placeholder="Post title" 
+                       style="width: 100%; padding: 8px; margin-bottom: 0px; border: 1px solid #ccc; border-radius: 8px;" />
             </div>
 
             <!-- Textarea and Post Button Side-by-Side -->
             <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem;">
-                <textarea id="postInput" placeholder="What's on your mind?" aria-label="Post content"
-                    style="flex: 1; min-height: 100px;"></textarea>
-                <button id="postBtn" class="post-btn" style="height: 40px;">Post</button>
+                <textarea id="postInput" name="content" placeholder="What's on your mind?" aria-label="Post content"
+                    style="flex: 1; min-height: 40px;"></textarea>
+                <button type="submit" id="postBtn" class="post-btn" style="height: 40px;">Post</button>
             </div>
 
             <!-- Image and Categories -->
             <div class="post-options-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
                 <!-- Image Upload -->
                 <div class="form-group" style="flex: 1;">
-                    <label for="postImage">Add Image</label>
-                    <input type="file" id="postImage" accept="image/*" />
+                    <label for="postImage" style="display: relative; align-items: center; gap: 0.5rem; cursor: pointer;">
+                    Add Image:
+                    </label>
+                    <input type="file" id="postImage" name="image" accept="image/*" />
                 </div>
 
-                <!-- Category Selector with checkboxes -->
+                <!-- Category Selector -->
                 <div class="form-group" style="flex: 1; position: relative;">
                     <label></label>
                     <div id="categoryDropdown" class="dropdown" style="position: relative;">
-                        <div id="dropdownToggle" class="dropdown-toggle" tabindex="0" style="border: 1px solid #ccc; padding: 8px; cursor: pointer;">Select categories</div>
-                        <div id="dropdownMenu" class="dropdown-menu hidden" style="position: absolute; background: white; border: 1px solid #ccc; max-height: 150px; overflow-y: auto; width: 100%; z-index: 100;">
+                        <div id="dropdownToggle" class="dropdown-toggle" tabindex="0" 
+                             style="border: 1px solid #ccc; padding: 5px; cursor: pointer;">
+                             Select categories
+                        </div>
+                        <div id="dropdownMenu" class="dropdown-menu hidden" 
+                             style="position: absolute; background: white; border: 1px solid #ccc; 
+                                    max-height: 150px; overflow-y: auto; width: 100%; z-index: 100;">
                             <!-- Categories will load here -->
                         </div>
                     </div>
                 </div>
             </div>
-        </div>
+        </form>
     `;
 
-    // Toggle dropdown menu
+    setupCategoryDropdown();
+    bindPostFormSubmit();
+}
+
+function setupCategoryDropdown() {
+    // Toggle dropdown
     document.getElementById("dropdownToggle").addEventListener("click", () => {
         const menu = document.getElementById("dropdownMenu");
         menu.classList.toggle("hidden");
@@ -184,52 +196,81 @@ function renderCreatePostSection() {
     });
 
     // Load categories dynamically
-    fetch('http://localhost:8080/api/categories') // ✅ Make sure this is the correct URL
+    fetch('http://localhost:8080/api/categories')
         .then(res => res.json())
         .then(categories => {
             const menu = document.getElementById("dropdownMenu");
             menu.innerHTML = "";
-
             categories.forEach(cat => {
                 const item = document.createElement("label");
                 item.style.display = "block";
                 item.style.padding = "5px 10px";
                 item.innerHTML = `
-                    <input type="checkbox" value="${cat.id}" />
+                    <input type="checkbox" name="category_names[]" value="${cat.name}" />
                     ${cat.name}
                 `;
                 menu.appendChild(item);
             });
         })
         .catch(err => console.error("Failed to load categories:", err));
+}
 
-    // Post button logic
-    document.getElementById("postBtn").addEventListener("click", () => {
-        const title = document.getElementById("postTitle").value.trim();
-        const content = document.getElementById("postInput").value.trim();
-        const image = document.getElementById("postImage").files[0];
-        const selectedCategories = Array.from(document.querySelectorAll('#dropdownMenu input:checked')).map(cb => cb.value);
-    
-        if (!title) {
-            alert("Title is required.");
-            return;
-        }
-    
-        if (!content) {
-            alert("Your post can't be empty!");
-            return;
-        }
-    
-        if (selectedCategories.length === 0) {
-            alert("Please select at least one category.");
-            return;
-        }
-    
-        // Example debug output
-        console.log("Post:", { title, content, image, selectedCategories });
-        alert("Post submitted!");
-    
+function bindPostFormSubmit() {
+    const form = document.getElementById("postForm");
+    if (!form) return;
+
+    form.addEventListener("submit", handlePostFormSubmit);
+}
+
+async function handlePostFormSubmit(event) {
+    event.preventDefault();
+
+    const form = event.target;
+    const formData = new FormData(form);
+
+    const title = formData.get("title").trim();
+    const content = formData.get("content").trim();
+    const selectedCategories = Array.from(form.querySelectorAll('input[name="category_names[]"]:checked'));
+
+    if (!title) {
+        alert("Title is required.");
+        return;
+    }
+
+    if (!content) {
+        alert("Your post can't be empty!");
+        return;
+    }
+
+    if (selectedCategories.length === 0) {
+        alert("Please select at least one category.");
+        return;
+    }
+
+    // Add category names to formData
+    selectedCategories.forEach(cb => {
+        formData.append("category_names[]", cb.value);
     });
+
+    try {
+        const response = await fetch('http://localhost:8080/api/posts/create', {
+            method: "POST",
+            body: formData,
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText);
+        }
+
+        const result = await response.json();
+        alert("Post created successfully!");
+        console.log("New Post:", result);
+        form.reset();
+    } catch (err) {
+        console.error("Error submitting post:", err);
+        alert("Failed to create post. Please try again.");
+    }
 }
 
 

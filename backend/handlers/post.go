@@ -52,7 +52,7 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 		ext := filepath.Ext(header.Filename)
 		filename := fmt.Sprintf("post_%s_%d%s", userID, time.Now().UnixNano(), ext)
-		dstPath := filepath.Join("static", filename)
+		dstPath := filepath.Join("static/pictures", filename)
 
 		dst, err := os.Create(dstPath)
 		if err != nil {
