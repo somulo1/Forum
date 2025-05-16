@@ -1,10 +1,15 @@
+
+let forumPosts;
 document.addEventListener("DOMContentLoaded", async () => {
     renderCreatePostSection();
-    await renderPosts();
+    forumPosts = await fetchForumPosts();
+    await renderPosts(forumPosts);
     await renderCategories();
     setupAuthButtons();
     
 });
+
+
 
 
 
@@ -51,19 +56,32 @@ function getTimeAgo(date) {
     return 'Just now.';
 }
 
+//Fetch all posts
 
-// Fetch & Render Forum Posts
-async function renderPosts() {
+async function fetchForumPosts() {
+
     try {
         const response = await fetch("http://localhost:8080/api/posts");
         if (!response.ok) throw new Error("Failed to fetch posts");
         const posts = await response.json();
-        console.log(posts);
+
+        return posts;
+    } catch (error) {
+        console.error("Error fetching posts:", error);
+    }
+
+}
+
+
+
+// Render Forum Posts
+async function renderPosts(posts) {
+    
 
         const postContainer = document.getElementById("postFeed");
         postContainer.innerHTML = "";
 
-        for( const post of posts) {
+        for(const post of posts) {
             const postDiv = document.createElement("div");
             postDiv.classList.add("post-card");
             postDiv.innerHTML = `
@@ -103,9 +121,7 @@ async function renderPosts() {
         await loadPostsLikes();
         await loadPostsComments();
         await loadCommentsLikes();
-    } catch (error) {
-        console.error("Error fetching posts:", error);
-    }
+    
 }
 // render create post
 function renderCreatePostSection() {
@@ -151,14 +167,41 @@ async function renderCategories() {
         const categories = await response.json();
 
         const categoryContainer = document.getElementById("categoryFilter");
-        categoryContainer.innerHTML = "<h3>Categories</h3>";
+        categoryContainer.innerHTML = `<h3>Categories</h3>
+                        <div class="menu-item" category-id="0"><i class="fas fa-tag"></i> All</div>
+        `;
 
         categories.forEach(category => {
             const categoryItem = document.createElement("div");
             categoryItem.classList.add("menu-item");
+            categoryItem.setAttribute("category-id", `${category.id}`);
             categoryItem.innerHTML = `<i class="fas fa-tag"></i> ${category.name}`;
             categoryContainer.appendChild(categoryItem);
         });
+
+        const categoryBtns = document.querySelectorAll("#categoryFilter .menu-item");
+        let filteredPosts = [];
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+            let catId = this.getAttribute('category-id');
+            if (parseInt(catId)==0){
+                filteredPosts = forumPosts;
+            } else {
+                forumPosts.forEach(post => {
+                let postCat = post.category_ids;
+                if (postCat.includes(parseInt(catId))) {
+                    filteredPosts.push(post);
+                }
+                });
+            }
+            
+            renderPosts(filteredPosts);
+            filteredPosts = [];
+            
+            });
+        });
+        
+        
     } catch (error) {
         console.error("Error fetching categories:", error);
     }
@@ -319,7 +362,6 @@ async function loadPostsComments() {
 
 
             for (const comment of result) {
-                console.log("comment: ", comment);
                 const commentItem = document.createElement('div');
                 commentItem.classList.add('comment');
                 commentItem.innerHTML = `
@@ -382,7 +424,6 @@ async function fetchOwner(Oid) {
 async function loadCommentsLikes() {
 
     const reactionBtns = document.querySelectorAll(".comment-actions .reaction-btn");
-    console.log("comment reaction btns:", reactionBtns);
 
     for (const btn of reactionBtns) {
         const commentId = btn.getAttribute('data-id'); 
