@@ -43,8 +43,27 @@
                 <!-- Stories will be rendered dynamically -->
             </section>
             <section id="createPostSection" class="create-post-section">
-                <!-- Create post form will be rendered dynamically -->
+                <form id="createPostForm" enctype="multipart/form-data" role="form" aria-label="Create new post">
+                    <textarea id="postContent" placeholder="What's on your mind?" aria-label="Post content" required></textarea>
+                    
+                    <!-- Image Upload -->
+                    <div class="form-group">
+                        <label for="postImage">Add Image</label>
+                        <input type="file" id="postImage" name="postImage" accept="image/*" />
+                    </div>
+                    
+                    <!-- Category Multi-Select -->
+                    <div class="form-group">
+                        <label for="postCategories">Select Categories</label>
+                        <select id="postCategories" name="categories" multiple aria-label="Post categories">
+                            <!-- Options will be populated dynamically -->
+                        </select>
+                    </div>
+            
+                    <button type="submit" id="submitPostButton">Post</button>
+                </form>
             </section>
+            
             <section id="postFeed">
                 <!-- Posts will be injected here -->
             </section>
