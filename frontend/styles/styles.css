@@ -196,6 +196,51 @@ img {
     outline: none;
     transition: var(--transition);
 }
+.post-btn {
+    white-space: nowrap;
+    padding: 10px 20px;
+    height: 100%;
+    font-size: 1rem;
+    background: var(--nav-bar-color);
+    color: white;
+    font-weight: bold;
+    border: none;
+    border-radius: var(--radius);
+    cursor: pointer;
+    transition: var(--transition);
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.post-btn:hover {
+    background: darken(var(--muted-text), 80%);
+}
+.rounded-input {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 10px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+  }
+  
+
+.post-input {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    width: 100%;
+}
+.post-input input {
+    flex: 1;
+    padding: 10px 16px;
+    font-size: 1rem;
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+    background: var(--bg-color);
+    outline: none;
+}
 
 /* Placeholder Styling */
 #postInput::placeholder {
@@ -565,5 +610,15 @@ img {
     .nav-search {
         width: 100%;
         margin-top: 0.5rem;
+    }
+}
+@media (max-width: 600px) {
+    .post-input {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .post-btn {
+        width: 100%;
     }
 }
