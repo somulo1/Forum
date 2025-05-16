@@ -1,10 +1,15 @@
+
+let forumPosts;
 document.addEventListener("DOMContentLoaded", async () => {
     renderCreatePostSection();
-    await renderPosts();
+    forumPosts = await fetchForumPosts();
+    await renderPosts(forumPosts);
     await renderCategories();
     setupAuthButtons();
     
 });
+
+
 
 
 
@@ -51,19 +56,32 @@ function getTimeAgo(date) {
     return 'Just now.';
 }
 
+//Fetch all posts
 
-// Fetch & Render Forum Posts
-async function renderPosts() {
+async function fetchForumPosts() {
+
     try {
         const response = await fetch("http://localhost:8080/api/posts");
         if (!response.ok) throw new Error("Failed to fetch posts");
         const posts = await response.json();
-        console.log(posts);
+
+        return posts;
+    } catch (error) {
+        console.error("Error fetching posts:", error);
+    }
+
+}
+
+
+
+// Render Forum Posts
+async function renderPosts(posts) {
+    
 
         const postContainer = document.getElementById("postFeed");
         postContainer.innerHTML = "";
 
-        for( const post of posts) {
+        for(const post of posts) {
             const postDiv = document.createElement("div");
             postDiv.classList.add("post-card");
             postDiv.innerHTML = `
@@ -103,44 +121,116 @@ async function renderPosts() {
         await loadPostsLikes();
         await loadPostsComments();
         await loadCommentsLikes();
-    } catch (error) {
-        console.error("Error fetching posts:", error);
-    }
+    
 }
-// render create post
+// Render create post with image upload and category selection
 function renderCreatePostSection() {
     const createPostContainer = document.getElementById("createPostSection");
 
     if (!createPostContainer) {
-        console.error("Missing #createPostContainer in index.html");
+        console.error("Missing #createPostSection in index.html");
         return;
     }
 
     createPostContainer.innerHTML = `
         <div class="create-post-box">
-            <input type="text" id="postInput" placeholder="What's on your mind?" aria-label="Create a post" />
-            <div class="post-options">
-                <button class="post-option photo-btn"><i class="fas fa-camera"></i> Photo</button>
-                <button class="post-option video-btn"><i class="fas fa-video"></i> Video</button>
-                <button class="post-option event-btn"><i class="fas fa-calendar"></i> Event</button>
+            <!-- Title Field -->
+            <div class="form-group" style="margin-bottom: 0rem;">
+               <input type="text" id="postTitle" placeholder="Post title" style="width: 100%; padding: 8px; margin-bottom: 0px; border: 1px solid #ccc; border-radius: 8px;" />
+
+            </div>
+
+            <!-- Textarea and Post Button Side-by-Side -->
+            <div style="display: flex; gap: 1rem; align-items: flex-start; margin-bottom: 1rem;">
+                <textarea id="postInput" placeholder="What's on your mind?" aria-label="Post content"
+                    style="flex: 1; min-height: 100px;"></textarea>
+                <button id="postBtn" class="post-btn" style="height: 40px;">Post</button>
+            </div>
+
+            <!-- Image and Categories -->
+            <div class="post-options-row" style="display: flex; gap: 1rem; margin-bottom: 1rem;">
+                <!-- Image Upload -->
+                <div class="form-group" style="flex: 1;">
+                    <label for="postImage">Add Image</label>
+                    <input type="file" id="postImage" accept="image/*" />
+                </div>
+
+                <!-- Category Selector with checkboxes -->
+                <div class="form-group" style="flex: 1; position: relative;">
+                    <label></label>
+                    <div id="categoryDropdown" class="dropdown" style="position: relative;">
+                        <div id="dropdownToggle" class="dropdown-toggle" tabindex="0" style="border: 1px solid #ccc; padding: 8px; cursor: pointer;">Select categories</div>
+                        <div id="dropdownMenu" class="dropdown-menu hidden" style="position: absolute; background: white; border: 1px solid #ccc; max-height: 150px; overflow-y: auto; width: 100%; z-index: 100;">
+                            <!-- Categories will load here -->
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     `;
 
-    // Attach event listeners for interactivity
-    document.querySelector(".photo-btn").addEventListener("click", () => {
-        alert("Photo upload coming soon!");
+    // Toggle dropdown menu
+    document.getElementById("dropdownToggle").addEventListener("click", () => {
+        const menu = document.getElementById("dropdownMenu");
+        menu.classList.toggle("hidden");
     });
 
-    document.querySelector(".video-btn").addEventListener("click", () => {
-        alert("Video upload feature coming soon!");
+    // Close dropdown when clicking outside
+    document.addEventListener("click", (e) => {
+        const dropdown = document.getElementById("categoryDropdown");
+        if (!dropdown.contains(e.target)) {
+            document.getElementById("dropdownMenu").classList.add("hidden");
+        }
     });
 
-    document.querySelector(".event-btn").addEventListener("click", () => {
-        alert("Event creation feature coming soon!");
+    // Load categories dynamically
+    fetch('http://localhost:8080/api/categories') // ✅ Make sure this is the correct URL
+        .then(res => res.json())
+        .then(categories => {
+            const menu = document.getElementById("dropdownMenu");
+            menu.innerHTML = "";
+
+            categories.forEach(cat => {
+                const item = document.createElement("label");
+                item.style.display = "block";
+                item.style.padding = "5px 10px";
+                item.innerHTML = `
+                    <input type="checkbox" value="${cat.id}" />
+                    ${cat.name}
+                `;
+                menu.appendChild(item);
+            });
+        })
+        .catch(err => console.error("Failed to load categories:", err));
+
+    // Post button logic
+    document.getElementById("postBtn").addEventListener("click", () => {
+        const title = document.getElementById("postTitle").value.trim();
+        const content = document.getElementById("postInput").value.trim();
+        const image = document.getElementById("postImage").files[0];
+        const selectedCategories = Array.from(document.querySelectorAll('#dropdownMenu input:checked')).map(cb => cb.value);
+    
+        if (!title) {
+            alert("Title is required.");
+            return;
+        }
+    
+        if (!content) {
+            alert("Your post can't be empty!");
+            return;
+        }
+    
+        if (selectedCategories.length === 0) {
+            alert("Please select at least one category.");
+            return;
+        }
+    
+        // Example debug output
+        console.log("Post:", { title, content, image, selectedCategories });
+        alert("Post submitted!");
+    
     });
 }
-
 
 
 // Fetch & Render Categories
@@ -151,14 +241,41 @@ async function renderCategories() {
         const categories = await response.json();
 
         const categoryContainer = document.getElementById("categoryFilter");
-        categoryContainer.innerHTML = "<h3>Categories</h3>";
+        categoryContainer.innerHTML = `<h3>Categories</h3>
+                        <div class="menu-item" category-id="0"><i class="fas fa-tag"></i> All</div>
+        `;
 
         categories.forEach(category => {
             const categoryItem = document.createElement("div");
             categoryItem.classList.add("menu-item");
+            categoryItem.setAttribute("category-id", `${category.id}`);
             categoryItem.innerHTML = `<i class="fas fa-tag"></i> ${category.name}`;
             categoryContainer.appendChild(categoryItem);
         });
+
+        const categoryBtns = document.querySelectorAll("#categoryFilter .menu-item");
+        let filteredPosts = [];
+        categoryBtns.forEach(btn => {
+            btn.addEventListener('click', function () {
+            let catId = this.getAttribute('category-id');
+            if (parseInt(catId)==0){
+                filteredPosts = forumPosts;
+            } else {
+                forumPosts.forEach(post => {
+                let postCat = post.category_ids;
+                if (postCat.includes(parseInt(catId))) {
+                    filteredPosts.push(post);
+                }
+                });
+            }
+            
+            renderPosts(filteredPosts);
+            filteredPosts = [];
+            
+            });
+        });
+        
+        
     } catch (error) {
         console.error("Error fetching categories:", error);
     }
@@ -319,7 +436,6 @@ async function loadPostsComments() {
 
 
             for (const comment of result) {
-                console.log("comment: ", comment);
                 const commentItem = document.createElement('div');
                 commentItem.classList.add('comment');
                 commentItem.innerHTML = `
@@ -382,7 +498,6 @@ async function fetchOwner(Oid) {
 async function loadCommentsLikes() {
 
     const reactionBtns = document.querySelectorAll(".comment-actions .reaction-btn");
-    console.log("comment reaction btns:", reactionBtns);
 
     for (const btn of reactionBtns) {
         const commentId = btn.getAttribute('data-id'); 
