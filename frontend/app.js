@@ -121,6 +121,7 @@ async function renderPosts(posts) {
         await loadPostsLikes();
         await loadPostsComments();
         await loadCommentsLikes();
+        handleCommentWriting();
     
 }
 // Render create post with image upload and category selection
@@ -489,7 +490,7 @@ async function loadPostsComments() {
                             <div class="comment-actions">
                                 <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
                                 <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
-                                <button class="reaction-btn comment-comment-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                                <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
                             </div>
                             <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
                         </div>
@@ -498,25 +499,81 @@ async function loadPostsComments() {
                 commentSection.appendChild(commentItem);
             }
 
-            const userComment = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
-
-            
-            const commentBox = document.createElement('div');
-            commentBox.classList.add('comment-box');
-            commentBox.innerHTML = `
-                <form class="comment-box-form">
-                    <textarea type="text" placeholder="Write comment..." col="30" rows="1" required autocomplete="off"></textarea>
-                    <button type="submit">send</button>
-                </form>
-            `;
-
-            userComment.appendChild(commentBox);
-
-            
         } catch (error) {
             console.log(error);
         }
     }
+}
+
+function handleCommentWriting() {
+    const postComments = document.querySelectorAll(`.post-card .post-comment`);
+    postComments.forEach(postCommentSection => {
+        // const postID = postCommentSection.getAttribute('data-id');
+        const commentBox = document.createElement('div');
+        commentBox.classList.add('comment-box');        
+        commentBox.innerHTML = `
+            <form class="comment-box-form">
+                <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
+                <button type="submit">send</button>
+            </form>
+    `;
+
+    postCommentSection.appendChild(commentBox);
+
+    });
+
+    // for comment replies
+
+    const commentReplyBtns = document.querySelectorAll(".comment-reply-btn");
+    commentReplyBtns.forEach(replyBtn => {
+        replyBtn.addEventListener('click', function (e) {
+            const commentID = e.currentTarget.getAttribute('data-id');
+            // console.log('target', replyBtn );
+            const postComments = e.target.closest(`.post-card .post-comment`);
+            const postID = postComments.getAttribute('data-id');
+            // console.log('post comments', postComments);
+            // console.log('postid', postID);
+            // console.log('commentid', commentID);
+            const replyPostComment = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comment-box`);
+            replyPostComment.innerHTML = "";
+            replyPostComment.innerHTML = `
+                <div class="reply-comment-header">
+                <div><p><em>Reply to ...</em></p></div>
+                <button class="close-reply btn">Close</button>
+                </div>
+                <div class="comment">
+                    <div class="comment-avatar">
+                        <img class="post-author-img" src="http://localhost:8080/avatar_url" alt=username/>
+                    </div>
+                    <div class="comment-details">
+                        <p class="comment-content"> <strong>recipient comment id(${commentID}):</strong> comment content shown here. Smart contract security is crucial. Unreal Engine tips are very practical. ............ </p>
+                        <div class="comment-footer">                            
+                            <p class="comment-time">10 min ago</p>
+                        </div>
+                    </div>
+                </div>
+                <form class="comment-box-form">
+                    <textarea type="text" placeholder="Reply to username goes here...." cols="30" rows="1" required autocomplete="off"></textarea>
+                    <button type="submit">send</button>
+                </form>
+            `;
+
+            console.log(replyPostComment);            
+        });
+    });
+    
+    // close reply section
+    const replyPostCommentSection = document.querySelectorAll(`.post-card .post-comment .comment-box .close-reply`);
+    console.log("repl", replyPostCommentSection);
+        replyPostCommentSection.forEach(rComment => function () {
+            rComment.addEventListener('click', function (e) {
+                const parentCommentSection = e.currentTarget.closest(`.post-card .post-comment`);
+                const parentPostId = parentCommentSection.getAttribute('data-id');
+                console.log("parent post", parentPostId);                        
+            });
+        });
+ 
+
 }
 
 async function fetchOwner(Oid) {
