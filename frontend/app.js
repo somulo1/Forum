@@ -510,7 +510,7 @@ function handleCommentWriting() {
     postComments.forEach(postCommentSection => {
         // const postID = postCommentSection.getAttribute('data-id');
         const commentBox = document.createElement('div');
-        commentBox.classList.add('comment-box');        
+        commentBox.classList.add('write-comment-box');        
         commentBox.innerHTML = `
             <form class="comment-box-form">
                 <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
@@ -534,12 +534,12 @@ function handleCommentWriting() {
             // console.log('post comments', postComments);
             // console.log('postid', postID);
             // console.log('commentid', commentID);
-            const replyPostComment = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comment-box`);
+            const replyPostComment = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .write-comment-box`);
             replyPostComment.innerHTML = "";
             replyPostComment.innerHTML = `
                 <div class="reply-comment-header">
                 <div><p><em>Reply to ...</em></p></div>
-                <button class="close-reply btn">Close</button>
+                <button class="close-reply">Close</button>
                 </div>
                 <div class="comment">
                     <div class="comment-avatar">
@@ -563,15 +563,25 @@ function handleCommentWriting() {
     });
     
     // close reply section
-    const replyPostCommentSection = document.querySelectorAll(`.post-card .post-comment .comment-box .close-reply`);
-    console.log("repl", replyPostCommentSection);
-        replyPostCommentSection.forEach(rComment => function () {
-            rComment.addEventListener('click', function (e) {
-                const parentCommentSection = e.currentTarget.closest(`.post-card .post-comment`);
-                const parentPostId = parentCommentSection.getAttribute('data-id');
-                console.log("parent post", parentPostId);                        
-            });
-        });
+    document.addEventListener('click', function (e) {
+
+    if (e.target.matches('.close-reply')) {
+        const parentCommentSection = e.target.closest('.post-card .post-comment');
+        console.log("parent comment section", parentCommentSection)
+        const commentReplyPostId = parentCommentSection.getAttribute('data-id');
+        console.log("post-id", commentReplyPostId);
+        const replyPostComment = document.querySelector(`.post-card .post-comment[data-id="${commentReplyPostId}"] .write-comment-box`);
+        replyPostComment. innerHTML = "";
+        replyPostComment.innerHTML = `
+            <form class="comment-box-form">
+                <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
+                <button type="submit">send</button>
+            </form>
+    `;
+
+    }
+
+    });
  
 
 }
