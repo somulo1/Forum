@@ -121,7 +121,7 @@ async function renderPosts(posts) {
         await loadPostsLikes();
         await loadPostsComments();
         await loadCommentsLikes();
-        handleCommentWriting();
+        initializeCommentForms();
     
 }
 // Render create post with image upload and category selection
@@ -486,7 +486,7 @@ async function loadPostsComments() {
                         <img class="post-author-img" src="http://localhost:8080${comment.avatar_url}" />
                     </div>
                     <div class="comment-details">
-                        <p class="comment-content"> <strong>${comment.username}:</strong> ${comment.content} </p>
+                        <p class="comment-content"> <strong><span class="comment-username">${comment.username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
                         <div class="comment-footer">
                             <div class="comment-actions">
                                 <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
@@ -506,71 +506,72 @@ async function loadPostsComments() {
     }
 }
 
-function handleCommentWriting() {
-    const postComments = document.querySelectorAll(`.post-card .post-comment`);
-    postComments.forEach(postCommentSection => {
-        // const postID = postCommentSection.getAttribute('data-id');
-        const commentBox = document.createElement('div');
-        commentBox.classList.add('write-comment-box');        
-        commentBox.innerHTML = `
+function initializeCommentForms() {
+    const commentContainers = document.querySelectorAll(`.post-card .post-comment`);
+    commentContainers.forEach(commentContainer => {
+        // const postID = commentContainer.getAttribute('data-id');
+        const commentForm = document.createElement('div');
+        commentForm.classList.add('write-comment-box');        
+        commentForm.innerHTML = `
             <form class="comment-box-form">
                 <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
                 <button type="submit">send</button>
             </form>
     `;
 
-    postCommentSection.appendChild(commentBox);
+    commentContainer.appendChild(commentForm);
 
     });
 
-    // for comment replies
+     // Reply functionality
 
     const commentReplyBtns = document.querySelectorAll(".comment-reply-btn");
     commentReplyBtns.forEach(replyBtn => {
         replyBtn.addEventListener('click', function (e) {
             const commentID = e.currentTarget.getAttribute('data-id');
-            // console.log('target', replyBtn );
             const postComments = e.target.closest(`.post-card .post-comment`);
             const postID = postComments.getAttribute('data-id');
-            // console.log('post comments', postComments);
-            // console.log('postid', postID);
-            // console.log('commentid', commentID);
-            const replyPostComment = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .write-comment-box`);
 
-            const commentatorDetails = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comment[comment-id="${commentID}"]`);
-            console.log("commentator details", commentatorDetails);
-            const commentTatorAvatar = commentatorDetails.querySelector('.comment-avatar img').getAttribute('src');
-            const commentDetails = commentatorDetails.querySelector('.comment-details .comment-content').innerHTML;
-            const commentTimeAgo = commentatorDetails.querySelector('.comment-details .comment-time').textContent;
+            const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comments-container`);
+            commentSection.classList.add('hidden');
+            
+            const replyFormContainer = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .write-comment-box`);
 
-            replyPostComment.innerHTML = "";
-            replyPostComment.innerHTML = `
+            const originalCommentElement = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comment[comment-id="${commentID}"]`);
+            console.log("commentator details", originalCommentElement);
+            const commenterAvatarSrc = originalCommentElement.querySelector('.comment-avatar img').getAttribute('src');
+            const originalCommenterUsername = originalCommentElement.querySelector('.comment-details .comment-content span.comment-username').textContent;
+            const originalCommenterText = originalCommentElement.querySelector('.comment-details .comment-content span.comment-text').textContent;
+            const commentTimestamp = originalCommentElement.querySelector('.comment-details .comment-time').textContent;
+
+            replyFormContainer.innerHTML = "";
+            replyFormContainer.innerHTML = `
                 <div class="reply-comment-header">
                     <div><p><em>Reply to ...</em></p></div>
-                    <button class="close-reply">Close</button>
+                    <button class="close-reply">Cancel</button>
                 </div>
                 <div class="comment">
                     <div class="comment-avatar">
-                        <img class="post-author-img" src="${commentTatorAvatar}" alt=username/>
+                        <img class="post-author-img" src="${commenterAvatarSrc}" alt=username/>
                     </div>
                     <div class="comment-details">
-                        ${commentDetails}
+                        <p><strong>${originalCommenterUsername}:</strong>  ${originalCommenterText}</p>
                         <div class="comment-footer">                            
-                            <p class="comment-time">${commentTimeAgo}</p>
+                            <p class="comment-time">${commentTimestamp}</p>
                         </div>
                     </div>
                 </div>
                 <form class="comment-box-form" comment-id="${commentID}">
-                    <textarea type="text" placeholder="Write your reply..." cols="30" rows="1" required autocomplete="off"></textarea>
+                    <textarea type="text" placeholder="Reply to @${originalCommenterUsername}..." cols="30" rows="1" required autocomplete="off"></textarea>
                     <button type="submit">send</button>
                 </form>
             `;
 
-            console.log(replyPostComment);            
+            console.log(replyFormContainer);            
         });
     });
     
-    // close reply section
+    // close reply handler
     document.addEventListener('click', function (e) {
 
     if (e.target.matches('.close-reply')) {
@@ -578,19 +579,22 @@ function handleCommentWriting() {
         console.log("parent comment section", parentCommentSection)
         const commentReplyPostId = parentCommentSection.getAttribute('data-id');
         console.log("post-id", commentReplyPostId);
-        const replyPostComment = document.querySelector(`.post-card .post-comment[data-id="${commentReplyPostId}"] .write-comment-box`);
-        replyPostComment. innerHTML = "";
-        replyPostComment.innerHTML = `
+        const replyFormContainer = document.querySelector(`.post-card .post-comment[data-id="${commentReplyPostId}"] .write-comment-box`);
+        replyFormContainer. innerHTML = "";
+        replyFormContainer.innerHTML = `
             <form class="comment-box-form post-id="${commentReplyPostId}">
                 <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
                 <button type="submit">send</button>
             </form>
-    `;
+         `;
+
+        const commentSection = document.querySelector(`.post-card .post-comment[data-id="${commentReplyPostId}"] .comments-container`);
+            commentSection.classList.remove('hidden');
 
     }
 
     });
- 
+
 
 }
 
