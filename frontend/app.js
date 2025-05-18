@@ -480,6 +480,7 @@ async function loadPostsComments() {
             for (const comment of result) {
                 const commentItem = document.createElement('div');
                 commentItem.classList.add('comment');
+                commentItem.setAttribute('comment-id', `${comment.id}`);
                 commentItem.innerHTML = `
                     <div class="comment-avatar">
                         <img class="post-author-img" src="http://localhost:8080${comment.avatar_url}" />
@@ -535,25 +536,32 @@ function handleCommentWriting() {
             // console.log('postid', postID);
             // console.log('commentid', commentID);
             const replyPostComment = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .write-comment-box`);
+
+            const commentatorDetails = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comment[comment-id="${commentID}"]`);
+            console.log("commentator details", commentatorDetails);
+            const commentTatorAvatar = commentatorDetails.querySelector('.comment-avatar img').getAttribute('src');
+            const commentDetails = commentatorDetails.querySelector('.comment-details .comment-content').innerHTML;
+            const commentTimeAgo = commentatorDetails.querySelector('.comment-details .comment-time').textContent;
+
             replyPostComment.innerHTML = "";
             replyPostComment.innerHTML = `
                 <div class="reply-comment-header">
-                <div><p><em>Reply to ...</em></p></div>
-                <button class="close-reply">Close</button>
+                    <div><p><em>Reply to ...</em></p></div>
+                    <button class="close-reply">Close</button>
                 </div>
                 <div class="comment">
                     <div class="comment-avatar">
-                        <img class="post-author-img" src="http://localhost:8080/avatar_url" alt=username/>
+                        <img class="post-author-img" src="${commentTatorAvatar}" alt=username/>
                     </div>
                     <div class="comment-details">
-                        <p class="comment-content"> <strong>recipient comment id(${commentID}):</strong> comment content shown here. Smart contract security is crucial. Unreal Engine tips are very practical. ............ </p>
+                        ${commentDetails}
                         <div class="comment-footer">                            
-                            <p class="comment-time">10 min ago</p>
+                            <p class="comment-time">${commentTimeAgo}</p>
                         </div>
                     </div>
                 </div>
-                <form class="comment-box-form">
-                    <textarea type="text" placeholder="Reply to username goes here...." cols="30" rows="1" required autocomplete="off"></textarea>
+                <form class="comment-box-form" comment-id="${commentID}">
+                    <textarea type="text" placeholder="Write your reply..." cols="30" rows="1" required autocomplete="off"></textarea>
                     <button type="submit">send</button>
                 </form>
             `;
@@ -573,7 +581,7 @@ function handleCommentWriting() {
         const replyPostComment = document.querySelector(`.post-card .post-comment[data-id="${commentReplyPostId}"] .write-comment-box`);
         replyPostComment. innerHTML = "";
         replyPostComment.innerHTML = `
-            <form class="comment-box-form">
+            <form class="comment-box-form post-id="${commentReplyPostId}">
                 <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
                 <button type="submit">send</button>
             </form>

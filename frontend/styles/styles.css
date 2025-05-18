@@ -584,6 +584,10 @@ img {
     max-height: 45dvh;
     overflow: scroll;
  }
+ 
+.reply-comment-header p {
+    color: var(--bg-color);
+}
 
  .close-reply {
     cursor: pointer;
