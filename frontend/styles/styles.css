@@ -580,11 +580,23 @@ img {
  }
 
 
- .comments-container {
+ .comments-container, .reply-comments-container {
     max-height: 45dvh;
+    min-height: 40dvh;
     overflow: scroll;
  }
+
+ .reply-comments-container {
+    margin-left: 1rem;
+ }
  
+ .reply-comments-container .post-author-img {
+    width: 40px;
+    height: 40px;
+    object-fit: cover;
+    margin-top: 5px;
+ }
+
 .reply-comment-header p {
     color: var(--bg-color);
 }

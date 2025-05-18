@@ -1,5 +1,69 @@
 
 let forumPosts;
+
+let sampleReplies = [
+    {
+        "id": 8,
+        "user_id": "8cab6c13-6f8f-4a30-90db-d34c37e90457",
+        "username": "james_arch",
+        "avatar_url": "/static/pictures/icon6.png",
+        "post_id": 3,
+        "content": "Serverless architecture is the future.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 10,
+        "user_id": "71caaa69-9ae5-46e7-b77c-335bf371c6a9",
+        "username": "david_block",
+        "avatar_url": "/static/pictures/icon10.png",
+        "post_id": 3,
+        "content": "Advanced TypeScriptThe issue is most likely due to the attribute value not being quoted. In CSS selectors, if an attribute value is purely numeric or contains special characters, it should be quoted. types are fascinating.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 18,
+        "user_id": "8cab6c13-6f8f-4a30-90db-d34c37e90457",
+        "username": "james_arch",
+        "avatar_url": "/static/pictures/icon6.png",
+        "post_id": 3,
+        "content": "Serverless architecture is the future.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 8,
+        "user_id": "8cab6c13-6f8f-4a30-90db-d34c37e90457",
+        "username": "james_arch",
+        "avatar_url": "/static/pictures/icon6.png",
+        "post_id": 3,
+        "content": "Serverless architecture is the future.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 10,
+        "user_id": "71caaa69-9ae5-46e7-b77c-335bf371c6a9",
+        "username": "david_block",
+        "avatar_url": "/static/pictures/icon10.png",
+        "post_id": 3,
+        "content": "Advanced TypeScriptThe issue is most likely due to the attribute value not being quoted. In CSS selectors, if an attribute value is purely numeric or contains special characters, it should be quoted. types are fascinating.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 18,
+        "user_id": "8cab6c13-6f8f-4a30-90db-d34c37e90457",
+        "username": "james_arch",
+        "avatar_url": "/static/pictures/icon6.png",
+        "post_id": 3,
+        "content": "Serverless architecture is the future.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    }
+];
+
 document.addEventListener("DOMContentLoaded", async () => {
     renderCreatePostSection();
     forumPosts = await fetchForumPosts();
@@ -500,10 +564,45 @@ async function loadPostsComments() {
                 commentSection.appendChild(commentItem);
             }
 
+            
+
         } catch (error) {
             console.log(error);
         }
     }
+}
+
+function loadReplyComments() {
+    const replyCommentsSections = document.querySelectorAll('.reply-comments-container'); 
+
+    console.log("replycommentsSection", replyCommentsSections);
+
+
+    replyCommentsSections.forEach(replyCommentsSection => {
+            sampleReplies.forEach(reply => {
+                const replyComment = document.createElement('div');
+            replyComment.classList.add('comment');
+            replyComment.innerHTML = `
+                    <div class="comment-avatar">
+                        <img class="post-author-img" src="http://localhost:8080${reply.avatar_url}" />
+                    </div>
+                    <div class="comment-details">
+                        <p class="comment-content"> <strong><span class="comment-username">${reply.username} <em>></em> alice_data</span></strong><br/><span class="comment-text">${reply.content}</span></p>
+                        <div class="comment-footer">
+                            <div class="comment-actions">
+                                <button class="reaction-btn comment-like-btn" data-id="${reply.id}"><i class="fas fa-thumbs-up"></i></button>
+                                <button class="reaction-btn comment-dislike-btn"data-id="${reply.id}"><i class="fas fa-thumbs-down"></i></button>
+                                <button class="reaction-btn comment-reply-btn" data-id="${reply.id}"><i class="fas fa-comment"></i></button>
+                            </div>
+                            <p class="comment-time">${getTimeAgo(reply.created_at)}</p>
+                        </div>
+                    </div>
+                `;
+                replyCommentsSection.appendChild(replyComment);
+            });
+
+    });
+
 }
 
 function initializeCommentForms() {
@@ -556,10 +655,17 @@ function initializeCommentForms() {
                     </div>
                     <div class="comment-details">
                         <p><strong>${originalCommenterUsername}:</strong>  ${originalCommenterText}</p>
-                        <div class="comment-footer">                            
+                        <div class="comment-footer">
+                            <div class="comment-actions">
+                                <button class="reaction-btn comment-like-btn" data-id="${commentID}"><i class="fas fa-thumbs-up"></i></button>
+                                <button class="reaction-btn comment-dislike-btn"data-id="${commentID}"><i class="fas fa-thumbs-down"></i></button>
+                                <button class="reaction-btn comment-reply-btn" data-id="${commentID}"><i class="fas fa-comment"></i></button>
+                            </div>
                             <p class="comment-time">${commentTimestamp}</p>
                         </div>
                     </div>
+                </div>
+                <div class="reply-comments-container">
                 </div>
                 <form class="comment-box-form" comment-id="${commentID}">
                     <textarea type="text" placeholder="Reply to @${originalCommenterUsername}..." cols="30" rows="1" required autocomplete="off"></textarea>
@@ -567,6 +673,7 @@ function initializeCommentForms() {
                 </form>
             `;
 
+            loadReplyComments();
             console.log(replyFormContainer);            
         });
     });
@@ -594,7 +701,6 @@ function initializeCommentForms() {
     }
 
     });
-
 
 }
 
