@@ -31,10 +31,16 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
 	comment.UserID = userID
 
-	comm, err := sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.Content)
+	// Ensure at least one of post_id or parent_comment_id is present
+	if comment.PostID == nil && comment.ParentCommentID == nil {
+		http.Error(w, "Missing post_id or parent_comment_id", http.StatusBadRequest)
+		return
+	}
+
+	// Create the comment (reply or top-level)
+	comm, err := sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.ParentCommentID, comment.Content)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to create comment", http.StatusInternalServerError)
 		return
@@ -43,6 +49,7 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, comm, http.StatusCreated)
 }
 
+
 // GetComments fetches comments for a post
 func GetComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
@@ -50,7 +57,6 @@ func GetComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Retrieve `post_id` from query parameters
 	postIDStr := r.URL.Query().Get("post_id")
 	if postIDStr == "" {
 		http.Error(w, "Missing post_id parameter", http.StatusBadRequest)
@@ -63,16 +69,16 @@ func GetComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch comments from the database
+	// Fetch all comments for the post (flat list)
 	comments, err := sqlite.GetPostComments(db, postID)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
 		return
 	}
 
-	// Send comments as JSON response
 	utils.SendJSONResponse(w, comments, http.StatusOK)
 }
+
 
 // DeleteComment deletes a comment
 func DeleteComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {

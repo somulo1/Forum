@@ -118,7 +118,6 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	return post, nil
 }
 
-
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	offset := (page - 1) * limit
 
@@ -352,30 +351,38 @@ func IsUniqueConstraintError(err error) bool {
 }
 
 // CreateComment inserts a new comment
-func CreateComment(db *sql.DB, userID string, postID int, content string) (models.Comment, error) {
+func CreateComment(db *sql.DB, userID string, postID *int, parentCommentID *int, content string) (models.Comment, error) {
 	var comment models.Comment
+
 	query := `
-		INSERT INTO comments (user_id, post_id, content)
-		VALUES (?, ?, ?)
-		RETURNING id, user_id, post_id, content, created_at
+		INSERT INTO comments (user_id, post_id, parent_comment_id, content)
+		VALUES (?, ?, ?, ?)
+		RETURNING id, user_id, post_id, parent_comment_id, content, created_at, updated_at
 	`
-	err := db.QueryRow(query, userID, postID, content).Scan(
+
+	err := db.QueryRow(query, userID, postID, parentCommentID, content).Scan(
 		&comment.ID,
 		&comment.UserID,
 		&comment.PostID,
+		&comment.ParentCommentID,
 		&comment.Content,
 		&comment.CreatedAt,
+		&comment.UpdatedAt,
 	)
+
 	return comment, err
 }
 
 // GetPostComments retrieves comments for a specific post
 func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 	rows, err := db.Query(`
-		SELECT id, user_id, content, created_at, post_id
-		FROM comments
-		WHERE post_id = ?
-		ORDER BY created_at ASC
+		SELECT 
+			c.id, c.user_id, c.post_id, c.parent_comment_id, c.content, 
+			c.created_at, c.updated_at, u.username, u.avatar_url
+		FROM comments c
+		JOIN users u ON u.id = c.user_id
+		WHERE c.post_id = ?
+		ORDER BY c.created_at ASC
 	`, postID)
 	if err != nil {
 		return nil, err
@@ -384,13 +391,46 @@ func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 
 	var comments []models.Comment
 	for rows.Next() {
-		var comment models.Comment
-		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.Content, &comment.CreatedAt, &comment.PostID); err != nil {
+		var c models.Comment
+		err := rows.Scan(
+			&c.ID,
+			&c.UserID,
+			&c.PostID,
+			&c.ParentCommentID,
+			&c.Content,
+			&c.CreatedAt,
+			&c.UpdatedAt,
+			&c.UserName,
+			&c.ProfileAvatar,
+		)
+		if err != nil {
 			return nil, err
 		}
-		comments = append(comments, comment)
+		comments = append(comments, c)
 	}
+	comments = BuildCommentTree(comments)
 	return comments, nil
+}
+
+func BuildCommentTree(comments []models.Comment) []models.Comment {
+	idMap := make(map[int]*models.Comment)
+	var roots []models.Comment
+
+	for i := range comments {
+		c := &comments[i]
+		idMap[c.ID] = c
+	}
+
+	for _, comment := range comments {
+		if comment.ParentCommentID != nil {
+			parent := idMap[*comment.ParentCommentID]
+			parent.Replies = append(parent.Replies, comment)
+		} else {
+			roots = append(roots, comment)
+		}
+	}
+
+	return roots
 }
 
 // CreateCategory inserts a new category
