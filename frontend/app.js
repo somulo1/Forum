@@ -1,5 +1,69 @@
 
 let forumPosts;
+
+let sampleReplies = [
+    {
+        "id": 8,
+        "user_id": "8cab6c13-6f8f-4a30-90db-d34c37e90457",
+        "username": "james_arch",
+        "avatar_url": "/static/pictures/icon6.png",
+        "post_id": 3,
+        "content": "Serverless architecture is the future.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 10,
+        "user_id": "71caaa69-9ae5-46e7-b77c-335bf371c6a9",
+        "username": "david_block",
+        "avatar_url": "/static/pictures/icon10.png",
+        "post_id": 3,
+        "content": "Advanced TypeScriptThe issue is most likely due to the attribute value not being quoted. In CSS selectors, if an attribute value is purely numeric or contains special characters, it should be quoted. types are fascinating.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 18,
+        "user_id": "8cab6c13-6f8f-4a30-90db-d34c37e90457",
+        "username": "james_arch",
+        "avatar_url": "/static/pictures/icon6.png",
+        "post_id": 3,
+        "content": "Serverless architecture is the future.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 8,
+        "user_id": "8cab6c13-6f8f-4a30-90db-d34c37e90457",
+        "username": "james_arch",
+        "avatar_url": "/static/pictures/icon6.png",
+        "post_id": 3,
+        "content": "Serverless architecture is the future.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 10,
+        "user_id": "71caaa69-9ae5-46e7-b77c-335bf371c6a9",
+        "username": "david_block",
+        "avatar_url": "/static/pictures/icon10.png",
+        "post_id": 3,
+        "content": "Advanced TypeScriptThe issue is most likely due to the attribute value not being quoted. In CSS selectors, if an attribute value is purely numeric or contains special characters, it should be quoted. types are fascinating.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    },
+    {
+        "id": 18,
+        "user_id": "8cab6c13-6f8f-4a30-90db-d34c37e90457",
+        "username": "james_arch",
+        "avatar_url": "/static/pictures/icon6.png",
+        "post_id": 3,
+        "content": "Serverless architecture is the future.",
+        "created_at": "2025-05-18T14:52:33Z",
+        "updated_at": "0001-01-01T00:00:00Z"
+    }
+];
+
 document.addEventListener("DOMContentLoaded", async () => {
     renderCreatePostSection();
     forumPosts = await fetchForumPosts();
@@ -121,6 +185,7 @@ async function renderPosts(posts) {
         await loadPostsLikes();
         await loadPostsComments();
         await loadCommentsLikes();
+        initializeCommentForms();
     
 }
 // Render create post with image upload and category selection
@@ -479,17 +544,18 @@ async function loadPostsComments() {
             for (const comment of result) {
                 const commentItem = document.createElement('div');
                 commentItem.classList.add('comment');
+                commentItem.setAttribute('comment-id', `${comment.id}`);
                 commentItem.innerHTML = `
                     <div class="comment-avatar">
                         <img class="post-author-img" src="http://localhost:8080${comment.avatar_url}" />
                     </div>
                     <div class="comment-details">
-                        <p class="comment-content"> <strong>${comment.username}:</strong> ${comment.content} </p>
+                        <p class="comment-content"> <strong><span class="comment-username">${comment.username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
                         <div class="comment-footer">
                             <div class="comment-actions">
                                 <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
                                 <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
-                                <button class="reaction-btn comment-comment-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                                <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
                             </div>
                             <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
                         </div>
@@ -498,25 +564,144 @@ async function loadPostsComments() {
                 commentSection.appendChild(commentItem);
             }
 
-            const userComment = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
-
             
-            const commentBox = document.createElement('div');
-            commentBox.classList.add('comment-box');
-            commentBox.innerHTML = `
-                <form class="comment-box-form">
-                    <textarea type="text" placeholder="Write comment..." col="30" rows="1" required autocomplete="off"></textarea>
-                    <button type="submit">send</button>
-                </form>
-            `;
 
-            userComment.appendChild(commentBox);
-
-            
         } catch (error) {
             console.log(error);
         }
     }
+}
+
+function loadReplyComments() {
+    const replyCommentsSections = document.querySelectorAll('.reply-comments-container'); 
+
+    console.log("replycommentsSection", replyCommentsSections);
+
+
+    replyCommentsSections.forEach(replyCommentsSection => {
+            sampleReplies.forEach(reply => {
+                const replyComment = document.createElement('div');
+            replyComment.classList.add('comment');
+            replyComment.innerHTML = `
+                    <div class="comment-avatar">
+                        <img class="post-author-img" src="http://localhost:8080${reply.avatar_url}" />
+                    </div>
+                    <div class="comment-details">
+                        <p class="comment-content"> <strong><span class="comment-username">${reply.username} <em>></em> alice_data</span></strong><br/><span class="comment-text">${reply.content}</span></p>
+                        <div class="comment-footer">
+                            <div class="comment-actions">
+                                <button class="reaction-btn comment-like-btn" data-id="${reply.id}"><i class="fas fa-thumbs-up"></i></button>
+                                <button class="reaction-btn comment-dislike-btn"data-id="${reply.id}"><i class="fas fa-thumbs-down"></i></button>
+                                <button class="reaction-btn comment-reply-btn" data-id="${reply.id}"><i class="fas fa-comment"></i></button>
+                            </div>
+                            <p class="comment-time">${getTimeAgo(reply.created_at)}</p>
+                        </div>
+                    </div>
+                `;
+                replyCommentsSection.appendChild(replyComment);
+            });
+
+    });
+
+}
+
+function initializeCommentForms() {
+    const commentContainers = document.querySelectorAll(`.post-card .post-comment`);
+    commentContainers.forEach(commentContainer => {
+        // const postID = commentContainer.getAttribute('data-id');
+        const commentForm = document.createElement('div');
+        commentForm.classList.add('write-comment-box');        
+        commentForm.innerHTML = `
+            <form class="comment-box-form">
+                <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
+                <button type="submit">send</button>
+            </form>
+    `;
+
+    commentContainer.appendChild(commentForm);
+
+    });
+
+     // Reply functionality
+
+    const commentReplyBtns = document.querySelectorAll(".comment-reply-btn");
+    commentReplyBtns.forEach(replyBtn => {
+        replyBtn.addEventListener('click', function (e) {
+            const commentID = e.currentTarget.getAttribute('data-id');
+            const postComments = e.target.closest(`.post-card .post-comment`);
+            const postID = postComments.getAttribute('data-id');
+
+            const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comments-container`);
+            commentSection.classList.add('hidden');
+            
+            const replyFormContainer = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .write-comment-box`);
+
+            const originalCommentElement = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comment[comment-id="${commentID}"]`);
+            console.log("commentator details", originalCommentElement);
+            const commenterAvatarSrc = originalCommentElement.querySelector('.comment-avatar img').getAttribute('src');
+            const originalCommenterUsername = originalCommentElement.querySelector('.comment-details .comment-content span.comment-username').textContent;
+            const originalCommenterText = originalCommentElement.querySelector('.comment-details .comment-content span.comment-text').textContent;
+            const commentTimestamp = originalCommentElement.querySelector('.comment-details .comment-time').textContent;
+
+            replyFormContainer.innerHTML = "";
+            replyFormContainer.innerHTML = `
+                <div class="reply-comment-header">
+                    <div><p><em>Reply to ...</em></p></div>
+                    <button class="close-reply">Cancel</button>
+                </div>
+                <div class="comment">
+                    <div class="comment-avatar">
+                        <img class="post-author-img" src="${commenterAvatarSrc}" alt=username/>
+                    </div>
+                    <div class="comment-details">
+                        <p><strong>${originalCommenterUsername}:</strong>  ${originalCommenterText}</p>
+                        <div class="comment-footer">
+                            <div class="comment-actions">
+                                <button class="reaction-btn comment-like-btn" data-id="${commentID}"><i class="fas fa-thumbs-up"></i></button>
+                                <button class="reaction-btn comment-dislike-btn"data-id="${commentID}"><i class="fas fa-thumbs-down"></i></button>
+                                <button class="reaction-btn comment-reply-btn" data-id="${commentID}"><i class="fas fa-comment"></i></button>
+                            </div>
+                            <p class="comment-time">${commentTimestamp}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="reply-comments-container">
+                </div>
+                <form class="comment-box-form" comment-id="${commentID}">
+                    <textarea type="text" placeholder="Reply to @${originalCommenterUsername}..." cols="30" rows="1" required autocomplete="off"></textarea>
+                    <button type="submit">send</button>
+                </form>
+            `;
+
+            loadReplyComments();
+            console.log(replyFormContainer);            
+        });
+    });
+    
+    // close reply handler
+    document.addEventListener('click', function (e) {
+
+    if (e.target.matches('.close-reply')) {
+        const parentCommentSection = e.target.closest('.post-card .post-comment');
+        console.log("parent comment section", parentCommentSection)
+        const commentReplyPostId = parentCommentSection.getAttribute('data-id');
+        console.log("post-id", commentReplyPostId);
+        const replyFormContainer = document.querySelector(`.post-card .post-comment[data-id="${commentReplyPostId}"] .write-comment-box`);
+        replyFormContainer. innerHTML = "";
+        replyFormContainer.innerHTML = `
+            <form class="comment-box-form post-id="${commentReplyPostId}">
+                <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
+                <button type="submit">send</button>
+            </form>
+         `;
+
+        const commentSection = document.querySelector(`.post-card .post-comment[data-id="${commentReplyPostId}"] .comments-container`);
+            commentSection.classList.remove('hidden');
+
+    }
+
+    });
+
 }
 
 async function fetchOwner(Oid) {
