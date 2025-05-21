@@ -33,14 +33,14 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 	comment.UserID = userID
 
-	// Ensure at least one of post_id or parent_comment_id is present
-	if comment.PostID == nil && comment.ParentCommentID == nil {
-		http.Error(w, "Missing post_id or parent_comment_id", http.StatusBadRequest)
+	// Validate input: post_id must be set for a top-level comment
+	if comment.PostID == 0 {
+		http.Error(w, "Missing post_id", http.StatusBadRequest)
 		return
 	}
 
-	// Create the comment (reply or top-level)
-	comm, err := sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.ParentCommentID, comment.Content)
+	// Create top-level comment
+	comm, err := sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.Content)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to create comment", http.StatusInternalServerError)
 		return
@@ -49,9 +49,51 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, comm, http.StatusCreated)
 }
 
+func CreateReplComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	var reply models.ReplyComment
+	err := json.NewDecoder(r.Body).Decode(&reply)
+	if err != nil {
+		http.Error(w, "Invalid reply data", http.StatusBadRequest)
+		return
+	}
+
+	// Validate user session
+	userID, ok := RequireAuth(db, w, r)
+	if !ok || userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	reply.UserID = userID
+
+	// Ensure parent_comment_id is provided
+	if reply.ParentCommentID == 0 {
+		http.Error(w, "Missing parent_comment_id", http.StatusBadRequest)
+		return
+	}
+
+	// post_id should not be included for replies
+	if r.FormValue("post_id") != "" {
+		http.Error(w, "post_id not allowed for replies", http.StatusBadRequest)
+		return
+	}
+
+	// Create the reply
+	createdReply, err := sqlite.CreateReplyComment(db, reply.UserID, reply.ParentCommentID, reply.Content)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to create reply", http.StatusInternalServerError)
+		return
+	}
+
+	utils.SendJSONResponse(w, createdReply, http.StatusCreated)
+}
 
 // GetComments fetches comments for a post
-func GetComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+func GetReplComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
@@ -78,7 +120,6 @@ func GetComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	utils.SendJSONResponse(w, comments, http.StatusOK)
 }
-
 
 // DeleteComment deletes a comment
 func DeleteComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
