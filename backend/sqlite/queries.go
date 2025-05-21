@@ -371,6 +371,26 @@ func CreateComment(db *sql.DB, userID string, postID int, content string) (model
 
 	return comment, err
 }
+func CreateReplyComment(db *sql.DB, userID string, parentCommentID int, content string) (models.ReplyComment, error) {
+	var reply models.ReplyComment
+
+	query := `
+		INSERT INTO replycomments (user_id, parent_comment_id, content)
+		VALUES (?, ?, ?)
+		RETURNING id, user_id, parent_comment_id, content, created_at, updated_at
+	`
+
+	err := db.QueryRow(query, userID, parentCommentID, content).Scan(
+		&reply.ID,
+		&reply.UserID,
+		&reply.ParentCommentID,
+		&reply.Content,
+		&reply.CreatedAt,
+		&reply.UpdatedAt,
+	)
+
+	return reply, err
+}
 
 // GetPostComments retrieves comments for a specific post
 func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
