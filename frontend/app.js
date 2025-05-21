@@ -166,7 +166,7 @@ async function renderPosts(posts) {
                 <div class="post-actions">
                     <button class="reaction-btn like-btn" data-id="${post.id}"><i class="fas fa-thumbs-up"></i></button>
                     <button class="reaction-btn dislike-btn" data-id="${post.id}"><i class="fas fa-thumbs-down"></i></button>
-                    <button class="reaction-btn comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i></button>
+                    <button class="reaction-btn comment-btn" data-id="${post.id}"><i class="fas fa-comment"></i>Comments</button>
                 </div>
                 <div class="post-comment hidden" data-id="${post.id}">
                     <div class="comments-container">
@@ -536,31 +536,13 @@ async function loadPostsComments() {
 
             const result = await response.json();
 
-            btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
+            btn.innerHTML( `<i class="fas fa-comment"></i> ${result.length == 0 ? "Comments" : result.length +" Comments"} `);
 
             const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"] .comments-container`);
 
 
             for (const comment of result) {
-                const commentItem = document.createElement('div');
-                commentItem.classList.add('comment');
-                commentItem.setAttribute('comment-id', `${comment.id}`);
-                commentItem.innerHTML = `
-                    <div class="comment-avatar">
-                        <img class="post-author-img" src="http://localhost:8080${comment.avatar_url}" />
-                    </div>
-                    <div class="comment-details">
-                        <p class="comment-content"> <strong><span class="comment-username">${comment.username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
-                        <div class="comment-footer">
-                            <div class="comment-actions">
-                                <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
-                                <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
-                                <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
-                            </div>
-                            <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
-                        </div>
-                    </div>
-                `;
+                const commentItem = createCommentDiv(comment);
                 commentSection.appendChild(commentItem);
             }
 
@@ -570,6 +552,29 @@ async function loadPostsComments() {
             console.log(error);
         }
     }
+}
+
+function createCommentDiv(comment){
+    const commentItem = document.createElement('div');
+    commentItem.classList.add('comment');
+    commentItem.setAttribute('comment-id', `${comment.id}`);
+    commentItem.innerHTML = `
+        <div class="comment-avatar">
+            <img class="post-author-img" src="http://localhost:8080${comment.avatar_url}" />
+        </div>
+        <div class="comment-details">
+            <p class="comment-content"> <strong><span class="comment-username">${comment.username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
+            <div class="comment-footer">
+                <div class="comment-actions">
+                    <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
+                    <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
+                    <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                </div>
+                <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
+            </div>
+        </div>
+    `;
+    return commentItem;
 }
 
 function loadReplyComments() {
