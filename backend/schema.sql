@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Sessions Table
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -25,7 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 -- Updated Posts Table (remove category_id)
 CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     image_url TEXT,
@@ -48,7 +48,7 @@ CREATE TABLE IF NOT EXISTS post_categories (
 -- Comments Table
 CREATE TABLE IF NOT EXISTS comments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     post_id INTEGER NOT NULL,
     content TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -56,10 +56,21 @@ CREATE TABLE IF NOT EXISTS comments (
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
 );
+-- ReplyComments Table
+CREATE TABLE IF NOT EXISTS replycomments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    parent_comment_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE
+);
 
 -- Likes Table (Supports both post and comment likes and allows dislikes)
 CREATE TABLE IF NOT EXISTS likes (
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     post_id INTEGER,
     comment_id INTEGER,
     type TEXT NOT NULL CHECK(type IN ('like', 'dislike')),
