@@ -536,7 +536,9 @@ async function loadPostsComments() {
 
             const result = await response.json();
 
-            btn.innerHTML( `<i class="fas fa-comment"></i> ${result.length == 0 ? "Comments" : result.length +" Comments"} `);
+            console.log("comments results", result);
+
+            btn.innerHTML= `<i class="fas fa-comment"></i> ${result.length == 0 ? "Comments" : result.length +" Comments"}`;
 
             const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"] .comments-container`);
 
@@ -733,7 +735,7 @@ async function loadCommentsLikes() {
     for (const btn of reactionBtns) {
         const commentId = btn.getAttribute('data-id'); 
         try {
-            const response = await fetch(`http://localhost:8080/api/likes/reactions?comment_id=${commentId}`); 
+            const response = await fetch(`http://localhost:8080/api/comments/get?post_id=${commentId}`); 
             if (!response.ok) {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
