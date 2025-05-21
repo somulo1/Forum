@@ -13,7 +13,7 @@ type Comment struct {
 	UpdatedAt     time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 
 	// Optional: Nested replies (not stored in DB, but useful for JSON/API)
-	Replies []Comment `json:"replies,omitempty" gorm:"-"`
+	Replies []ReplyComment `json:"replies,omitempty" gorm:"-"`
 }
 
 type ReplyComment struct {
