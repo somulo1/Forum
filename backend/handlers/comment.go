@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"forum/models"
 	"forum/sqlite"
@@ -93,33 +92,33 @@ func CreateReplComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 // GetComments fetches comments for a post
-func GetReplComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
-		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		return
-	}
+// func GetReplComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodGet {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
 
-	postIDStr := r.URL.Query().Get("post_id")
-	if postIDStr == "" {
-		http.Error(w, "Missing post_id parameter", http.StatusBadRequest)
-		return
-	}
+// 	postIDStr := r.URL.Query().Get("post_id")
+// 	if postIDStr == "" {
+// 		http.Error(w, "Missing post_id parameter", http.StatusBadRequest)
+// 		return
+// 	}
 
-	postID, err := strconv.Atoi(postIDStr)
-	if err != nil {
-		http.Error(w, "Invalid post_id parameter", http.StatusBadRequest)
-		return
-	}
+// 	postID, err := strconv.Atoi(postIDStr)
+// 	if err != nil {
+// 		http.Error(w, "Invalid post_id parameter", http.StatusBadRequest)
+// 		return
+// 	}
 
-	// Fetch all comments for the post (flat list)
-	comments, err := sqlite.GetPostComments(db, postID)
-	if err != nil {
-		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
-		return
-	}
+// 	// Fetch all comments for the post (flat list)
+// 	comments, err := sqlite.GetPostComments(db, postID)
+// 	if err != nil {
+// 		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
+// 		return
+// 	}
 
-	utils.SendJSONResponse(w, comments, http.StatusOK)
-}
+// 	utils.SendJSONResponse(w, comments, http.StatusOK)
+// }
 
 // DeleteComment deletes a comment
 func DeleteComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
