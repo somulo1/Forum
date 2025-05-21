@@ -351,7 +351,7 @@ func IsUniqueConstraintError(err error) bool {
 }
 
 // CreateComment inserts a new comment
-func CreateComment(db *sql.DB, userID string, postID *int, parentCommentID *int, content string) (models.Comment, error) {
+func CreateComment(db *sql.DB, userID string, postID int, content string) (models.Comment, error) {
 	var comment models.Comment
 
 	query := `
@@ -360,11 +360,10 @@ func CreateComment(db *sql.DB, userID string, postID *int, parentCommentID *int,
 		RETURNING id, user_id, post_id, parent_comment_id, content, created_at, updated_at
 	`
 
-	err := db.QueryRow(query, userID, postID, parentCommentID, content).Scan(
+	err := db.QueryRow(query, userID, postID, content).Scan(
 		&comment.ID,
 		&comment.UserID,
 		&comment.PostID,
-		&comment.ParentCommentID,
 		&comment.Content,
 		&comment.CreatedAt,
 		&comment.UpdatedAt,
