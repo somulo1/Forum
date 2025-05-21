@@ -375,9 +375,10 @@ func CreateComment(db *sql.DB, userID string, postID *int, parentCommentID *int,
 
 // GetPostComments retrieves comments for a specific post
 func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
-	rows, err := db.Query(`
+	// Step 1: Fetch top-level comments
+	commentRows, err := db.Query(`
 		SELECT 
-			c.id, c.user_id, c.post_id, c.parent_comment_id, c.content, 
+			c.id, c.user_id, c.post_id, c.content,
 			c.created_at, c.updated_at, u.username, u.avatar_url
 		FROM comments c
 		JOIN users u ON u.id = c.user_id
@@ -387,16 +388,17 @@ func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer commentRows.Close()
 
+	commentsMap := make(map[int]*models.Comment)
 	var comments []models.Comment
-	for rows.Next() {
+
+	for commentRows.Next() {
 		var c models.Comment
-		err := rows.Scan(
+		err := commentRows.Scan(
 			&c.ID,
 			&c.UserID,
 			&c.PostID,
-			&c.ParentCommentID,
 			&c.Content,
 			&c.CreatedAt,
 			&c.UpdatedAt,
@@ -407,31 +409,50 @@ func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 			return nil, err
 		}
 		comments = append(comments, c)
-	}
-	comments = BuildCommentTree(comments)
-	return comments, nil
-}
-
-func BuildCommentTree(comments []models.Comment) []models.Comment {
-	idMap := make(map[int]*models.Comment)
-	var roots []models.Comment
-
-	for i := range comments {
-		c := &comments[i]
-		idMap[c.ID] = c
+		commentsMap[c.ID] = &comments[len(comments)-1] // store pointer
 	}
 
-	for _, comment := range comments {
-		if comment.ParentCommentID != nil {
-			parent := idMap[*comment.ParentCommentID]
-			parent.Replies = append(parent.Replies, comment)
-		} else {
-			roots = append(roots, comment)
+	// Step 2: Fetch replies
+	replyRows, err := db.Query(`
+		SELECT 
+			r.id, r.user_id, r.parent_comment_id, r.content,
+			r.created_at, r.updated_at, u.username, u.avatar_url
+		FROM replycomments r
+		JOIN users u ON u.id = r.user_id
+		WHERE r.parent_comment_id IN (
+			SELECT id FROM comments WHERE post_id = ?
+		)
+		ORDER BY r.created_at ASC
+	`, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer replyRows.Close()
+
+	for replyRows.Next() {
+		var r models.ReplyComment
+		err := replyRows.Scan(
+			&r.ID,
+			&r.UserID,
+			&r.ParentCommentID,
+			&r.Content,
+			&r.CreatedAt,
+			&r.UpdatedAt,
+			&r.UserName,
+			&r.ProfileAvatar,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if parent, ok := commentsMap[r.ParentCommentID]; ok {
+			parent.Replies = append(parent.Replies, r)
 		}
 	}
 
-	return roots
+	return comments, nil
 }
+
 
 // CreateCategory inserts a new category
 func CreateCategory(db *sql.DB, name string) error {
