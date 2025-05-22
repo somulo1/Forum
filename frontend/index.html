@@ -7,74 +7,142 @@
     <link rel="icon" href="http://localhost:8080/static/pictures/forum-logo.png" type="image/x-icon"/>
     <link rel="stylesheet" href="styles/styles.css" />
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
+    <style>
+        /* Add blur effect styles */
+        .main-container {
+            transition: filter 0.3s ease-in-out;
+        }
+        
+        .main-container.blur {
+            filter: blur(5px) brightness(0.7);
+            pointer-events: none;
+        }
+    </style>
 </head>
 <body>
-    <!-- Navbar -->
-    <nav class="navbar" role="navigation" aria-label="Main navigation">
-        <div id="navLogoContainer"></div> <!-- Placeholder for dynamic logo -->
-        <!-- <div class="nav-brand" id="navBrand">Forum</div> -->
-        <div class="nav-search" role="search">
-            <i class="fas fa-search search-icon"></i>
-            <input type="text" id="searchInput" placeholder="Search..." aria-label="Search forum" />
-        </div>
-        <div class="nav-auth" id="navAuth" role="group" aria-label="User Authentication">
-            <!-- Auth buttons will be inserted here -->
-        </div>
-    </nav>
-    
-
-    <!-- Main Layout -->
-    <div class="container">
-        <!-- Left Sidebar -->
-        <aside class="sidebar left-sidebar" aria-label="Sidebar navigation">
-            <div class="profile-section" id="userProfile">
-                <!-- User profile will load dynamically -->
+    <div class="main-container">
+        <!-- Navbar -->
+        <nav class="navbar" role="navigation" aria-label="Main navigation">
+            <div id="navLogoContainer"></div> <!-- Placeholder for dynamic logo -->
+            <!-- <div class="nav-brand" id="navBrand">Forum</div> -->
+            <div class="nav-search" role="search">
+                <i class="fas fa-search search-icon"></i>
+                <input type="text" id="searchInput" placeholder="Search..." aria-label="Search forum" />
             </div>
-            <nav class="menu-section" aria-label="Sidebar menu">
-                <a href="/posts" class="menu-item active" data-view="feed"><i class="fas fa-home"></i> Home</a>
-                <a href="#" class="menu-item" data-view="profile"><i class="fas fa-user"></i> Profile</a>
-                <a href="/profile" class="menu-item" data-view="trending"><i class="fas fa-fire"></i> Trending</a>
-                <a href="/saved" class="menu-item" data-view="saved"><i class="fas fa-bookmark"></i> Saved</a>
-            </nav>
-        </aside>
+            <div class="nav-auth" id="navAuth" role="group" aria-label="User Authentication">
+                <!-- Auth buttons will be inserted here -->
+            </div>
+        </nav>
+        
 
-        <!-- Main Content -->
-        <main class="main-content" id="mainContent" role="main">
-            <section id="storySection" class="story-section">
-                <!-- Stories will be rendered dynamically -->
-            </section>
-            <section id="createPostSection" class="create-post-section">
-            </section>
-            
-            <section id="postFeed">
-                <!-- Posts will be injected here -->
-            </section>
-        </main>
+        <!-- Main Layout -->
+        <div class="container">
+            <!-- Left Sidebar -->
+            <aside class="sidebar left-sidebar" aria-label="Sidebar navigation">
+                <div class="profile-section" id="userProfile">
+                    <!-- User profile will load dynamically -->
+                </div>
+                <nav class="menu-section" aria-label="Sidebar menu">
+                    <a href="/posts" class="menu-item active" data-view="feed"><i class="fas fa-home"></i> Home</a>
+                    <a href="#" class="menu-item" data-view="profile"><i class="fas fa-user"></i> Profile</a>
+                    <a href="/profile" class="menu-item" data-view="trending"><i class="fas fa-fire"></i> Trending</a>
+                    <a href="/saved" class="menu-item" data-view="saved"><i class="fas fa-bookmark"></i> Saved</a>
+                </nav>
+            </aside>
 
-        <!-- Right Sidebar -->
-        <aside class="sidebar right-sidebar" aria-label="Right sidebar">
-            <section id="categoryFilter" class="category-section">
-                <h3>Categories</h3>
-                <!-- Dynamic category filters -->
-            </section>
-            <section id="trendingSection" class="trending-section">
-                <h3>Trending</h3>
-                <!-- Trending topics dynamically -->
-            </section>
-            <section id="suggestedUsers" class="suggested-section">
-                <h3>Suggested Users</h3>
-                <!-- Suggested users dynamically -->
-            </section>
-        </aside>
+            <!-- Main Content -->
+            <main class="main-content" id="mainContent" role="main">
+                <section id="storySection" class="story-section">
+                    <!-- Stories will be rendered dynamically -->
+                </section>
+                <section id="createPostSection" class="create-post-section">
+                </section>
+                
+                <section id="postFeed">
+                    <!-- Posts will be injected here -->
+                </section>
+            </main>
+
+            <!-- Right Sidebar -->
+            <aside class="sidebar right-sidebar" aria-label="Right sidebar">
+                <section id="categoryFilter" class="category-section">
+                    <h3>Categories</h3>
+                    <!-- Dynamic category filters -->
+                </section>
+                <section id="trendingSection" class="trending-section">
+                    <h3>Trending</h3>
+                    <!-- Trending topics dynamically -->
+                </section>
+                <section id="suggestedUsers" class="suggested-section">
+                    <h3>Suggested Users</h3>
+                    <!-- Suggested users dynamically -->
+                </section>
+            </aside>
+        </div>
     </div>
 
     <!-- Modals -->
     <div id="modalsContainer">
         <!-- Auth Modal -->
         <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
-            <div class="modal-content">
-                <span class="close" id="closeModal" role="button" aria-label="Close authentication modal">&times;</span>
-                <div id="authForms"></div>
+            <div class="modal-content auth-modal-content">
+                <div class="cont">
+                    <button class="close-btn" aria-label="Close">&times;</button>
+                    <div class="form sign-in">
+                        <h2>Welcome back</h2>
+                        <label>
+                            <span>Email</span>
+                            <input type="email" required />
+                        </label>
+                        <label>
+                            <span>Password</span>
+                            <input type="password" required />
+                        </label>
+                        <button type="button" class="submit">Sign In</button>
+                        <div class="mobile-toggle">
+                            <button type="button" class="toggle-signup">Need an account? Sign Up</button>
+                        </div>
+                    </div>
+                    <div class="sub-cont">
+                        <div class="img">
+                            <div class="img-text m-up">
+                                <h2>New here?</h2>
+                                <p>Sign up and discover great amount of new opportunities!</p>
+                            </div>
+                            <div class="img-text m-in">
+                                <h2>One of us?</h2>
+                                <p>If you already have an account, just sign in. We've missed you!</p>
+                            </div>
+                            <div class="img-btn">
+                                <span class="m-up">Sign Up</span>
+                                <span class="m-in">Sign In</span>
+                            </div>
+                        </div>
+                        <div class="form sign-up">
+                            <h2>Time to feel like home</h2>
+                            <label>
+                                <span>Name</span>
+                                <input type="text" required />
+                            </label>
+                            <label>
+                                <span>Email</span>
+                                <input type="email" required />
+                            </label>
+                            <label>
+                                <span>Password</span>
+                                <input type="password" required />
+                            </label>
+                            <label>
+                                <span>Confirm Password</span>
+                                <input type="password" required />
+                            </label>
+                            <button type="button" class="submit">Sign Up</button>
+                            <div class="mobile-toggle">
+                                <button type="button" class="toggle-signin">Already have an account? Sign In</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
 
