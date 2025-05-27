@@ -69,6 +69,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await renderPosts(forumPosts);
     await renderCategories();
     setupAuthButtons();
+    setupMenuHandlers();
 });
 
 
@@ -283,12 +284,16 @@ async function handlePostFormSubmit(event) {
     event.preventDefault();
 
     const form = event.target;
-    const formData = new FormData(form);
+    const formData = new FormData();
 
-    const title = formData.get("title").trim();
-    const content = formData.get("content").trim();
-    const selectedCategories = Array.from(form.querySelectorAll('input[name="category_names[]"]:checked'));
+    // Get form values
+    const title = form.querySelector('#postTitle').value.trim();
+    const content = form.querySelector('#postInput').value.trim();
+    const imageInput = form.querySelector('#postImage');
+    const selectedCategories = Array.from(form.querySelectorAll('input[name="category_names[]"]:checked'))
+        .map(cb => cb.value);
 
+    // Validate inputs
     if (!title) {
         alert("Title is required.");
         return;
@@ -304,29 +309,64 @@ async function handlePostFormSubmit(event) {
         return;
     }
 
-    // Add category names to formData
-    selectedCategories.forEach(cb => {
-        formData.append("category_names[]", cb.value);
-    });
+    // Build FormData
+    formData.append("title", title);
+    formData.append("content", content);
+    if (imageInput && imageInput.files[0]) {
+        formData.append("image", imageInput.files[0]);
+    }
+    formData.append("category_names", JSON.stringify(selectedCategories));
+
+    // Log what we're sending
+    console.log("Sending post with:");
+    console.log("- Title:", title);
+    console.log("- Content:", content);
+    console.log("- Categories:", selectedCategories);
+    if (imageInput.files[0]) {
+        console.log("- Image:", imageInput.files[0].name);
+    }
 
     try {
         const response = await fetch('http://localhost:8080/api/posts/create', {
             method: "POST",
             body: formData,
+            credentials: "include"
         });
 
-        if (!response.ok) {
-            const errorText = await response.text();
-            throw new Error(errorText);
+        // Log raw response for debugging
+        const responseText = await response.text();
+        console.log("Server response:", responseText);
+
+        let responseData;
+        try {
+            responseData = JSON.parse(responseText);
+        } catch (e) {
+            console.error("Server returned non-JSON response:", responseText);
+            throw new Error("Invalid server response format");
         }
 
-        const result = await response.json();
-        alert("Post created successfully!");
-        console.log("New Post:", result);
+        if (!response.ok) {
+            if (response.status === 401) {
+                alert("Please log in to create a post.");
+                const authModal = document.getElementById('authModal');
+                document.querySelector('.main-container').classList.add('blur');
+                authModal.classList.remove('hidden');
+                document.querySelector('.cont').classList.remove('s-signup');
+                return;
+            }
+            throw new Error(responseData.error || 'Server error occurred');
+        }
+
+        // Success! Refresh posts and reset form
+        forumPosts = await fetchForumPosts();
+        await renderPosts(forumPosts);
+        
         form.reset();
+        document.getElementById("dropdownMenu").classList.add("hidden");
+        // alert("Post created successfully!");
     } catch (err) {
         console.error("Error submitting post:", err);
-        alert("Failed to create post. Please try again.");
+        alert(`Failed to create post: ${err.message}`);
     }
 }
 
@@ -338,8 +378,11 @@ async function renderCategories() {
         const categories = await response.json();
 
         const categoryContainer = document.getElementById("categoryFilter");
-        categoryContainer.innerHTML = `<h3>Categories</h3>
-                        <div class="menu-item" category-id="0"><i class="fas fa-tag"></i> All</div>
+        categoryContainer.innerHTML = `
+            <h3>Categories</h3>
+            <div class="menu-item active" category-id="0">
+                <i class="fas fa-tag"></i> All
+            </div>
         `;
 
         categories.forEach(category => {
@@ -352,27 +395,46 @@ async function renderCategories() {
 
         const categoryBtns = document.querySelectorAll("#categoryFilter .menu-item");
         let filteredPosts = [];
+        
         categoryBtns.forEach(btn => {
-            btn.addEventListener('click', function () {
-            let catId = this.getAttribute('category-id');
-            if (parseInt(catId)==0){
-                filteredPosts = forumPosts;
-            } else {
-                forumPosts.forEach(post => {
-                let postCat = post.category_ids;
-                if (postCat.includes(parseInt(catId))) {
-                    filteredPosts.push(post);
+            btn.addEventListener('click', async function() {
+                // Remove active class from all buttons
+                categoryBtns.forEach(b => b.classList.remove('active'));
+                // Add active class to clicked button
+                this.classList.add('active');
+
+                const catId = this.getAttribute('category-id');
+                const postFeed = document.getElementById('postFeed');
+
+                // Add loading state
+                postFeed.style.opacity = '0.5';
+                postFeed.style.transition = 'opacity 0.3s ease';
+
+                try {
+                    if (parseInt(catId) === 0) {
+                        filteredPosts = forumPosts;
+                    } else {
+                        filteredPosts = forumPosts.filter(post => 
+                            post.category_ids && post.category_ids.includes(parseInt(catId))
+                        );
+                    }
+
+                    // Scroll to top smoothly
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+
+                    // Render the filtered posts
+                    await renderPosts(filteredPosts);
+
+                    // Remove loading state
+                    postFeed.style.opacity = '1';
+                } catch (error) {
+                    console.error("Error filtering posts:", error);
+                    postFeed.style.opacity = '1';
                 }
-                });
-            }
-            
-            renderPosts(filteredPosts);
-            filteredPosts = [];
-            
+
+                filteredPosts = [];
             });
         });
-        
-        
     } catch (error) {
         console.error("Error fetching categories:", error);
     }
@@ -463,7 +525,7 @@ document.addEventListener("click", async (event) => {
 
     if (commentBtn) {
         const postId = commentBtn.dataset.id;
-        const commentSection = document.querySelector(`.post-comment[data-id="${postId}"]`);
+        const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"]`);
         if (commentSection) {
             commentSection.classList.toggle('hidden');
         }
@@ -515,7 +577,6 @@ async function loadPostsLikes() {
 // load comments
 
 async function loadPostsComments() {
-
     const commentBtns = document.querySelectorAll(".comment-btn");
 
     for (const btn of commentBtns) {
@@ -526,41 +587,45 @@ async function loadPostsComments() {
                 throw new Error(`HTTP error! Status: ${response.status}`);
             }
 
-
             const result = await response.json();
-
-            btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
-
-            const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"] .comments-container`);
-
-
-            for (const comment of result) {
-                const commentItem = document.createElement('div');
-                commentItem.classList.add('comment');
-                commentItem.setAttribute('comment-id', `${comment.id}`);
-                commentItem.innerHTML = `
-                    <div class="comment-avatar">
-                        <img class="post-author-img" src="http://localhost:8080${comment.avatar_url}" />
-                    </div>
-                    <div class="comment-details">
-                        <p class="comment-content"> <strong><span class="comment-username">${comment.username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
-                        <div class="comment-footer">
-                            <div class="comment-actions">
-                                <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
-                                <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
-                                <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
-                            </div>
-                            <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
-                        </div>
-                    </div>
-                `;
-                commentSection.appendChild(commentItem);
-            }
-
             
+            // Add null check before accessing length
+            if (result && Array.isArray(result)) {
+                btn.insertAdjacentHTML("beforeend", ` ${result.length} Comments`);
 
+                const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"] .comments-container`);
+                if (!commentSection) {
+                    console.error(`Comment section not found for post ${postId}`);
+                    continue;
+                }
+
+                for (const comment of result) {
+                    const commentItem = document.createElement('div');
+                    commentItem.classList.add('comment');
+                    commentItem.setAttribute('comment-id', `${comment.id}`);
+                    commentItem.innerHTML = `
+                        <div class="comment-avatar">
+                            <img class="post-author-img" src="http://localhost:8080${comment.avatar_url || '/static/pictures/default-avatar.png'}" />
+                        </div>
+                        <div class="comment-details">
+                            <p class="comment-content"> <strong><span class="comment-username">${comment.username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
+                            <div class="comment-footer">
+                                <div class="comment-actions">
+                                    <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
+                                    <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
+                                    <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                                </div>
+                                <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
+                            </div>
+                        </div>
+                    `;
+                    commentSection.appendChild(commentItem);
+                }
+            } else {
+                console.warn(`Invalid response format for post ${postId} comments:`, result);
+            }
         } catch (error) {
-            console.log(error);
+            console.error(`Error loading comments for post ${postId}:`, error);
         }
     }
 }
@@ -601,21 +666,144 @@ function loadReplyComments() {
 function initializeCommentForms() {
     const commentContainers = document.querySelectorAll(`.post-card .post-comment`);
     commentContainers.forEach(commentContainer => {
-        // const postID = commentContainer.getAttribute('data-id');
+        const postID = commentContainer.getAttribute('data-id');
         const commentForm = document.createElement('div');
         commentForm.classList.add('write-comment-box');        
         commentForm.innerHTML = `
-            <form class="comment-box-form">
+            <form class="comment-box-form" data-post-id="${postID}">
                 <textarea type="text" placeholder="Write comment..." cols="30" rows="1" required autocomplete="off"></textarea>
                 <button type="submit">send</button>
             </form>
-    `;
+        `;
 
-    commentContainer.appendChild(commentForm);
+        commentContainer.appendChild(commentForm);
 
+        // Add submit handler for the comment form
+        const form = commentForm.querySelector('form');
+        form.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const textarea = this.querySelector('textarea');
+            const content = textarea.value.trim();
+            const postId = this.getAttribute('data-post-id');
+
+            if (!content) {
+                alert('Comment cannot be empty');
+                return;
+            }
+
+            if (!postId) {
+                console.error('No post ID found');
+                alert('Error: Could not determine which post to comment on');
+                return;
+            }
+
+            // Log the data we're about to send
+            const commentData = {
+                post_id: parseInt(postId),
+                content: content,
+                parent_id: null  // Add this for top-level comments
+            };
+            // console.log('Sending comment data:', commentData);
+
+            try {
+                const response = await fetch('http://localhost:8080/api/comments/create', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify(commentData)
+                });
+
+                // Get the response text first for debugging
+                const responseText = await response.text();
+                // console.log('Server response:', responseText);
+
+                // Try to parse the response as JSON
+                let responseData;
+                try {
+                    responseData = JSON.parse(responseText);
+                } catch (e) {
+                    console.error('Failed to parse server response:', responseText);
+                    throw new Error('Invalid server response format');
+                }
+
+                if (!response.ok) {
+                    if (response.status === 401) {
+                        alert("Please log in to comment.");
+                        const authModal = document.getElementById('authModal');
+                        document.querySelector('.main-container').classList.add('blur');
+                        authModal.classList.remove('hidden');
+                        document.querySelector('.cont').classList.remove('s-signup');
+                        return;
+                    }
+                    throw new Error(responseData?.error || 'Failed to create comment');
+                }
+
+                // Clear the textarea
+                textarea.value = '';
+
+                // Refresh comments for this post
+                const commentBtn = document.querySelector(`.post-card .comment-btn[data-id="${postId}"]`);
+                const commentSection = document.querySelector(`.post-card .post-comment[data-id="${postId}"] .comments-container`);
+                
+                if (!commentSection) {
+                    console.error('Comment section not found after successful comment creation');
+                    return;
+                }
+                
+                // Clear existing comments
+                commentSection.innerHTML = '<h4>Comments</h4>';
+                
+                // Fetch and display updated comments
+                const commentsResponse = await fetch(`http://localhost:8080/api/comments/get?post_id=${postId}`);
+                if (!commentsResponse.ok) {
+                    throw new Error('Failed to fetch updated comments');
+                }
+                
+                const comments = await commentsResponse.json();
+                
+                if (!comments || !Array.isArray(comments)) {
+                    console.error('Invalid comments data received:', comments);
+                    return;
+                }
+
+                commentBtn.innerHTML = `<i class="fas fa-comment"></i> ${comments.length} Comments`;
+
+                for (const comment of comments) {
+                    const commentItem = document.createElement('div');
+                    commentItem.classList.add('comment');
+                    commentItem.setAttribute('comment-id', `${comment.id}`);
+                    commentItem.innerHTML = `
+                        <div class="comment-avatar">
+                            <img class="post-author-img" src="http://localhost:8080${comment.avatar_url || '/static/pictures/default-avatar.png'}" />
+                        </div>
+                        <div class="comment-details">
+                            <p class="comment-content"> <strong><span class="comment-username">${comment.username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
+                            <div class="comment-footer">
+                                <div class="comment-actions">
+                                    <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
+                                    <button class="reaction-btn comment-dislike-btn"data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
+                                    <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                                </div>
+                                <p class="comment-time">${getTimeAgo(comment.created_at)}</p>
+                            </div>
+                        </div>
+                    `;
+                    commentSection.appendChild(commentItem);
+                }
+
+                // Refresh comment likes
+                await loadCommentsLikes();
+
+            } catch (error) {
+                console.error('Error posting comment:', error);
+                alert(`Failed to post comment: ${error.message}`);
+            }
+        });
     });
 
-     // Reply functionality
+    // Reply functionality
 
     const commentReplyBtns = document.querySelectorAll(".comment-reply-btn");
     commentReplyBtns.forEach(replyBtn => {
@@ -1020,3 +1208,168 @@ document.addEventListener("DOMContentLoaded", function() {
         }
     });
 });
+
+// Add this new function
+function setupMenuHandlers() {
+    const menuItems = document.querySelectorAll('.menu-section .menu-item');
+    const postFeed = document.getElementById('postFeed');
+    
+    menuItems.forEach(item => {
+        item.addEventListener('click', async function() {
+            // Remove active class from all menu items
+            menuItems.forEach(mi => mi.classList.remove('active'));
+            // Add active class to clicked item
+            this.classList.add('active');
+
+            // Add loading state
+            postFeed.style.opacity = '0.5';
+            postFeed.style.transition = 'opacity 0.3s ease';
+
+            const view = this.getAttribute('data-view');
+            
+            try {
+                switch(view) {
+                    case 'home':
+                        // Reuse existing fetch and render functionality
+                        forumPosts = await fetchForumPosts();
+                        await renderPosts(forumPosts);
+                        break;
+
+                    case 'profile':
+                        const userResponse = await fetch('http://localhost:8080/api/user', {
+                            credentials: 'include'
+                        });
+                        
+                        if (!userResponse.ok) {
+                            throw new Error('Please log in to view your profile');
+                        }
+                        
+                        const userData = await userResponse.json();
+                        
+                        // Filter posts by user_id
+                        const userPosts = forumPosts.filter(post => post.user_id === userData.id);
+                        
+                        // Get user's total likes
+                        let totalLikes = 0;
+                        await Promise.all(userPosts.map(async (post) => {
+                            try {
+                                const response = await fetch(`http://localhost:8080/api/likes/reactions?post_id=${post.id}`);
+                                if (response.ok) {
+                                    const likeData = await response.json();
+                                    totalLikes += likeData.likes || 0;
+                                }
+                            } catch (error) {
+                                console.error(`Error fetching likes for post ${post.id}:`, error);
+                            }
+                        }));
+
+                        // Create enhanced profile header with stats
+                        const profileHeader = document.createElement('div');
+                        profileHeader.classList.add('profile-header', 'post-card');
+                        profileHeader.innerHTML = `
+                            <div class="profile-banner" style="background: var(--bg-color); padding: 2rem; border-radius: var(--radius) var(--radius) 0 0;">
+                                <div class="profile-avatar" style="text-align: center; margin-bottom: 1rem;">
+                                    <img src="http://localhost:8080${userData.avatar_url || '/static/pictures/default-avatar.png'}" 
+                                         alt="Profile" 
+                                         style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--primary-color); object-fit: cover;">
+                                </div>
+                                <div class="profile-info" style="text-align: center; color: var(--primary-color);">
+                                    <h2 style="margin-bottom: 0.5rem;">${userData.username}</h2>
+                                    <p style="color: rgba(255,255,255,0.8);">${userData.email}</p>
+                                </div>
+                            </div>
+                            <div class="profile-stats" style="display: flex; justify-content: space-around; padding: 1rem; border-top: 1px solid var(--border-color);">
+                                <div class="stat-item" style="text-align: center;">
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${userPosts.length}</div>
+                                    <div style="color: var(--muted-text);">Posts</div>
+                                </div>
+                                <div class="stat-item" style="text-align: center;">
+                                    <div style="font-size: 1.5rem; font-weight: bold;">${totalLikes}</div>
+                                    <div style="color: var(--muted-text);">Total Likes</div>
+                                </div>
+                            </div>
+                            <div class="profile-posts-header" style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                                <h3>My Posts</h3>
+                            </div>
+                        `;
+                        
+                        postFeed.innerHTML = '';
+                        postFeed.appendChild(profileHeader);
+                        await renderPosts(userPosts);
+                        break;
+
+                    case 'trending':
+                        // Get all posts with their likes
+                        const postsWithLikes = await Promise.all(forumPosts.map(async (post) => {
+                            try {
+                                const response = await fetch(`http://localhost:8080/api/likes/reactions?post_id=${post.id}`);
+                                if (!response.ok) throw new Error('Failed to fetch likes');
+                                const likeData = await response.json();
+                                return { ...post, totalLikes: likeData.likes || 0 };
+                            } catch (error) {
+                                console.error(`Error fetching likes for post ${post.id}:`, error);
+                                return { ...post, totalLikes: 0 };
+                            }
+                        }));
+
+                        // Sort by likes and get top 5
+                        const trendingPosts = postsWithLikes
+                            .sort((a, b) => b.totalLikes - a.totalLikes)
+                            .slice(0, 5);
+
+                        // Create trending header
+                        const trendingHeader = document.createElement('div');
+                        trendingHeader.classList.add('trending-header', 'post-card');
+                        trendingHeader.innerHTML = `
+                            <div class="post-header">
+                                <div class="post-author-info">
+                                    <i class="fas fa-fire" style="font-size: 2rem; color: var(--accent-color);"></i>
+                                    <span class="post-author-name">Top 5 Trending Posts</span>
+                                </div>
+                            </div>
+                        `;
+                        
+                        postFeed.innerHTML = '';
+                        postFeed.appendChild(trendingHeader);
+                        await renderPosts(trendingPosts);
+                        break;
+
+                    case 'saved':
+                        // Reuse post-card styling for saved posts message
+                        const savedHeader = document.createElement('div');
+                        savedHeader.classList.add('saved-header', 'post-card');
+                        savedHeader.innerHTML = `
+                            <div class="post-header">
+                                <div class="post-author-info">
+                                    <i class="fas fa-bookmark" style="font-size: 2rem; color: var(--accent-color);"></i>
+                                    <span class="post-author-name">Saved Posts</span>
+                                </div>
+                            </div>
+                            <div class="post-content">
+                                <p>The saved posts feature will be implemented soon! Stay tuned for updates.</p>
+                                <p>You'll be able to save your favorite posts and find them here.</p>
+                            </div>
+                        `;
+                        postFeed.innerHTML = '';
+                        postFeed.appendChild(savedHeader);
+                        break;
+                }
+
+                // Scroll to top smoothly
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+                
+            } catch (error) {
+                if (error.message === 'Please log in to view your profile') {
+                    const authModal = document.getElementById('authModal');
+                    document.querySelector('.main-container').classList.add('blur');
+                    authModal.classList.remove('hidden');
+                    document.querySelector('.cont').classList.remove('s-signup');
+                }
+                console.error('Error handling menu click:', error);
+            } finally {
+                // Remove loading state
+                postFeed.style.opacity = '1';
+            }
+        });
+    });
+}
