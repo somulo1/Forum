@@ -1178,24 +1178,59 @@ document.addEventListener("DOMContentLoaded", function() {
             }
     
             try {
-                const response = await fetch("http://localhost:8080/api/register", {
+                // Register the user
+                const registerResponse = await fetch("http://localhost:8080/api/register", {
                     method: "POST",
-                    body: formData
-                    // ❌ Do NOT set headers like 'Content-Type': browser will handle it
+                    body: formData,
+                    credentials: 'include'
                 });
     
-                if (response.ok) {
-                    alert("Registration successful!");
-                    mainContainer.classList.remove("blur");
-                    authModal.classList.add("hidden");
-                    location.reload();
-                } else {
-                    const errText = await response.text();
-                    alert(`Registration failed: ${errText}`);
+                if (!registerResponse.ok) {
+                    const errText = await registerResponse.text();
+                    throw new Error(errText);
                 }
+    
+                // After successful registration, automatically log in
+                const loginResponse = await fetch('http://localhost:8080/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',
+                    body: JSON.stringify({ email, password })
+                });
+    
+                if (!loginResponse.ok) {
+                    throw new Error('Auto-login failed after registration');
+                }
+    
+                // Get user data after successful login
+                const userResponse = await fetch("http://localhost:8080/api/user", {
+                    credentials: "include"
+                });
+    
+                if (userResponse.ok) {
+                    const user = await userResponse.json();
+                    const navAuth = document.getElementById("navAuth");
+                    navAuth.innerHTML = `
+                        <img src="http://localhost:8080${user.avatar_url || '/static/default.png'}" 
+                             alt="User Avatar" 
+                             style="width:32px; height:32px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:8px;">
+                        <span>${user.username}</span>
+                        <button class="logout-btn" style="margin-left:10px;">Logout</button>
+                    `;
+                    document.querySelector(".logout-btn").addEventListener("click", logoutUser);
+                }
+    
+                // Close modal and update UI
+                mainContainer.classList.remove("blur");
+                authModal.classList.add("hidden");
+                
+                // Refresh the page to update all states
+                location.reload();
             } catch (error) {
                 console.error("Registration error:", error);
-                alert("Registration failed. Please try again.");
+                alert(`Registration failed: ${error.message}`);
             }
         });
     }
