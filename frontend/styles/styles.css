@@ -109,6 +109,37 @@ img {
     box-shadow: 0 3px 10px rgba(0, 0, 0, 0.2);
 }
 
+.nav-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.nav-avatar {
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #ccc;
+}
+
+.nav-username {
+    font-weight: 500;
+    color: #333;
+}
+
+.logout-btn {
+    background: none;
+    border: none;
+    color: #444;
+    font-size: 16px;
+    cursor: pointer;
+}
+
+.logout-btn:hover {
+    color: #e00;
+}
+
 
 /* ===== Layout ===== */
 .container {
