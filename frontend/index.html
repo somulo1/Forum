@@ -85,72 +85,66 @@
     <!-- Modals -->
    <!-- Auth Modal -->
 <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
-    <div class="modal-content auth-modal-content">
-      <div class="cont">
+    <div class="cont">
         <button class="close-btn" aria-label="Close">&times;</button>
         
-                <!-- Sign In Form -->
-                <form class="form sign-in">
-                <h2>Welcome back</h2>
-                <label>
-                    <span>Email</span>
-                    <input type="email" name="email" required />
-                </label>
-                <label>
-                    <span>Password</span>
-                    <input type="password" name="password" required />
-                </label>
-                <button type="button" class="submit">Sign In</button>
-                <div class="mobile-toggle">
-                    <button type="button" class="toggle-signup">Need an account? Sign Up</button>
-                </div>
-                </form>
-  
-        <!-- Sign Up Form -->
-        <div class="sub-cont">
-          <div class="img">
-            <div class="img-text m-up">
-              <h2>New here?</h2>
-              <p>Sign up and discover great new opportunities!</p>
-            </div>
-            <div class="img-text m-in">
-              <h2>One of us?</h2>
-              <p>If you already have an account, just sign in. We've missed you!</p>
-            </div>
-            <div class="img-btn">
-              <span class="m-up">Sign Up</span>
-              <span class="m-in">Sign In</span>
-            </div>
-          </div>  
-                <form class="form sign-up" enctype="multipart/form-data">
-                    <h2>Time to feel like home</h2>
-                    <label>
-                    <span>Username</span>
-                    <input type="text" name="username" required />
-                    </label>
-                    <label>
-                    <span>Email</span>
-                    <input type="email" name="email" required />
-                    </label>
-                    <label>
-                    <span>Upload Profile Picture</span>
-                    <input type="file" name="avatar" id="avatar" accept="image/*" />
-                    </label>
-                    <label>
-                    <span>Password</span>
-                    <input type="password" name="password" required />
-                    </label>
-                    <label>
-                    <span>Confirm Password</span>
-                    <input type="password" name="confirmPassword" required />
-                    </label>
-                    <button type="button" class="submit">Sign Up</button>
-                    <div class="mobile-toggle">
-                    <button type="button" class="toggle-signin">Already have an account? Sign In</button>
-                    </div>
-                </form>
+        <!-- Left side - Sign In -->
+        <div class="form sign-in">
+            <h2>Welcome Back</h2>
+            <label>
+                <input type="email" name="email" placeholder=" " required />
+                <span>Email</span>
+            </label>
+            <label>
+                <input type="password" name="password" placeholder=" " required />
+                <span>Password</span>
+            </label>
+            <button type="button" class="submit">Sign In</button>
         </div>
-      </div>
+
+        <!-- Right side - Sign Up -->
+        <div class="sub-cont">
+            <!-- Sliding overlay -->
+            <div class="img">
+
+                <!-- Text for Sign In state -->
+                <div class="img-text m-in">
+                    <h2>One of us?</h2>
+                    <p>If you already have an account, just sign in.</p>
+                </div>
+                <!-- Toggle button -->
+                <div class="img-btn">
+                    <span class="m-up">Sign Up</span>
+                    <span class="m-in">Sign In</span>
+                </div>
+            </div>
+
+            <!-- Sign Up Form -->
+            <div class="form sign-up">
+                <h2>Create Account</h2>
+                <label>
+                    <input type="text" name="username" placeholder=" " required />
+                    <span>Username</span>
+                </label>
+                <label>
+                    <input type="email" name="email" placeholder=" " required />
+                    <span>Email</span>
+                </label>
+                <label>
+                    <input type="file" name="avatar" id="avatar" accept="image/*" />
+                    <span>Profile Picture</span>
+                </label>
+                <label>
+                    <input type="password" name="password" placeholder=" " required />
+                    <span>Password</span>
+                </label>
+                <label>
+                    <input type="password" name="confirmPassword" placeholder=" " required />
+                    <span>Confirm Password</span>
+                </label>
+                <button type="button" class="submit">Sign Up</button>
+            </div>
+        </div>
     </div>
 </div>
   
