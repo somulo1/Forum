@@ -178,7 +178,7 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 func GetUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	userID, err := utils.GetUserIDFromSession(db, r)
-	log.Printf("errr: %v\n", err)
+	// log.Printf("errr: %v\n", err)
 
 	if err != nil {
 		utils.SendJSONError(w, "Unauthorized1", http.StatusUnauthorized)
