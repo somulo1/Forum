@@ -1,4 +1,3 @@
-
 let forumPosts;
 
 let sampleReplies = [
@@ -70,11 +69,7 @@ document.addEventListener("DOMContentLoaded", async () => {
     await renderPosts(forumPosts);
     await renderCategories();
     setupAuthButtons();
-    
 });
-
-
-
 
 
 // function to render nav logo
@@ -95,7 +90,6 @@ function renderNavLogo() {
 document.addEventListener("DOMContentLoaded", () => {
     renderNavLogo();
 });
-
 
 // getTimeAgo() returns the time that has passed (i.e "1 day ago.")
 function getTimeAgo(date) {
@@ -135,8 +129,6 @@ async function fetchForumPosts() {
     }
 
 }
-
-
 
 // Render Forum Posts
 async function renderPosts(posts) {
@@ -338,7 +330,6 @@ async function handlePostFormSubmit(event) {
     }
 }
 
-
 // Fetch & Render Categories
 async function renderCategories() {
     try {
@@ -387,39 +378,44 @@ async function renderCategories() {
     }
 }
 
-// Setup Authentication UI
-async function setupAuthButtons() {
-    const navAuth = document.getElementById("navAuth");
-
-    try {
-        const response = await fetch("http://localhost:8080/api/user");
-        if (response.ok) {
-            const user = await response.json();
-            navAuth.innerHTML = `<button class="logout-btn">Logout (${user.username})</button>`;
-            document.querySelector(".logout-btn").addEventListener("click", logoutUser);
-        } else {
-            navAuth.innerHTML = `
-                <button class="login-btn">Login</button>
-                <button class="signup-btn">Sign Up</button>
-            `;
-            document.querySelector(".login-btn").addEventListener("click", showLoginModal);
-            document.querySelector(".signup-btn").addEventListener("click", showSignupModal);
-        }
-    } catch (error) {
-        console.error("Error checking authentication:", error);
-        navAuth.innerHTML = `
-            <button class="login-btn">Login</button>
-            <button class="signup-btn">Sign Up</button>
-        `;
-    }
-}
 
 
 // Logout Functionality
 async function logoutUser() {
     try {
-        await fetch("http://localhost:8080/api/logout", { method: "POST" });
-        location.reload();
+        const response = await fetch("http://localhost:8080/api/logout", { 
+            method: "POST",
+            credentials: "include"  // Important for cookies
+        });
+        
+        if (response.ok) {
+            // Update UI to show login/signup buttons
+            const navAuth = document.getElementById("navAuth");
+            navAuth.innerHTML = `
+                <button class="login-btn">Login</button>
+                <button class="signup-btn">Sign Up</button>
+            `;
+            
+            // Reattach event listeners to the new buttons
+            const loginBtn = document.querySelector(".login-btn");
+            const signupBtn = document.querySelector(".signup-btn");
+            
+            loginBtn.addEventListener("click", () => {
+                const authModal = document.getElementById('authModal');
+                document.querySelector('.main-container').classList.add('blur');
+                authModal.classList.remove('hidden');
+                document.querySelector('.cont').classList.remove('s-signup');
+            });
+            
+            signupBtn.addEventListener("click", () => {
+                const authModal = document.getElementById('authModal');
+                document.querySelector('.main-container').classList.add('blur');
+                authModal.classList.remove('hidden');
+                document.querySelector('.cont').classList.add('s-signup');
+            });
+        } else {
+            console.error("Logout failed");
+        }
     } catch (error) {
         console.error("Error logging out:", error);
     }
@@ -440,7 +436,8 @@ document.addEventListener("click", async (event) => {
         const response = await fetch(`http://localhost:8080/api/likes/toggle`, {
             method: "POST",
             body: JSON.stringify({ post_id: parseInt(postID), type: "like" }),
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" },
+            credentials: 'include',
         });
         if (!response.ok){
             alert("User not logged in");
@@ -454,7 +451,8 @@ document.addEventListener("click", async (event) => {
         const response = await fetch(`http://localhost:8080/api/likes/toggle`, {
             method: "POST",
             body: JSON.stringify({ post_id: parseInt(postID), type: "dislike" }),
-            headers: { "Content-Type": "application/json" }
+            headers: { "Content-Type": "application/json" },
+            credentials: 'include',
         });
         if (!response.ok){
             alert("User not logged in");
@@ -471,8 +469,6 @@ document.addEventListener("click", async (event) => {
         }
     }
 });
-
-
 
 // load post likes & dislikes
 
@@ -515,9 +511,6 @@ async function loadPostsLikes() {
         }
     }
 }
-
-
-
 
 // load comments
 
@@ -747,3 +740,283 @@ async function loadCommentsLikes() {
         }
     }
 }
+
+// Setup Authentication UI (moved to global scope)
+async function setupAuthButtons() {
+    const navAuth = document.getElementById("navAuth");
+
+    try {
+        const response = await fetch("http://localhost:8080/api/user", {
+            credentials: "include"  // important to send cookies/session
+        });
+        
+        if (response.ok) {
+            const user = await response.json();
+            // Show avatar + username + logout button
+            navAuth.innerHTML = `
+                <img src="http://localhost:8080${user.avatar_url || '/static/default.png'}" 
+                     alt="User Avatar" 
+                     style="width:32px; height:32px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:8px;">
+                <span>${user.username}</span>
+                <button class="logout-btn" style="margin-left:10px;">Logout</button>
+            `;
+            document.querySelector(".logout-btn").addEventListener("click", logoutUser);
+        } else {
+            // Show login/signup buttons for unauthenticated users
+            navAuth.innerHTML = `
+                <button class="login-btn">Login</button>
+                <button class="signup-btn">Sign Up</button>
+            `;
+            const loginBtn = document.querySelector(".login-btn");
+            const signupBtn = document.querySelector(".signup-btn");
+            
+            loginBtn.addEventListener("click", () => {
+                const authModal = document.getElementById('authModal');
+                document.querySelector('.main-container').classList.add('blur');
+                authModal.classList.remove('hidden');
+                document.querySelector('.cont').classList.remove('s-signup');
+            });
+            
+            signupBtn.addEventListener("click", () => {
+                const authModal = document.getElementById('authModal');
+                document.querySelector('.main-container').classList.add('blur');
+                authModal.classList.remove('hidden');
+                document.querySelector('.cont').classList.add('s-signup');
+            });
+        }
+    } catch (error) {
+        console.error("Error checking authentication:", error);
+        navAuth.innerHTML = `
+            <button class="login-btn">Login</button>
+            <button class="signup-btn">Sign Up</button>
+        `;
+    }
+}
+
+// Initialize auth modal functionality
+document.addEventListener("DOMContentLoaded", function() {
+    const authModal = document.getElementById('authModal');
+    const mainContainer = document.querySelector('.main-container');
+    const cont = document.querySelector('.cont');
+
+    // Function to show login form
+    function showLoginForm() {
+        cont.classList.remove('s-signup');
+    }
+
+    // Function to show signup form
+    function showSignupForm() {
+        cont.classList.add('s-signup');
+    }
+
+    // Login button click handler
+    const loginBtn = document.querySelector('.login-btn');
+    if (loginBtn) {
+        loginBtn.addEventListener('click', () => {
+            // console.log("Login button clicked!");
+            mainContainer.classList.add('blur');
+            authModal.classList.remove('hidden');
+            showLoginForm();
+        });
+    }
+
+    // Signup button click handler
+    const signupBtn = document.querySelector('.signup-btn');
+    if (signupBtn) {
+        signupBtn.addEventListener('click', () => {
+            console.log("Signup button clicked!");
+            mainContainer.classList.add('blur');
+            authModal.classList.remove('hidden');
+            showSignupForm();
+        });
+    }
+
+    // Toggle between login and signup using the sliding button
+    const imgBtn = document.querySelector('.img-btn');
+    if (imgBtn) {
+        imgBtn.addEventListener('click', function() {
+            cont.classList.toggle('s-signup');
+        });
+    }
+
+    // Mobile toggle buttons
+    const toggleSignup = document.querySelector('.toggle-signup');
+    const toggleSignin = document.querySelector('.toggle-signin');
+
+    if (toggleSignup) {
+        toggleSignup.addEventListener('click', function(e) {
+            e.preventDefault();
+            showSignupForm();
+        });
+    }
+
+    if (toggleSignin) {
+        toggleSignin.addEventListener('click', function(e) {
+            e.preventDefault();
+            showLoginForm();
+        });
+    }
+
+    // Close button handler
+    const closeBtn = document.querySelector('.close-btn');
+    if (closeBtn) {
+        closeBtn.addEventListener('click', function() {
+            mainContainer.classList.remove('blur');
+            authModal.classList.add('hidden');
+        });
+    }
+
+    // Handle form submissions
+    const signInBtn = document.querySelector('.sign-in .submit');
+    if (signInBtn) {
+        signInBtn.addEventListener('click', async function() {
+            const email = document.querySelector('.sign-in input[type="email"]').value;
+            const password = document.querySelector('.sign-in input[type="password"]').value;
+
+            if (!email || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8080/api/login', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    credentials: 'include',  // Important for cookies
+                    body: JSON.stringify({ email, password }),
+                });
+                
+                if (response.ok) {
+                    // After successful login, fetch user data and update UI
+                    const userResponse = await fetch("http://localhost:8080/api/user", {
+                        credentials: "include"
+                        
+                    });
+                    // console.log("userResponse", userResponse)
+
+                    if (userResponse.ok) {
+                        const user = await userResponse.json();
+                        // console.log(user);
+                        const navAuth = document.getElementById("navAuth");
+                        navAuth.innerHTML = `
+                            <img src="http://localhost:8080${user.avatar_url || '/static/default.png'}" 
+                                 alt="User Avatar" 
+                                 style="width:32px; height:32px; border-radius:50%; object-fit:cover; vertical-align:middle; margin-right:8px;">
+                            <span>${user.username}</span>
+                            <button class="logout-btn" style="margin-left:10px;">Logout</button>
+                        `;
+                        document.querySelector(".logout-btn").addEventListener("click", logoutUser);
+                    }
+                    
+                    mainContainer.classList.remove('blur');
+                    authModal.classList.add('hidden');
+                } else {
+                    alert('Login failed. Please check your credentials.');
+                }
+            } catch (error) {
+                console.error('Login error:', error);
+                alert('Login failed. Please try again.');
+            }
+        });
+    }
+
+    const signUpBtn = document.querySelector('.sign-up .submit');
+
+    if (signUpBtn) {
+        signUpBtn.addEventListener('click', async function () {
+            const usernameInput = document.querySelector('.sign-up input[name="username"]');
+            const emailInput = document.querySelector('.sign-up input[name="email"]');
+            const passwordInput = document.querySelector('.sign-up input[name="password"]');
+            const confirmPasswordInput = document.querySelector('.sign-up input[name="confirmPassword"]');
+            const avatarInput = document.getElementById("avatar");
+    
+            const username = usernameInput.value.trim();
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+            const confirmPassword = confirmPasswordInput.value;
+    
+            // --- Regex validation ---
+            const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            const passwordRegex = /^[a-zA-Z0-9!@#$%^&*()_+\-=[\]{};':"\\|,.<>/?]{6,}$/;
+    
+            if (!username || !email || !password || !confirmPassword) {
+                alert('All fields are required.');
+                return;
+            }
+    
+            if (!usernameRegex.test(username)) {
+                alert('Username must be 3–20 characters, no spaces or special characters.');
+                return;
+            }
+    
+            if (!emailRegex.test(email)) {
+                alert('Invalid email format.');
+                return;
+            }
+    
+            if (!passwordRegex.test(password)) {
+                alert('Password must be at least 6 characters and safe.');
+                return;
+            }
+    
+            if (password !== confirmPassword) {
+                alert('Passwords do not match!');
+                return;
+            }
+    
+            // File validation
+            if (avatarInput.files.length > 0) {
+                const file = avatarInput.files[0];
+                const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+                if (!allowedTypes.includes(file.type)) {
+                    alert('Avatar must be JPG, PNG, or GIF format.');
+                    return;
+                }
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Avatar size must be under 5MB.');
+                    return;
+                }
+            }
+    
+            const formData = new FormData();
+            formData.append("username", username);
+            formData.append("email", email);
+            formData.append("password", password);
+            if (avatarInput.files.length > 0) {
+                formData.append("avatar", avatarInput.files[0]);
+            }
+    
+            try {
+                const response = await fetch("http://localhost:8080/api/register", {
+                    method: "POST",
+                    body: formData
+                    // ❌ Do NOT set headers like 'Content-Type': browser will handle it
+                });
+    
+                if (response.ok) {
+                    alert("Registration successful!");
+                    mainContainer.classList.remove("blur");
+                    authModal.classList.add("hidden");
+                    location.reload();
+                } else {
+                    const errText = await response.text();
+                    alert(`Registration failed: ${errText}`);
+                }
+            } catch (error) {
+                console.error("Registration error:", error);
+                alert("Registration failed. Please try again.");
+            }
+        });
+    }
+    
+    // Handle form submission with Enter key
+    authModal.addEventListener('keyup', function(e) {
+        if (e.key === 'Enter') {
+            const activeForm = cont.classList.contains('s-signup') ? signUpBtn : signInBtn;
+            activeForm.click();
+        }
+    });
+});
