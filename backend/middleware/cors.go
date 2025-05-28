@@ -9,7 +9,7 @@ import (
 func CORS(next http.Handler) http.Handler {
 	allowedOrigin := os.Getenv("FRONTEND_ORIGIN")
 	if allowedOrigin == "" {
-		allowedOrigin = "http://127.0.0.1:8000" // fallback default
+		allowedOrigin = "http://localhost:8000" // fallback default
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

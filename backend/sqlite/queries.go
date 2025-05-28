@@ -355,9 +355,9 @@ func CreateComment(db *sql.DB, userID string, postID int, content string) (model
 	var comment models.Comment
 
 	query := `
-		INSERT INTO comments (user_id, post_id, parent_comment_id, content)
-		VALUES (?, ?, ?, ?)
-		RETURNING id, user_id, post_id, parent_comment_id, content, created_at, updated_at
+		INSERT INTO comments (user_id, post_id, content)
+		VALUES (?, ?, ?)
+		RETURNING id, user_id, post_id, content, created_at, updated_at
 	`
 
 	err := db.QueryRow(query, userID, postID, content).Scan(
@@ -368,9 +368,13 @@ func CreateComment(db *sql.DB, userID string, postID int, content string) (model
 		&comment.CreatedAt,
 		&comment.UpdatedAt,
 	)
+	if err != nil {
+		return comment, fmt.Errorf("failed to create comment: %w", err)
+	}
 
 	return comment, err
 }
+
 func CreateReplyComment(db *sql.DB, userID string, parentCommentID int, content string) (models.ReplyComment, error) {
 	var reply models.ReplyComment
 
@@ -471,7 +475,6 @@ func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 
 	return comments, nil
 }
-
 
 // CreateCategory inserts a new category
 func CreateCategory(db *sql.DB, name string) error {
