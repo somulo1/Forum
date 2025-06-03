@@ -1268,11 +1268,11 @@ img {
 }
 
 .auth-modal-content .img-text.m-up {
-    transform: translateX(-50%) translateY(-50%);
+    transform: translateX(-50%) translateY(100%);
 }
 
 .auth-modal-content .cont.s-signup .img-text.m-up {
-    transform: translateX(0) translateY(-50%);
+    transform: translateX(100%) translateY(-50%);
 }
 
 .auth-modal-content .img-text.m-in {
@@ -1562,6 +1562,27 @@ img {
     font-weight: 600;
 }
 
+/* Sign Up Text Styling */
+.img-text.m-up {
+    color: #000;
+    margin-top: 40px;
+    z-index: 2;
+    position: absolute;
+    right: 30px;
+    text-align: right;
+    width: 250px;
+}
+
+.img-text.m-up h2,
+.img-text.m-up p {
+    color: #000;
+    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
+}
+
+.sub-cont .form.sign-up {
+    margin-top: 60px;
+}
+
 .form label {
     display: block;
     width: 100%;
@@ -1758,4 +1779,6 @@ img {
     width: 20px;
     text-align: center;
     font-size: 1.1rem;
+}
+
 }
