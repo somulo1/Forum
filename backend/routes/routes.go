@@ -18,20 +18,19 @@ func HandlerWrapper(db *sql.DB, handler func(*sql.DB, http.ResponseWriter, *http
 
 func SetupRoutes(db *sql.DB) http.Handler {
 	mux := http.NewServeMux()
-	// Fetch user data
-	mux.Handle("/api/user", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.GetUser)))
-
 	// Authentication routes
 	mux.HandleFunc("/api/register", HandlerWrapper(db, handlers.RegisterUser))
 	mux.HandleFunc("/api/login", HandlerWrapper(db, handlers.LoginUser))
 	mux.HandleFunc("/api/logout", HandlerWrapper(db, handlers.LogoutUser))
-
-	// Post routes (protected by auth middleware)
+	
+	// Post routes
 	mux.Handle("/api/posts/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreatePost)))
-	mux.HandleFunc("/api/posts", HandlerWrapper(db, handlers.GetPosts)) // Allow public access
-	mux.Handle("/api/posts/update", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.UpdatePost)))
-	mux.Handle("/api/posts/delete", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.DeletePost)))
-
+	mux.HandleFunc("/api/posts", HandlerWrapper(db, handlers.GetPosts))
+	
+	// Like routes
+	mux.Handle("/api/likes/toggle", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.ToggleLike)))
+	mux.HandleFunc("/api/likes/reactions", HandlerWrapper(db, handlers.GetReactions))
+	
 	// Comment routes (protected by auth middleware)
 	mux.Handle("/api/comments/delete", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.DeleteComment)))
 	mux.Handle("/api/comment/reply/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreateReplComment)))
@@ -41,9 +40,6 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	// Category routes (protected by auth middleware)
 	mux.Handle("/api/categories/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreateCategory)))
 	mux.HandleFunc("/api/categories", HandlerWrapper(db, handlers.GetCategories))
-	// Like routes
-	mux.Handle("/api/likes/toggle", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.ToggleLike))) // Protected
-	mux.HandleFunc("/api/likes/reactions", HandlerWrapper(db, handlers.GetReactions))                       // Public
 
 	// comment, post and likes owner
 	mux.Handle("/api/owner", HandlerWrapper(db, handlers.GetOwner))
