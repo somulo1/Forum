@@ -118,7 +118,6 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	return post, nil
 }
 
-
 func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 	offset := (page - 1) * limit
 
@@ -354,42 +353,126 @@ func IsUniqueConstraintError(err error) bool {
 // CreateComment inserts a new comment
 func CreateComment(db *sql.DB, userID string, postID int, content string) (models.Comment, error) {
 	var comment models.Comment
+
 	query := `
 		INSERT INTO comments (user_id, post_id, content)
 		VALUES (?, ?, ?)
-		RETURNING id, user_id, post_id, content, created_at
+		RETURNING id, user_id, post_id, content, created_at, updated_at
 	`
+
 	err := db.QueryRow(query, userID, postID, content).Scan(
 		&comment.ID,
 		&comment.UserID,
 		&comment.PostID,
 		&comment.Content,
 		&comment.CreatedAt,
+		&comment.UpdatedAt,
 	)
+	if err != nil {
+		return comment, fmt.Errorf("failed to create comment: %w", err)
+	}
+
 	return comment, err
+}
+
+func CreateReplyComment(db *sql.DB, userID string, parentCommentID int, content string) (models.ReplyComment, error) {
+	var reply models.ReplyComment
+
+	query := `
+		INSERT INTO replycomments (user_id, parent_comment_id, content)
+		VALUES (?, ?, ?)
+		RETURNING id, user_id, parent_comment_id, content, created_at, updated_at
+	`
+
+	err := db.QueryRow(query, userID, parentCommentID, content).Scan(
+		&reply.ID,
+		&reply.UserID,
+		&reply.ParentCommentID,
+		&reply.Content,
+		&reply.CreatedAt,
+		&reply.UpdatedAt,
+	)
+
+	return reply, err
 }
 
 // GetPostComments retrieves comments for a specific post
 func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
-	rows, err := db.Query(`
-		SELECT id, user_id, content, created_at, post_id
-		FROM comments
-		WHERE post_id = ?
-		ORDER BY created_at ASC
+	// Step 1: Fetch top-level comments
+	commentRows, err := db.Query(`
+		SELECT 
+			c.id, c.user_id, c.post_id, c.content,
+			c.created_at, c.updated_at, u.username, u.avatar_url
+		FROM comments c
+		JOIN users u ON u.id = c.user_id
+		WHERE c.post_id = ?
+		ORDER BY c.created_at ASC
 	`, postID)
 	if err != nil {
 		return nil, err
 	}
-	defer rows.Close()
+	defer commentRows.Close()
 
+	commentsMap := make(map[int]*models.Comment)
 	var comments []models.Comment
-	for rows.Next() {
-		var comment models.Comment
-		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.Content, &comment.CreatedAt, &comment.PostID); err != nil {
+
+	for commentRows.Next() {
+		var c models.Comment
+		err := commentRows.Scan(
+			&c.ID,
+			&c.UserID,
+			&c.PostID,
+			&c.Content,
+			&c.CreatedAt,
+			&c.UpdatedAt,
+			&c.UserName,
+			&c.ProfileAvatar,
+		)
+		if err != nil {
 			return nil, err
 		}
-		comments = append(comments, comment)
+		comments = append(comments, c)
+		commentsMap[c.ID] = &comments[len(comments)-1] // store pointer
 	}
+
+	// Step 2: Fetch replies
+	replyRows, err := db.Query(`
+		SELECT 
+			r.id, r.user_id, r.parent_comment_id, r.content,
+			r.created_at, r.updated_at, u.username, u.avatar_url
+		FROM replycomments r
+		JOIN users u ON u.id = r.user_id
+		WHERE r.parent_comment_id IN (
+			SELECT id FROM comments WHERE post_id = ?
+		)
+		ORDER BY r.created_at ASC
+	`, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer replyRows.Close()
+
+	for replyRows.Next() {
+		var r models.ReplyComment
+		err := replyRows.Scan(
+			&r.ID,
+			&r.UserID,
+			&r.ParentCommentID,
+			&r.Content,
+			&r.CreatedAt,
+			&r.UpdatedAt,
+			&r.UserName,
+			&r.ProfileAvatar,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if parent, ok := commentsMap[r.ParentCommentID]; ok {
+			parent.Replies = append(parent.Replies, r)
+		}
+	}
+
 	return comments, nil
 }
 

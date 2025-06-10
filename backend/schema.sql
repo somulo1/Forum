@@ -14,7 +14,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Sessions Table
 CREATE TABLE IF NOT EXISTS sessions (
     id TEXT PRIMARY KEY,
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
@@ -25,7 +25,7 @@ CREATE INDEX IF NOT EXISTS idx_sessions_user ON sessions(user_id);
 -- Updated Posts Table (remove category_id)
 CREATE TABLE IF NOT EXISTS posts (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     title TEXT NOT NULL,
     content TEXT NOT NULL,
     image_url TEXT,
@@ -48,18 +48,31 @@ CREATE TABLE IF NOT EXISTS post_categories (
 -- Comments Table
 CREATE TABLE IF NOT EXISTS comments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     post_id INTEGER NOT NULL,
     content TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
     FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+    -- FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE
 );
+-- ReplyComments Table
+CREATE TABLE IF NOT EXISTS replycomments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id TEXT NOT NULL,
+    parent_comment_id INTEGER NOT NULL,
+    content TEXT NOT NULL,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_comment_id) REFERENCES comments(id) ON DELETE CASCADE
+);
+
 
 -- Likes Table (Supports both post and comment likes and allows dislikes)
 CREATE TABLE IF NOT EXISTS likes (
-    user_id INTEGER NOT NULL,
+    user_id TEXT NOT NULL,
     post_id INTEGER,
     comment_id INTEGER,
     type TEXT NOT NULL CHECK(type IN ('like', 'dislike')),
@@ -211,6 +224,19 @@ CREATE TABLE IF NOT EXISTS categories (
 -- (8, 9), (8, 4),
 -- (9, 10), (9, 5),
 -- (10, 1), (10, 6), (10, 2);
+
+-- -- Insert sample replies to comments
+-- INSERT INTO replycomments (user_id, parent_comment_id, content) VALUES
+-- ('3a094c34-a8bd-4514-82dc-48b306c987eb', 1, 'Thanks! I found the security checklist very useful too.'),
+-- ('5f38b9c6-0dec-4075-a145-6716d85ca219', 2, 'Glad you liked the guide! Any thoughts on Plotly?'),
+-- ('eddca3a0-45a0-4559-a55d-63480eccaeb0', 3, 'Yes, especially tip #3 was a game-changer for me.'),
+-- ('0bbdb9ae-5955-4269-aff1-dcf1a57a03fc', 4, 'Completely agree. Red teaming is underrated.'),
+-- ('5fc3bda1-8832-46fc-a26f-367954b3de36', 5, 'Exactly! That visual helped a lot.'),
+-- ('16dbbb7c-46fe-4036-9cec-6d978d3d02bd', 6, 'That bit about quoting attribute values was enlightening.'),
+-- ('8cab6c13-6f8f-4a30-90db-d34c37e90457', 7, 'Yes! It’s amazing how lightweight they can be.'),
+-- ('7426e07d-577f-48fe-b968-636dcfab6307', 8, 'Absolutely. This is where cloud-native shines.'),
+-- ('71caaa69-9ae5-46e7-b77c-335bf371c6a9', 9, 'Security is often overlooked in smart contracts.'),
+-- ('014b3423-b8a2-4129-ba20-85efea98e119', 10, 'Good point about quoting. CSS selectors can be picky.');
 
 -- COMMIT;
 

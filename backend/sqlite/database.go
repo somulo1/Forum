@@ -19,6 +19,12 @@ func InitializeDatabase(dbPath string) error {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
 
+	// Enable foreign key constraints
+	_, err = DB.Exec("PRAGMA foreign_keys = ON")
+	if err != nil {
+		return fmt.Errorf("failed to enable foreign key constraints: %w", err)
+	}
+	
 	// Apply schema from schema.sql file
 	if err := applySchemaFromFile("schema.sql"); err != nil {
 		return fmt.Errorf("failed to apply schema: %w", err)

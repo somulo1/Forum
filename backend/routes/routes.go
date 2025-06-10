@@ -34,7 +34,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 
 	// Comment routes (protected by auth middleware)
 	mux.Handle("/api/comments/delete", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.DeleteComment)))
-
+	mux.Handle("/api/comment/reply/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreateReplComment)))
 	mux.Handle("/api/comments/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreateComment)))
 	mux.HandleFunc("/api/comments/get", HandlerWrapper(db, handlers.GetPostComments)) // Public access
 
