@@ -4,7 +4,6 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
-	"strconv"
 
 	"forum/models"
 	"forum/sqlite"
@@ -31,9 +30,15 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
-
 	comment.UserID = userID
 
+	// Validate input: post_id must be set for a top-level comment
+	if comment.PostID == 0 {
+		http.Error(w, "Missing post_id", http.StatusBadRequest)
+		return
+	}
+
+	// Create top-level comment
 	comm, err := sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.Content)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to create comment", http.StatusInternalServerError)
@@ -43,36 +48,77 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, comm, http.StatusCreated)
 }
 
-// GetComments fetches comments for a post
-func GetComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
-	if r.Method != http.MethodGet {
+func CreateReplComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodPost {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
 		return
 	}
 
-	// Retrieve `post_id` from query parameters
-	postIDStr := r.URL.Query().Get("post_id")
-	if postIDStr == "" {
-		http.Error(w, "Missing post_id parameter", http.StatusBadRequest)
-		return
-	}
-
-	postID, err := strconv.Atoi(postIDStr)
+	var reply models.ReplyComment
+	err := json.NewDecoder(r.Body).Decode(&reply)
 	if err != nil {
-		http.Error(w, "Invalid post_id parameter", http.StatusBadRequest)
+		http.Error(w, "Invalid reply data", http.StatusBadRequest)
 		return
 	}
 
-	// Fetch comments from the database
-	comments, err := sqlite.GetPostComments(db, postID)
+	// Validate user session
+	userID, ok := RequireAuth(db, w, r)
+	if !ok || userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+	reply.UserID = userID
+
+	// Ensure parent_comment_id is provided
+	if reply.ParentCommentID == 0 {
+		http.Error(w, "Missing parent_comment_id", http.StatusBadRequest)
+		return
+	}
+
+	// post_id should not be included for replies
+	if r.FormValue("post_id") != "" {
+		http.Error(w, "post_id not allowed for replies", http.StatusBadRequest)
+		return
+	}
+
+	// Create the reply
+	createdReply, err := sqlite.CreateReplyComment(db, reply.UserID, reply.ParentCommentID, reply.Content)
 	if err != nil {
-		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
+		utils.SendJSONError(w, "Failed to create reply", http.StatusInternalServerError)
 		return
 	}
 
-	// Send comments as JSON response
-	utils.SendJSONResponse(w, comments, http.StatusOK)
+	utils.SendJSONResponse(w, createdReply, http.StatusCreated)
 }
+
+// GetComments fetches comments for a post
+// func GetReplComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+// 	if r.Method != http.MethodGet {
+// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+// 		return
+// 	}
+
+// 	postIDStr := r.URL.Query().Get("post_id")
+// 	if postIDStr == "" {
+// 		http.Error(w, "Missing post_id parameter", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	postID, err := strconv.Atoi(postIDStr)
+// 	if err != nil {
+// 		http.Error(w, "Invalid post_id parameter", http.StatusBadRequest)
+// 		return
+// 	}
+
+// 	// Fetch all comments for the post (flat list)
+// 	comments, err := sqlite.GetPostComments(db, postID)
+// 	if err != nil {
+// 		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
+// 		return
+// 	}
+
+// 	utils.SendJSONResponse(w, comments, http.StatusOK)
+// }
 
 // DeleteComment deletes a comment
 func DeleteComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
