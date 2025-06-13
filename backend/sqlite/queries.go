@@ -587,3 +587,39 @@ func GetUserByID(db *sql.DB, userID string) (*models.User, error) {
 
 	return &user, nil
 }
+
+// GetReplyCommentsByParentID fetches all reply comments for a given parent_comment_id
+func GetReplyCommentsByParentID(db *sql.DB, parentCommentID int) ([]models.ReplyComment, error) {
+	rows, err := db.Query(`
+		SELECT 
+			r.id, r.user_id, u.username, u.avatar_url, r.parent_comment_id, r.content, r.created_at, r.updated_at
+		FROM replycomments r
+		JOIN users u ON r.user_id = u.id
+		WHERE r.parent_comment_id = ?
+		ORDER BY r.created_at ASC
+	`, parentCommentID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var replies []models.ReplyComment
+	for rows.Next() {
+		var rc models.ReplyComment
+		err := rows.Scan(
+			&rc.ID,
+			&rc.UserID,
+			&rc.UserName,
+			&rc.ProfileAvatar,
+			&rc.ParentCommentID,
+			&rc.Content,
+			&rc.CreatedAt,
+			&rc.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+		replies = append(replies, rc)
+	}
+	return replies, nil
+}
