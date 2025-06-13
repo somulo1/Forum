@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"net/http"
+	"strconv"
 
 	"forum/models"
 	"forum/sqlite"
@@ -91,34 +92,33 @@ func CreateReplComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, createdReply, http.StatusCreated)
 }
 
-// GetComments fetches comments for a post
-// func GetReplComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
-// 	if r.Method != http.MethodGet {
-// 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-// 		return
-// 	}
+// GetReplyComments fetches reply comments for a given parent_comment_id
+func GetReplyComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
 
-// 	postIDStr := r.URL.Query().Get("post_id")
-// 	if postIDStr == "" {
-// 		http.Error(w, "Missing post_id parameter", http.StatusBadRequest)
-// 		return
-// 	}
+	parentIDStr := r.URL.Query().Get("parent_comment_id")
+	if parentIDStr == "" {
+		http.Error(w, "Missing parent_comment_id parameter", http.StatusBadRequest)
+		return
+	}
 
-// 	postID, err := strconv.Atoi(postIDStr)
-// 	if err != nil {
-// 		http.Error(w, "Invalid post_id parameter", http.StatusBadRequest)
-// 		return
-// 	}
+	parentID, err := strconv.Atoi(parentIDStr)
+	if err != nil {
+		http.Error(w, "Invalid parent_comment_id parameter", http.StatusBadRequest)
+		return
+	}
 
-// 	// Fetch all comments for the post (flat list)
-// 	comments, err := sqlite.GetPostComments(db, postID)
-// 	if err != nil {
-// 		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
-// 		return
-// 	}
+	replies, err := sqlite.GetReplyCommentsByParentID(db, parentID)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to fetch reply comments", http.StatusInternalServerError)
+		return
+	}
 
-// 	utils.SendJSONResponse(w, comments, http.StatusOK)
-// }
+	utils.SendJSONResponse(w, replies, http.StatusOK)
+}
 
 // DeleteComment deletes a comment
 func DeleteComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
