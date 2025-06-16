@@ -82,6 +82,9 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
+	// Extract search query
+	searchQuery := r.URL.Query().Get("search")
+
 	// Get current user ID for like status
 	currentUserID, _ := utils.GetUserIDFromSession(db, r)
 
@@ -89,7 +92,10 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	var posts []models.Post
 	var err error
 
-	if likedByUserID != nil {
+	if searchQuery != "" {
+		// Search posts by query
+		posts, err = sqlite.SearchPosts(db, searchQuery, page, limit)
+	} else if likedByUserID != nil {
 		// Get posts liked by specific user
 		posts, err = sqlite.GetPostsLikedByUser(db, *likedByUserID, page, limit)
 	} else if userID != nil {

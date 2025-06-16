@@ -12,6 +12,7 @@ class PostsManager {
 
     init() {
         this.setupEventListeners();
+        this.setupSearchFunctionality();
         this.loadCategories();
         this.loadPosts(); // Load posts on initialization
     }
@@ -99,6 +100,142 @@ class PostsManager {
                 this.hideAllInlineComments();
             }
         });
+    }
+
+    setupSearchFunctionality() {
+        const searchInput = document.getElementById('searchInput');
+        const clearSearchBtn = document.getElementById('clearSearchBtn');
+        const clearSearchResults = document.getElementById('clearSearchResults');
+
+        if (!searchInput) return;
+
+        let searchTimeout;
+
+        // Search input handler with debouncing
+        searchInput.addEventListener('input', (e) => {
+            const query = e.target.value.trim();
+
+            // Show/hide clear button
+            if (clearSearchBtn) {
+                clearSearchBtn.style.display = query ? 'block' : 'none';
+            }
+
+            // Clear previous timeout
+            if (searchTimeout) {
+                clearTimeout(searchTimeout);
+            }
+
+            // Debounce search (wait 500ms after user stops typing)
+            searchTimeout = setTimeout(() => {
+                if (query.length >= 2) {
+                    this.performSearch(query);
+                } else if (query.length === 0) {
+                    this.clearSearch();
+                }
+            }, 500);
+        });
+
+        // Enter key handler for immediate search
+        searchInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                const query = e.target.value.trim();
+                if (query.length >= 2) {
+                    if (searchTimeout) clearTimeout(searchTimeout);
+                    this.performSearch(query);
+                }
+            }
+        });
+
+        // Clear search button
+        if (clearSearchBtn) {
+            clearSearchBtn.addEventListener('click', () => {
+                searchInput.value = '';
+                clearSearchBtn.style.display = 'none';
+                this.clearSearch();
+                searchInput.focus();
+            });
+        }
+
+        // Clear search results button
+        if (clearSearchResults) {
+            clearSearchResults.addEventListener('click', () => {
+                this.clearSearch();
+                searchInput.value = '';
+                if (clearSearchBtn) clearSearchBtn.style.display = 'none';
+                searchInput.focus();
+            });
+        }
+    }
+
+    async performSearch(query) {
+        console.log('Performing search for:', query);
+
+        // Show search results info
+        const searchResults = document.getElementById('searchResults');
+        const searchQuery = document.getElementById('searchQuery');
+        const searchResultsCount = document.getElementById('searchResultsCount');
+
+        if (searchResults && searchQuery) {
+            searchQuery.textContent = query;
+            searchResults.style.display = 'block';
+        }
+
+        // Reset filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+
+        // Load posts with search query
+        this.currentFilter = 'search';
+        this.currentSearchQuery = query;
+
+        try {
+            utils.showLoading('loadingPosts');
+
+            const filters = { search: query };
+            const posts = await apiWrapper.getPosts(1, this.postsPerPage, filters);
+
+            this.posts = posts || [];
+            this.renderPosts();
+
+            // Update search results count
+            if (searchResultsCount) {
+                searchResultsCount.textContent = this.posts.length;
+            }
+
+            console.log('Search completed. Found', this.posts.length, 'posts');
+
+        } catch (error) {
+            console.error('Search failed:', error);
+            this.posts = [];
+            this.renderPosts();
+
+            if (searchResultsCount) {
+                searchResultsCount.textContent = '0';
+            }
+        } finally {
+            utils.hideLoading('loadingPosts');
+        }
+    }
+
+    clearSearch() {
+        console.log('Clearing search');
+
+        // Hide search results info
+        const searchResults = document.getElementById('searchResults');
+        if (searchResults) {
+            searchResults.style.display = 'none';
+        }
+
+        // Reset to default filter
+        this.currentFilter = 'all';
+        this.currentSearchQuery = null;
+
+        // Reset filter buttons
+        document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector('.filter-btn[data-filter="all"]')?.classList.add('active');
+
+        // Reload all posts
+        this.loadPosts('all');
     }
 
     hideAllInlineComments() {

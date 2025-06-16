@@ -601,3 +601,69 @@ func HasUserLikedPost(db *sql.DB, userID, postID int) (bool, error) {
 
 	return count > 0, nil
 }
+
+// SearchPosts searches for posts by title, content, or author
+func SearchPosts(db *sql.DB, searchQuery string, page, limit int) ([]models.Post, error) {
+	offset := (page - 1) * limit
+
+	// Use LIKE with wildcards for search
+	searchPattern := "%" + searchQuery + "%"
+
+	query := `
+        SELECT
+            p.id, p.title, p.content, p.user_id, p.created_at, p.updated_at,
+            u.username,
+            COALESCE(like_counts.like_count, 0) as like_count,
+            COALESCE(comment_counts.comment_count, 0) as comment_count,
+            c.name as category_name
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN categories c ON p.category_id = c.id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) as like_count
+            FROM likes
+            WHERE post_id IS NOT NULL
+            GROUP BY post_id
+        ) like_counts ON p.id = like_counts.post_id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) as comment_count
+            FROM comments
+            GROUP BY post_id
+        ) comment_counts ON p.id = comment_counts.post_id
+        WHERE (
+            p.title LIKE ? OR
+            p.content LIKE ? OR
+            u.username LIKE ?
+        )
+        ORDER BY p.created_at DESC
+        LIMIT ? OFFSET ?
+    `
+
+	rows, err := db.Query(query, searchPattern, searchPattern, searchPattern, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		var categoryName sql.NullString
+
+		err := rows.Scan(
+			&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt, &post.UpdatedAt,
+			&post.Username, &post.LikeCount, &post.CommentCount, &categoryName,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if categoryName.Valid && categoryName.String != "" {
+			post.Categories = append(post.Categories, models.Category{Name: categoryName.String})
+		}
+
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
