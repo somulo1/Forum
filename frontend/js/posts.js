@@ -1,5 +1,4 @@
 // Posts Management
-
 class Posts {
     constructor() {
         this.currentPage = 1;
@@ -67,52 +66,33 @@ class Posts {
     async handleCreatePost(event) {
         event.preventDefault();
         
-        const form = event.target;
-        const formData = Utils.getFormData(form);
-
-        // Validate form data
-        if (!formData.title || formData.title.trim().length < 3) {
-            Utils.showError('Title must be at least 3 characters long');
+        const formData = Utils.getFormData(event.target);
+        
+        if (!formData.title || !formData.content) {
+            Utils.showError('Please fill in all required fields');
             return;
-        }
-
-        if (!formData.content || formData.content.trim().length < 10) {
-            Utils.showError('Content must be at least 10 characters long');
-            return;
-        }
-
-        // Get selected categories
-        const selectedCategories = Array.from(form.querySelectorAll('input[name="categories"]:checked'))
-            .map(checkbox => checkbox.value);
-
-        if (selectedCategories.length === 0) {
-            Utils.showError('Please select at least one category');
-            return;
-        }
-
-        // Validate image file if provided
-        const imageFile = form.querySelector('#post-image').files[0];
-        if (imageFile) {
-            const validation = ApiHelpers.validateFile(imageFile);
-            if (!validation.valid) {
-                Utils.showError(validation.error);
-                return;
-            }
         }
 
         try {
             Utils.showLoading();
             
-            await api.createPost({
-                title: formData.title.trim(),
-                content: formData.content.trim(),
-                categories: selectedCategories,
-                image: imageFile
-            });
+            const postData = {
+                title: formData.title,
+                content: formData.content,
+                categories: formData.categories || []
+            };
 
+            // Add image if provided
+            const imageFile = event.target.querySelector('input[name="image"]').files[0];
+            if (imageFile) {
+                postData.image = imageFile;
+            }
+
+            await api.createPost(postData);
+            
             Utils.showSuccess('Post created successfully!');
             Utils.closeModal('#create-post-modal');
-            Utils.clearForm(form);
+            Utils.clearForm(event.target);
             
             // Reload posts
             this.loadPosts();
@@ -183,48 +163,60 @@ class Posts {
         const isOwner = AuthHelpers.isOwner(post.user_id);
         
         return `
-            <article class="post-card" data-post-id="${post.id}">
-                <header class="post-header">
-                    <img src="${formattedPost.avatar_url}" alt="${Utils.escapeHtml(post.username)}" class="post-avatar">
-                    <div class="post-meta">
-                        <div class="post-author">${Utils.escapeHtml(post.username)}</div>
-                        <div class="post-date">${formattedPost.created_at}</div>
+            <div class="post-card" data-post-id="${post.id}">
+                <div class="post-header">
+                    <div class="post-author">
+                        <img src="${post.profile_avatar || '/static/profiles/default.png'}" 
+                             alt="${Utils.escapeHtml(post.username)}" class="avatar">
+                        <div class="author-info">
+                            <span class="username">${Utils.escapeHtml(post.username)}</span>
+                            <span class="post-date">${formattedPost.formattedDate}</span>
+                        </div>
                     </div>
                     ${isOwner ? `
-                        <div class="action-buttons">
-                            <button class="btn btn-small btn-danger" onclick="Posts.deletePost(${post.id})">Delete</button>
+                        <div class="post-actions">
+                            <button class="btn btn-sm btn-outline" onclick="Posts.editPost(${post.id})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="Posts.deletePost(${post.id})">Delete</button>
                         </div>
                     ` : ''}
-                </header>
+                </div>
                 
-                <h2 class="post-title">${Utils.escapeHtml(post.title)}</h2>
-                <div class="post-content">${Utils.escapeHtml(formattedPost.content_preview)}</div>
+                <div class="post-content">
+                    <h3 class="post-title">${Utils.escapeHtml(post.title)}</h3>
+                    <p class="post-text">${Utils.escapeHtml(formattedPost.truncatedContent)}</p>
+                    
+                    ${post.image_url ? `
+                        <img src="${post.image_url}" alt="Post image" class="post-image">
+                    ` : ''}
+                    
+                    ${post.category_ids && post.category_ids.length > 0 ? `
+                        <div class="post-categories">
+                            ${post.category_ids.map(catId => `
+                                <span class="category-tag">Category ${catId}</span>
+                            `).join('')}
+                        </div>
+                    ` : ''}
+                </div>
                 
-                ${post.image_url && post.image_url.trim() !== '' ? `
-                    <img src="${formattedPost.image_url}" alt="Post image" class="post-image" onerror="Utils.handleImageError(this)">
-                ` : ''}
-                
-                ${post.category_ids && post.category_ids.length > 0 ? `
-                    <div class="post-categories">
-                        ${post.category_ids.map(categoryId => `
-                            <span class="category-tag">Category ${categoryId}</span>
-                        `).join('')}
-                    </div>
-                ` : ''}
-                
-                <footer class="post-actions">
+                <div class="post-footer">
                     <div class="post-stats">
-                        <span class="stat-item">
-                            <span>💬</span>
-                            <span id="comments-count-${post.id}">0</span>
-                        </span>
+                        <span class="likes-count">👍 ${post.likes || 0}</span>
+                        <span class="dislikes-count">👎 ${post.dislikes || 0}</span>
+                        <span class="comments-count">💬 ${post.comments_count || 0}</span>
                     </div>
                     
-                    <div class="like-buttons" data-post-id="${post.id}">
-                        <!-- Like buttons will be loaded by likes.js -->
-                    </div>
-                </footer>
-            </article>
+                    ${AuthHelpers.isLoggedIn() ? `
+                        <div class="post-reactions">
+                            <button class="btn btn-sm like-btn" data-post-id="${post.id}" data-type="like">
+                                👍 Like
+                            </button>
+                            <button class="btn btn-sm dislike-btn" data-post-id="${post.id}" data-type="dislike">
+                                👎 Dislike
+                            </button>
+                        </div>
+                    ` : ''}
+                </div>
+            </div>
         `;
     }
 
@@ -265,37 +257,48 @@ class Posts {
         const isOwner = AuthHelpers.isOwner(post.user_id);
         
         return `
-            <article class="post-detail">
-                <header class="post-header">
-                    <img src="${formattedPost.avatar_url}" alt="${Utils.escapeHtml(post.username)}" class="post-avatar">
-                    <div class="post-meta">
-                        <div class="post-author">${Utils.escapeHtml(post.username)}</div>
-                        <div class="post-date">${formattedPost.created_at}</div>
-                    </div>
-                    ${isOwner ? `
-                        <div class="action-buttons">
-                            <button class="btn btn-small btn-danger" onclick="Posts.deletePost(${post.id})">Delete</button>
+            <div class="post-detail">
+                <div class="post-header">
+                    <div class="post-author">
+                        <img src="${post.profile_avatar || '/static/profiles/default.png'}" 
+                             alt="${Utils.escapeHtml(post.username)}" class="avatar">
+                        <div class="author-info">
+                            <span class="username">${Utils.escapeHtml(post.username)}</span>
+                            <span class="post-date">${formattedPost.formattedDate}</span>
                         </div>
-                    ` : ''}
-                </header>
-                
-                <h1 class="post-title">${Utils.escapeHtml(post.title)}</h1>
-                <div class="post-content">${Utils.escapeHtml(post.content)}</div>
-                
-                ${post.image_url && post.image_url.trim() !== '' ? `
-                    <img src="${formattedPost.image_url}" alt="Post image" class="post-image" onerror="Utils.handleImageError(this)">
-                ` : ''}
-                
-                <footer class="post-actions">
-                    <div class="like-buttons" data-post-id="${post.id}">
-                        <!-- Like buttons will be loaded by likes.js -->
                     </div>
-                </footer>
+                </div>
                 
-                <section class="comments-section" data-post-id="${post.id}">
-                    <!-- Comments will be loaded by comments.js -->
-                </section>
-            </article>
+                <div class="post-content">
+                    <h2 class="post-title">${Utils.escapeHtml(post.title)}</h2>
+                    <div class="post-text">${Utils.escapeHtml(post.content)}</div>
+                    
+                    ${post.image_url ? `
+                        <img src="${post.image_url}" alt="Post image" class="post-image">
+                    ` : ''}
+                </div>
+                
+                <div class="post-footer">
+                    <div class="post-reactions" data-post-id="${post.id}">
+                        <!-- Likes will be initialized here -->
+                    </div>
+                </div>
+                
+                <div class="comments-section">
+                    <h3>Comments (${comments.length})</h3>
+                    
+                    ${AuthHelpers.isLoggedIn() ? `
+                        <form class="comment-form" data-post-id="${post.id}">
+                            <textarea name="content" placeholder="Write a comment..." required></textarea>
+                            <button type="submit" class="btn btn-primary">Post Comment</button>
+                        </form>
+                    ` : ''}
+                    
+                    <div class="comments-list" data-post-id="${post.id}">
+                        <!-- Comments will be loaded here -->
+                    </div>
+                </div>
+            </div>
         `;
     }
 
