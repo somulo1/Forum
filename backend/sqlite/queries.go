@@ -83,15 +83,16 @@ func GetPost(db *sql.DB, postID int) (models.Post, error) {
 	return post, nil
 }
 
-func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
+func GetPosts(db *sql.DB, page, limit int, categoryID *int) ([]models.Post, error) {
 	offset := (page - 1) * limit
 
-	rows, err := db.Query(`
-        SELECT 
-            posts.id, 
+	// Build the query with optional category filter
+	query := `
+        SELECT
+            posts.id,
             posts.user_id,
             users.username,
-			users.AvatarURL, 
+			users.AvatarURL,
             posts.title,
 			posts.ImageURL,
             posts.content,
@@ -105,11 +106,24 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
         JOIN users ON posts.user_id = users.id
         LEFT JOIN categories ON posts.category_id = categories.id
         LEFT JOIN comments ON posts.id = comments.post_id
-        LEFT JOIN likes ON posts.id = likes.post_id
+        LEFT JOIN likes ON posts.id = likes.post_id`
+
+	args := []interface{}{}
+
+	// Add category filter if specified
+	if categoryID != nil {
+		query += ` WHERE posts.category_id = ?`
+		args = append(args, *categoryID)
+	}
+
+	query += `
         GROUP BY posts.id
         ORDER BY posts.created_at DESC
-        LIMIT ? OFFSET ?
-    `, limit, offset)
+        LIMIT ? OFFSET ?`
+
+	args = append(args, limit, offset)
+
+	rows, err := db.Query(query, args...)
 	if err != nil {
 		log.Println("Error fetching posts:", err) // Log the error
 		return nil, err
@@ -125,8 +139,8 @@ func GetPosts(db *sql.DB, page, limit int) ([]models.Post, error) {
 			&post.ID,
 			&post.UserID,
 			&post.Username,
-			&post.Title,
 			&post.AvatarURL,
+			&post.Title,
 			&post.ImageURL,
 			&post.Content,
 			&post.CategoryID,
