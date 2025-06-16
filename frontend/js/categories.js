@@ -1,15 +1,13 @@
 // Categories Management
-
 class Categories {
     constructor() {
         this.categories = [];
         this.init();
     }
 
-    async init() {
-        await this.loadCategories();
+    init() {
         this.setupEventListeners();
-        this.renderCategoryFilter();
+        this.loadCategories();
     }
 
     setupEventListeners() {
@@ -21,12 +19,11 @@ class Categories {
             });
         }
 
-        // Create category button (if we add one later)
-        document.addEventListener('click', (e) => {
-            if (e.target.matches('.create-category-btn')) {
-                this.showCreateCategoryModal();
-            }
-        });
+        // Create category form (if exists)
+        const createCategoryForm = Utils.$('#create-category-form');
+        if (createCategoryForm) {
+            createCategoryForm.addEventListener('submit', (e) => this.handleCreateCategory(e));
+        }
     }
 
     // Load categories from API
@@ -61,15 +58,48 @@ class Categories {
         }
     }
 
-    // Get category name by ID
-    getCategoryName(categoryId) {
-        const category = this.categories.find(cat => cat.id === categoryId);
-        return category ? category.name : 'Unknown Category';
+    // Handle create category form submission
+    async handleCreateCategory(event) {
+        event.preventDefault();
+        
+        if (!AuthHelpers.requireAuth()) return;
+
+        const formData = Utils.getFormData(event.target);
+        
+        if (!formData.name || !formData.name.trim()) {
+            Utils.showError('Please enter a category name');
+            return;
+        }
+
+        try {
+            Utils.showLoading();
+            
+            await api.createCategory({
+                name: formData.name.trim()
+            });
+            
+            Utils.showSuccess('Category created successfully');
+            Utils.clearForm(event.target);
+            
+            // Reload categories
+            await this.loadCategories();
+            this.renderCategoryFilter();
+
+        } catch (error) {
+            ApiHelpers.handleError(error);
+        } finally {
+            Utils.hideLoading();
+        }
     }
 
     // Get category by ID
-    getCategory(categoryId) {
-        return this.categories.find(cat => cat.id === categoryId);
+    getCategoryById(id) {
+        return this.categories.find(category => category.id === parseInt(id));
+    }
+
+    // Get category by name
+    getCategoryByName(name) {
+        return this.categories.find(category => category.name.toLowerCase() === name.toLowerCase());
     }
 
     // Get all categories
@@ -77,159 +107,90 @@ class Categories {
         return this.categories;
     }
 
-    // Create new category
-    async createCategory(name) {
-        if (!AuthHelpers.requireAuth()) return;
-
-        if (!name || name.trim().length < 2) {
-            Utils.showError('Category name must be at least 2 characters long');
-            return;
-        }
-
-        // Check if category already exists
-        const existingCategory = this.categories.find(cat => 
-            cat.name.toLowerCase() === name.trim().toLowerCase()
-        );
-
-        if (existingCategory) {
-            Utils.showError('Category already exists');
-            return;
-        }
-
-        try {
-            await api.createCategory({ name: name.trim() });
-            Utils.showSuccess('Category created successfully!');
-            
-            // Reload categories
-            await this.loadCategories();
-            this.renderCategoryFilter();
-            
-            return true;
-        } catch (error) {
-            ApiHelpers.handleError(error);
-            return false;
-        }
+    // Format categories for display
+    formatCategoriesForPost(categoryIds) {
+        if (!categoryIds || !Array.isArray(categoryIds)) return [];
+        
+        return categoryIds.map(id => {
+            const category = this.getCategoryById(id);
+            return category ? category.name : `Category ${id}`;
+        });
     }
 
-    // Show create category modal (if implemented)
-    showCreateCategoryModal() {
-        const categoryName = prompt('Enter category name:');
-        if (categoryName) {
-            this.createCategory(categoryName);
-        }
-    }
-
-    // Render categories for post creation form
-    renderCategoriesForForm(containerId) {
+    // Render categories list (for admin/management)
+    renderCategoriesList(containerId) {
         const container = Utils.$(containerId);
         if (!container) return;
 
         if (this.categories.length === 0) {
-            container.innerHTML = `
-                <p class="text-muted">No categories available. 
-                   <button type="button" class="btn btn-small btn-secondary create-category-btn">
-                       Create Category
-                   </button>
-                </p>
-            `;
+            container.innerHTML = '<p class="no-categories">No categories found.</p>';
             return;
         }
 
-        const checkboxes = this.categories.map(category => `
+        container.innerHTML = `
+            <div class="categories-grid">
+                ${this.categories.map(category => `
+                    <div class="category-item" data-category-id="${category.id}">
+                        <div class="category-info">
+                            <h4 class="category-name">${Utils.escapeHtml(category.name)}</h4>
+                            <span class="category-id">ID: ${category.id}</span>
+                        </div>
+                        ${AuthHelpers.isLoggedIn() ? `
+                            <div class="category-actions">
+                                <button class="btn btn-sm btn-outline" onclick="Categories.editCategory(${category.id})">Edit</button>
+                                <button class="btn btn-sm btn-danger" onclick="Categories.deleteCategory(${category.id})">Delete</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `).join('')}
+            </div>
+        `;
+    }
+
+    // Render category checkboxes for post creation
+    renderCategoryCheckboxes(containerId) {
+        const container = Utils.$(containerId);
+        if (!container) return;
+
+        if (this.categories.length === 0) {
+            container.innerHTML = '<p class="no-categories">No categories available.</p>';
+            return;
+        }
+
+        container.innerHTML = this.categories.map(category => `
             <label class="category-checkbox">
                 <input type="checkbox" name="categories" value="${Utils.escapeHtml(category.name)}">
                 <span>${Utils.escapeHtml(category.name)}</span>
             </label>
         `).join('');
-
-        container.innerHTML = `
-            ${checkboxes}
-            <button type="button" class="btn btn-small btn-secondary create-category-btn mt-2">
-                Add New Category
-            </button>
-        `;
     }
 
-    // Get selected categories from form
-    getSelectedCategories(formElement) {
-        const checkboxes = formElement.querySelectorAll('input[name="categories"]:checked');
-        return Array.from(checkboxes).map(checkbox => checkbox.value);
+    // Edit category (placeholder for future implementation)
+    async editCategory(categoryId) {
+        Utils.showWarning('Edit category functionality not implemented yet');
     }
 
-    // Render category tags for display
-    renderCategoryTags(categoryIds) {
-        if (!categoryIds || categoryIds.length === 0) return '';
-
-        return categoryIds.map(categoryId => {
-            const categoryName = this.getCategoryName(categoryId);
-            return `<span class="category-tag">${Utils.escapeHtml(categoryName)}</span>`;
-        }).join('');
-    }
-
-    // Filter posts by category
-    filterPostsByCategory(posts, categoryId) {
-        if (!categoryId) return posts;
-
-        return posts.filter(post => 
-            post.category_ids && post.category_ids.includes(parseInt(categoryId))
-        );
-    }
-
-    // Get popular categories (categories with most posts)
-    getPopularCategories(posts, limit = 5) {
-        const categoryCounts = {};
-
-        posts.forEach(post => {
-            if (post.category_ids) {
-                post.category_ids.forEach(categoryId => {
-                    categoryCounts[categoryId] = (categoryCounts[categoryId] || 0) + 1;
-                });
-            }
-        });
-
-        return Object.entries(categoryCounts)
-            .sort(([,a], [,b]) => b - a)
-            .slice(0, limit)
-            .map(([categoryId, count]) => ({
-                category: this.getCategory(parseInt(categoryId)),
-                count
-            }))
-            .filter(item => item.category);
+    // Delete category (placeholder for future implementation)
+    async deleteCategory(categoryId) {
+        if (!confirm('Are you sure you want to delete this category?')) return;
+        
+        Utils.showWarning('Delete category functionality not implemented yet');
     }
 
     // Search categories
     searchCategories(query) {
-        if (!query) return this.categories;
-
-        const lowerQuery = query.toLowerCase();
-        return this.categories.filter(category =>
-            category.name.toLowerCase().includes(lowerQuery)
+        if (!query || !query.trim()) return this.categories;
+        
+        const searchTerm = query.toLowerCase().trim();
+        return this.categories.filter(category => 
+            category.name.toLowerCase().includes(searchTerm)
         );
     }
 
-    // Validate category selection
-    validateCategorySelection(selectedCategories) {
-        if (!selectedCategories || selectedCategories.length === 0) {
-            return { valid: false, error: 'Please select at least one category' };
-        }
-
-        if (selectedCategories.length > 5) {
-            return { valid: false, error: 'Please select no more than 5 categories' };
-        }
-
-        // Check if all selected categories exist
-        const invalidCategories = selectedCategories.filter(categoryName => 
-            !this.categories.some(cat => cat.name === categoryName)
-        );
-
-        if (invalidCategories.length > 0) {
-            return { 
-                valid: false, 
-                error: `Invalid categories: ${invalidCategories.join(', ')}` 
-            };
-        }
-
-        return { valid: true };
+    // Get popular categories (placeholder - would need backend support)
+    getPopularCategories(limit = 5) {
+        // For now, just return the first few categories
+        return this.categories.slice(0, limit);
     }
 
     // Refresh categories
@@ -238,33 +199,9 @@ class Categories {
         this.renderCategoryFilter();
     }
 
-    // Get category statistics
-    getCategoryStats(posts) {
-        const stats = {};
-
-        this.categories.forEach(category => {
-            stats[category.id] = {
-                name: category.name,
-                postCount: 0,
-                totalLikes: 0,
-                totalComments: 0
-            };
-        });
-
-        posts.forEach(post => {
-            if (post.category_ids) {
-                post.category_ids.forEach(categoryId => {
-                    if (stats[categoryId]) {
-                        stats[categoryId].postCount++;
-                        // Add likes and comments if available
-                        if (post.likes) stats[categoryId].totalLikes += post.likes;
-                        if (post.comments_count) stats[categoryId].totalComments += post.comments_count;
-                    }
-                });
-            }
-        });
-
-        return stats;
+    // Clear categories cache
+    clearCache() {
+        this.categories = [];
     }
 }
 
@@ -272,54 +209,3 @@ class Categories {
 document.addEventListener('DOMContentLoaded', () => {
     window.Categories = new Categories();
 });
-
-// Helper functions for other modules
-window.CategoriesHelpers = {
-    // Get category name by ID
-    getCategoryName: (categoryId) => {
-        if (window.Categories) {
-            return window.Categories.getCategoryName(categoryId);
-        }
-        return 'Unknown Category';
-    },
-
-    // Get all categories
-    getAll: () => {
-        if (window.Categories) {
-            return window.Categories.getAllCategories();
-        }
-        return [];
-    },
-
-    // Render category tags
-    renderTags: (categoryIds) => {
-        if (window.Categories) {
-            return window.Categories.renderCategoryTags(categoryIds);
-        }
-        return '';
-    },
-
-    // Validate category selection
-    validate: (selectedCategories) => {
-        if (window.Categories) {
-            return window.Categories.validateCategorySelection(selectedCategories);
-        }
-        return { valid: false, error: 'Categories not loaded' };
-    },
-
-    // Create new category
-    create: (name) => {
-        if (window.Categories) {
-            return window.Categories.createCategory(name);
-        }
-        return Promise.resolve(false);
-    },
-
-    // Refresh categories
-    refresh: () => {
-        if (window.Categories) {
-            return window.Categories.refresh();
-        }
-        return Promise.resolve();
-    }
-};
