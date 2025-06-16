@@ -14,8 +14,11 @@ import (
 )
 
 func UploadAvatar(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	fmt.Printf("UploadAvatar handler called - Method: %s, Path: %s\n", r.Method, r.URL.Path)
+
 	// Get authenticated user
 	userID := r.Context().Value("userID").(int)
+	fmt.Printf("User ID from context: %d\n", userID)
 
 	tx, err := db.Begin()
 	if err != nil {
