@@ -18,6 +18,7 @@ type Post struct {
 	CommentCount int        `json:"comment_count" gorm:"-"`
 	Likes        []Like     `json:"likes" gorm:"foreignKey:PostID"`
 	LikeCount    int        `json:"like_count" gorm:"-"`
+	UserLiked    bool       `json:"user_liked" gorm:"-"`
 	CreatedAt    time.Time  `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt    time.Time  `json:"updated_at" gorm:"autoUpdateTime"`
 }

@@ -470,3 +470,144 @@ func GetUserByID(db *sql.DB, userID int) (*models.User, error) {
 
 	return &user, nil
 }
+
+// GetPostsByUser fetches posts created by a specific user
+func GetPostsByUser(db *sql.DB, userID, page, limit int) ([]models.Post, error) {
+	offset := (page - 1) * limit
+
+	query := `
+        SELECT
+            p.id, p.title, p.content, p.user_id, p.created_at, p.updated_at,
+            u.username,
+            COALESCE(like_counts.like_count, 0) as like_count,
+            COALESCE(comment_counts.comment_count, 0) as comment_count,
+            GROUP_CONCAT(c.name) as categories
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) as like_count
+            FROM likes
+            WHERE post_id IS NOT NULL
+            GROUP BY post_id
+        ) like_counts ON p.id = like_counts.post_id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) as comment_count
+            FROM comments
+            GROUP BY post_id
+        ) comment_counts ON p.id = comment_counts.post_id
+        LEFT JOIN post_categories pc ON p.id = pc.post_id
+        LEFT JOIN categories c ON pc.category_id = c.id
+        WHERE p.user_id = ?
+        GROUP BY p.id, p.title, p.content, p.user_id, p.created_at, p.updated_at, u.username
+        ORDER BY p.created_at DESC
+        LIMIT ? OFFSET ?
+    `
+
+	rows, err := db.Query(query, userID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		var categories sql.NullString
+
+		err := rows.Scan(
+			&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt, &post.UpdatedAt,
+			&post.Username, &post.LikeCount, &post.CommentCount, &categories,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if categories.Valid && categories.String != "" {
+			categoryNames := strings.Split(categories.String, ",")
+			for _, name := range categoryNames {
+				post.Categories = append(post.Categories, models.Category{Name: name})
+			}
+		}
+
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
+
+// GetPostsLikedByUser fetches posts liked by a specific user
+func GetPostsLikedByUser(db *sql.DB, userID, page, limit int) ([]models.Post, error) {
+	offset := (page - 1) * limit
+
+	query := `
+        SELECT
+            p.id, p.title, p.content, p.user_id, p.created_at, p.updated_at,
+            u.username,
+            COALESCE(like_counts.like_count, 0) as like_count,
+            COALESCE(comment_counts.comment_count, 0) as comment_count,
+            GROUP_CONCAT(c.name) as categories
+        FROM posts p
+        JOIN users u ON p.user_id = u.id
+        JOIN likes l ON p.id = l.post_id AND l.user_id = ?
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) as like_count
+            FROM likes
+            WHERE post_id IS NOT NULL
+            GROUP BY post_id
+        ) like_counts ON p.id = like_counts.post_id
+        LEFT JOIN (
+            SELECT post_id, COUNT(*) as comment_count
+            FROM comments
+            GROUP BY post_id
+        ) comment_counts ON p.id = comment_counts.post_id
+        LEFT JOIN post_categories pc ON p.id = pc.post_id
+        LEFT JOIN categories c ON pc.category_id = c.id
+        GROUP BY p.id, p.title, p.content, p.user_id, p.created_at, p.updated_at, u.username
+        ORDER BY p.created_at DESC
+        LIMIT ? OFFSET ?
+    `
+
+	rows, err := db.Query(query, userID, limit, offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		var categories sql.NullString
+
+		err := rows.Scan(
+			&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt, &post.UpdatedAt,
+			&post.Username, &post.LikeCount, &post.CommentCount, &categories,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		if categories.Valid && categories.String != "" {
+			categoryNames := strings.Split(categories.String, ",")
+			for _, name := range categoryNames {
+				post.Categories = append(post.Categories, models.Category{Name: name})
+			}
+		}
+
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
+
+// HasUserLikedPost checks if a user has liked a specific post
+func HasUserLikedPost(db *sql.DB, userID, postID int) (bool, error) {
+	query := `SELECT COUNT(*) FROM likes WHERE user_id = ? AND post_id = ?`
+
+	var count int
+	err := db.QueryRow(query, userID, postID).Scan(&count)
+	if err != nil {
+		return false, err
+	}
+
+	return count > 0, nil
+}

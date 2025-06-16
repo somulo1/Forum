@@ -60,7 +60,7 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	// Extract pagination parameters from the URL query
 	page, limit := utils.GetPaginationParams(r)
 
-	// Extract category filter from query parameters
+	// Extract filters from query parameters
 	var categoryID *int
 	if categoryIDStr := r.URL.Query().Get("category_id"); categoryIDStr != "" {
 		if id, err := strconv.Atoi(categoryIDStr); err == nil {
@@ -68,11 +68,49 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	// Fetch posts with pagination and optional category filter
-	posts, err := sqlite.GetPosts(db, page, limit, categoryID)
+	var userID *int
+	if userIDStr := r.URL.Query().Get("user_id"); userIDStr != "" {
+		if id, err := strconv.Atoi(userIDStr); err == nil {
+			userID = &id
+		}
+	}
+
+	var likedByUserID *int
+	if likedByStr := r.URL.Query().Get("liked_by"); likedByStr != "" {
+		if id, err := strconv.Atoi(likedByStr); err == nil {
+			likedByUserID = &id
+		}
+	}
+
+	// Get current user ID for like status
+	currentUserID, _ := utils.GetUserIDFromSession(db, r)
+
+	// Fetch posts with filters
+	var posts []models.Post
+	var err error
+
+	if likedByUserID != nil {
+		// Get posts liked by specific user
+		posts, err = sqlite.GetPostsLikedByUser(db, *likedByUserID, page, limit)
+	} else if userID != nil {
+		// Get posts by specific user
+		posts, err = sqlite.GetPostsByUser(db, *userID, page, limit)
+	} else {
+		// Get all posts (with optional category filter)
+		posts, err = sqlite.GetPosts(db, page, limit, categoryID)
+	}
+
 	if err != nil {
 		utils.SendJSONError(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
+	}
+
+	// Add user like status to each post
+	for i := range posts {
+		if currentUserID > 0 {
+			liked, _ := sqlite.HasUserLikedPost(db, currentUserID, posts[i].ID)
+			posts[i].UserLiked = liked
+		}
 	}
 
 	utils.SendJSONResponse(w, posts, http.StatusOK)

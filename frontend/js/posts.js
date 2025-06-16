@@ -40,10 +40,7 @@ class PostsManager {
         // Posts container for event delegation
         const postsContainer = document.getElementById('postsContainer');
         if (postsContainer) {
-            utils.delegate(postsContainer, '.post-title', 'click', (e) => {
-                const postId = e.target.closest('.post-card').dataset.postId;
-                this.showPostDetail(postId);
-            });
+            // Removed post title click handler - showPostDetail method doesn't exist
 
             utils.delegate(postsContainer, '.like-btn', 'click', (e) => {
                 e.stopPropagation();
