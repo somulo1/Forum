@@ -14,7 +14,7 @@ var DB *sql.DB
 // InitializeDatabase initializes the SQLite database
 func InitializeDatabase(dbPath string) error {
 	var err error
-	DB, err = sql.Open("sqlite3", dbPath)
+	DB, err = sql.Open("sqlite", dbPath)
 	if err != nil {
 		return fmt.Errorf("failed to open database: %w", err)
 	}
