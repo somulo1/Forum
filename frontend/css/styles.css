@@ -306,7 +306,7 @@ select:focus {
 /* Content Grid */
 .content-grid {
     display: grid;
-    grid-template-columns: 250px 1fr;
+    grid-template-columns: 1fr 250px;
     gap: 30px;
     margin-top: 20px;
 }
@@ -320,6 +320,7 @@ select:focus {
     height: fit-content;
     position: sticky;
     top: 80px;
+    border-left: 1px solid #e9ecef;
 }
 
 .sidebar-section {
@@ -1440,7 +1441,7 @@ select:focus {
     }
 
     .content-grid {
-        grid-template-columns: 200px 1fr;
+        grid-template-columns: 1fr 200px;
         gap: 25px;
     }
 
@@ -1460,7 +1461,7 @@ select:focus {
     }
 
     .content-grid {
-        grid-template-columns: 220px 1fr;
+        grid-template-columns: 1fr 220px;
     }
 }
 
@@ -1479,7 +1480,7 @@ select:focus {
     }
 
     .content-grid {
-        grid-template-columns: 250px 1fr;
+        grid-template-columns: 1fr 250px;
         gap: 40px;
     }
 }
