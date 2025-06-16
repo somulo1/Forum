@@ -13,6 +13,7 @@ class PostsManager {
     init() {
         this.setupEventListeners();
         this.loadCategories();
+        this.loadPosts(); // Load posts on initialization
     }
 
     setupEventListeners() {
@@ -46,8 +47,25 @@ class PostsManager {
 
             utils.delegate(postsContainer, '.like-btn', 'click', (e) => {
                 e.stopPropagation();
-                const postId = e.target.closest('.post-card').dataset.postId;
+                e.preventDefault();
+                console.log('Like button clicked'); // Debug log
+                const postCard = e.target.closest('.post-card');
+                if (!postCard) {
+                    console.log('Post card not found'); // Debug log
+                    return;
+                }
+                const postId = postCard.dataset.postId;
+                console.log('Post ID:', postId); // Debug log
                 auth.requireAuth(() => this.togglePostLike(postId));
+            });
+
+            utils.delegate(postsContainer, '.delete-post-btn', 'click', (e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                const postCard = e.target.closest('.post-card');
+                if (!postCard) return;
+                const postId = postCard.dataset.postId;
+                this.deletePost(postId);
             });
 
             utils.delegate(postsContainer, '.comment-btn', 'click', (e) => {
@@ -306,16 +324,22 @@ class PostsManager {
     }
 
     async togglePostLike(postId) {
+        console.log('togglePostLike called with postId:', postId); // Debug log
         try {
+            console.log('Calling API to toggle like...'); // Debug log
             await apiWrapper.toggleLike({ post_id: parseInt(postId) });
-            
+            console.log('API call successful'); // Debug log
+
             // Update the UI optimistically
             const likeBtn = document.querySelector(`[data-post-id="${postId}"] .like-btn`);
+            console.log('Like button found:', !!likeBtn); // Debug log
             if (likeBtn) {
                 const isLiked = likeBtn.classList.contains('liked');
                 const countSpan = likeBtn.querySelector('span');
                 let count = parseInt(countSpan.textContent) || 0;
-                
+
+                console.log('Current like status:', isLiked, 'Count:', count); // Debug log
+
                 if (isLiked) {
                     likeBtn.classList.remove('liked');
                     count = Math.max(0, count - 1);
@@ -323,10 +347,12 @@ class PostsManager {
                     likeBtn.classList.add('liked');
                     count += 1;
                 }
-                
+
                 countSpan.textContent = count;
+                console.log('UI updated, new count:', count); // Debug log
             }
         } catch (error) {
+            console.error('Error in togglePostLike:', error); // Debug log
             // Error is already handled by apiWrapper
         }
     }
