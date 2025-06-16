@@ -1,5 +1,4 @@
 // Main Application Controller
-
 class App {
     constructor() {
         this.currentPage = 'home';
@@ -9,15 +8,11 @@ class App {
 
     async init() {
         try {
-            // Wait for DOM to be fully loaded
-            if (document.readyState === 'loading') {
-                document.addEventListener('DOMContentLoaded', () => this.initialize());
-            } else {
-                await this.initialize();
-            }
+            console.log('Initializing Forum Application...');
+            await this.initialize();
         } catch (error) {
-            console.error('App initialization error:', error);
-            Utils.showError('Failed to initialize application');
+            console.error('Failed to initialize application:', error);
+            Utils.showError('Failed to load application. Please refresh the page.');
         }
     }
 
@@ -58,38 +53,57 @@ class App {
     }
 
     setupNavigation() {
-        // Home link
-        const homeLink = Utils.$('#home-link');
-        if (homeLink) {
-            homeLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.navigateToHome();
-            });
-        }
+        // Navigation links
+        Utils.$('#home-nav')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.navigateToHome();
+        });
 
-        // Categories link
-        const categoriesLink = Utils.$('#categories-link');
-        if (categoriesLink) {
-            categoriesLink.addEventListener('click', (e) => {
-                e.preventDefault();
-                this.navigateToCategories();
-            });
-        }
+        Utils.$('#categories-nav')?.addEventListener('click', (e) => {
+            e.preventDefault();
+            this.navigateToCategories();
+        });
 
         // Update active navigation
         this.updateActiveNavigation();
     }
 
     setupGlobalEventListeners() {
-        // Handle browser back/forward buttons
-        window.addEventListener('popstate', (e) => {
-            this.handlePopState(e);
+        // Global keyboard shortcuts
+        document.addEventListener('keydown', (e) => {
+            // Escape key to close modals
+            if (e.key === 'Escape') {
+                this.closeAllModals();
+            }
+            
+            // Ctrl/Cmd + Enter to submit forms
+            if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+                const activeElement = document.activeElement;
+                if (activeElement && activeElement.form) {
+                    const submitButton = activeElement.form.querySelector('button[type="submit"]');
+                    if (submitButton) {
+                        submitButton.click();
+                    }
+                }
+            }
         });
 
-        // Handle global keyboard shortcuts
-        document.addEventListener('keydown', (e) => {
-            this.handleKeyboardShortcuts(e);
+        // Handle notification close
+        Utils.$('#notification-close')?.addEventListener('click', () => {
+            Utils.hide('#notification');
         });
+
+        // Auto-hide notifications
+        document.addEventListener('click', (e) => {
+            if (e.target.matches('#notification') || e.target.closest('#notification')) {
+                Utils.hide('#notification');
+            }
+        });
+
+        // Handle window resize
+        window.addEventListener('resize', Utils.debounce(() => {
+            this.handleResize();
+        }, 250));
 
         // Handle online/offline status
         window.addEventListener('online', () => {
@@ -98,15 +112,7 @@ class App {
         });
 
         window.addEventListener('offline', () => {
-            Utils.showError('Connection lost. Some features may not work.');
-        });
-
-        // Handle visibility change (tab switching)
-        document.addEventListener('visibilitychange', () => {
-            if (!document.hidden && this.isInitialized) {
-                // Refresh data when user returns to tab
-                this.refreshIfStale();
-            }
+            Utils.showWarning('You are offline. Some features may not work.');
         });
     }
 
@@ -143,53 +149,38 @@ class App {
         this.currentPage = 'categories';
         this.updateActiveNavigation();
         
-        // For now, just show a message about categories
-        // In a full implementation, you might have a dedicated categories page
-        Utils.showMessage('Categories feature - use the filter dropdown to browse by category');
+        // For now, just show a message
+        Utils.showWarning('Categories page not implemented yet');
     }
 
     updateActiveNavigation() {
         // Remove active class from all nav links
         Utils.$$('.nav-link').forEach(link => link.classList.remove('active'));
         
-        // Add active class to current page link
-        const activeLink = Utils.$(`#${this.currentPage}-link`);
+        // Add active class to current page
+        const activeLink = Utils.$(`#${this.currentPage}-nav`);
         if (activeLink) {
             activeLink.classList.add('active');
         }
     }
 
-    // Handle browser navigation
-    handlePopState(event) {
-        // Handle browser back/forward buttons
-        // For now, just navigate to home
-        this.navigateToHome();
+    // Modal management
+    closeAllModals() {
+        Utils.$$('.modal').forEach(modal => {
+            Utils.closeModal(modal);
+        });
     }
 
-    // Handle keyboard shortcuts
-    handleKeyboardShortcuts(event) {
-        // Only handle shortcuts when not typing in inputs
-        if (event.target.matches('input, textarea')) return;
-
-        switch (event.key) {
-            case 'n':
-                if (event.ctrlKey || event.metaKey) {
-                    event.preventDefault();
-                    if (AuthHelpers.isLoggedIn() && window.Posts) {
-                        window.Posts.showCreatePostModal();
-                    }
-                }
-                break;
-            case 'r':
-                if (event.ctrlKey || event.metaKey) {
-                    event.preventDefault();
-                    this.refresh();
-                }
-                break;
-            case '/':
-                event.preventDefault();
-                // Focus on search if we had one
-                break;
+    // Handle window resize
+    handleResize() {
+        // Add responsive behavior here if needed
+        const width = window.innerWidth;
+        
+        if (width < 768) {
+            // Mobile view adjustments
+            document.body.classList.add('mobile-view');
+        } else {
+            document.body.classList.remove('mobile-view');
         }
     }
 
@@ -230,15 +221,19 @@ class App {
         }
     }
 
-    // Refresh data if it's stale (when user returns to tab)
-    refreshIfStale() {
-        const lastRefresh = this.lastRefreshTime || 0;
-        const now = Date.now();
-        const fiveMinutes = 5 * 60 * 1000;
-
-        if (now - lastRefresh > fiveMinutes) {
-            this.refresh();
-            this.lastRefreshTime = now;
+    // Error handling
+    handleError(error, context = 'Application') {
+        console.error(`${context} Error:`, error);
+        
+        if (error.message && error.message.includes('NetworkError')) {
+            Utils.showError('Network error. Please check your connection.');
+        } else if (error.message && error.message.includes('401')) {
+            Utils.showError('Session expired. Please log in again.');
+            if (window.Auth) {
+                window.Auth.showLoginForm();
+            }
+        } else {
+            Utils.showError(error.message || 'An unexpected error occurred');
         }
     }
 
@@ -247,77 +242,47 @@ class App {
         return {
             currentPage: this.currentPage,
             isInitialized: this.isInitialized,
-            isAuthenticated: AuthHelpers.isLoggedIn(),
-            currentUser: AuthHelpers.getCurrentUser()
+            currentUser: window.currentUser,
+            isOnline: navigator.onLine
         };
     }
 
-    // Handle application errors
-    handleError(error, context = 'Unknown') {
-        console.error(`App Error [${context}]:`, error);
-        
-        if (error.message && error.message.includes('Network')) {
-            Utils.showError('Network error. Please check your connection.');
-        } else if (error.message && error.message.includes('Unauthorized')) {
-            Utils.showError('Session expired. Please log in again.');
-            if (window.Auth) {
-                window.Auth.handleLogout();
-            }
-        } else {
-            Utils.showError(`An error occurred: ${error.message || 'Unknown error'}`);
-        }
+    // Check if application is ready
+    isReady() {
+        return this.isInitialized;
     }
 
-    // Cleanup method
-    destroy() {
-        // Remove event listeners and cleanup
-        window.removeEventListener('popstate', this.handlePopState);
-        window.removeEventListener('online', this.refresh);
-        window.removeEventListener('offline', () => {});
-        document.removeEventListener('visibilitychange', this.refreshIfStale);
-        document.removeEventListener('keydown', this.handleKeyboardShortcuts);
+    // Cleanup (for page unload)
+    cleanup() {
+        // Clear any intervals or timeouts
+        // Remove event listeners if needed
+        console.log('Application cleanup completed');
     }
 }
+
+// Global error handlers
+window.addEventListener('error', (event) => {
+    console.error('Global JavaScript Error:', event.error);
+    if (window.App) {
+        window.App.handleError(event.error, 'Global');
+    }
+});
+
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled Promise Rejection:', event.reason);
+    if (window.App) {
+        window.App.handleError(event.reason, 'Promise');
+    }
+});
 
 // Initialize application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.App = new App();
 });
 
-// Global error handler
-window.addEventListener('error', (event) => {
-    console.error('Global error:', event.error);
+// Cleanup on page unload
+window.addEventListener('beforeunload', () => {
     if (window.App) {
-        window.App.handleError(event.error, 'Global');
+        window.App.cleanup();
     }
 });
-
-// Global unhandled promise rejection handler
-window.addEventListener('unhandledrejection', (event) => {
-    console.error('Unhandled promise rejection:', event.reason);
-    if (window.App) {
-        window.App.handleError(event.reason, 'Promise');
-    }
-});
-
-// Export app helpers
-window.AppHelpers = {
-    refresh: () => {
-        if (window.App) {
-            return window.App.refresh();
-        }
-    },
-    
-    getState: () => {
-        if (window.App) {
-            return window.App.getState();
-        }
-        return null;
-    },
-    
-    navigateToHome: () => {
-        if (window.App) {
-            window.App.navigateToHome();
-        }
-    }
-};
