@@ -228,6 +228,7 @@ class PostsManager {
             modal.close();
             this.clearCreatePostForm();
             this.loadPosts(); // Reload posts to show the new one
+            this.loadCategories(); // Refresh categories to update counts
         } catch (error) {
             // Error is already handled by apiWrapper
         }
@@ -276,6 +277,7 @@ class PostsManager {
         try {
             await apiWrapper.deletePost(parseInt(postId));
             this.loadPosts(); // Reload posts
+            this.loadCategories(); // Refresh categories to update counts
         } catch (error) {
             // Error is already handled by apiWrapper
         }

@@ -336,10 +336,20 @@ func CreateCategory(db *sql.DB, name string) error {
 	return err
 }
 
-// GetCategories retrieves all categories
-// GetCategories retrieves all categories
+// GetCategories retrieves all categories with post counts
 func GetCategories(db *sql.DB) ([]models.Category, error) {
-	rows, err := db.Query(`SELECT id, name FROM categories`)
+	query := `
+		SELECT
+			c.id,
+			c.name,
+			COUNT(p.id) as posts_count
+		FROM categories c
+		LEFT JOIN posts p ON c.id = p.category_id
+		GROUP BY c.id, c.name
+		ORDER BY c.name ASC
+	`
+
+	rows, err := db.Query(query)
 	if err != nil {
 		return nil, err
 	}
@@ -348,9 +358,11 @@ func GetCategories(db *sql.DB) ([]models.Category, error) {
 	var categories []models.Category
 	for rows.Next() {
 		var category models.Category
-		if err := rows.Scan(&category.ID, &category.Name); err != nil {
+		var postsCount int
+		if err := rows.Scan(&category.ID, &category.Name, &postsCount); err != nil {
 			return nil, err
 		}
+		category.PostsCount = postsCount
 		categories = append(categories, category)
 	}
 	return categories, nil
