@@ -481,9 +481,10 @@ func GetPostsByUser(db *sql.DB, userID, page, limit int) ([]models.Post, error) 
             u.username,
             COALESCE(like_counts.like_count, 0) as like_count,
             COALESCE(comment_counts.comment_count, 0) as comment_count,
-            GROUP_CONCAT(c.name) as categories
+            c.name as category_name
         FROM posts p
         JOIN users u ON p.user_id = u.id
+        LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN (
             SELECT post_id, COUNT(*) as like_count
             FROM likes
@@ -495,10 +496,7 @@ func GetPostsByUser(db *sql.DB, userID, page, limit int) ([]models.Post, error) 
             FROM comments
             GROUP BY post_id
         ) comment_counts ON p.id = comment_counts.post_id
-        LEFT JOIN post_categories pc ON p.id = pc.post_id
-        LEFT JOIN categories c ON pc.category_id = c.id
         WHERE p.user_id = ?
-        GROUP BY p.id, p.title, p.content, p.user_id, p.created_at, p.updated_at, u.username
         ORDER BY p.created_at DESC
         LIMIT ? OFFSET ?
     `
@@ -512,21 +510,18 @@ func GetPostsByUser(db *sql.DB, userID, page, limit int) ([]models.Post, error) 
 	var posts []models.Post
 	for rows.Next() {
 		var post models.Post
-		var categories sql.NullString
+		var categoryName sql.NullString
 
 		err := rows.Scan(
 			&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt, &post.UpdatedAt,
-			&post.Username, &post.LikeCount, &post.CommentCount, &categories,
+			&post.Username, &post.LikeCount, &post.CommentCount, &categoryName,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		if categories.Valid && categories.String != "" {
-			categoryNames := strings.Split(categories.String, ",")
-			for _, name := range categoryNames {
-				post.Categories = append(post.Categories, models.Category{Name: name})
-			}
+		if categoryName.Valid && categoryName.String != "" {
+			post.Categories = append(post.Categories, models.Category{Name: categoryName.String})
 		}
 
 		posts = append(posts, post)
@@ -545,10 +540,11 @@ func GetPostsLikedByUser(db *sql.DB, userID, page, limit int) ([]models.Post, er
             u.username,
             COALESCE(like_counts.like_count, 0) as like_count,
             COALESCE(comment_counts.comment_count, 0) as comment_count,
-            GROUP_CONCAT(c.name) as categories
+            c.name as category_name
         FROM posts p
         JOIN users u ON p.user_id = u.id
         JOIN likes l ON p.id = l.post_id AND l.user_id = ?
+        LEFT JOIN categories c ON p.category_id = c.id
         LEFT JOIN (
             SELECT post_id, COUNT(*) as like_count
             FROM likes
@@ -560,9 +556,6 @@ func GetPostsLikedByUser(db *sql.DB, userID, page, limit int) ([]models.Post, er
             FROM comments
             GROUP BY post_id
         ) comment_counts ON p.id = comment_counts.post_id
-        LEFT JOIN post_categories pc ON p.id = pc.post_id
-        LEFT JOIN categories c ON pc.category_id = c.id
-        GROUP BY p.id, p.title, p.content, p.user_id, p.created_at, p.updated_at, u.username
         ORDER BY p.created_at DESC
         LIMIT ? OFFSET ?
     `
@@ -576,21 +569,18 @@ func GetPostsLikedByUser(db *sql.DB, userID, page, limit int) ([]models.Post, er
 	var posts []models.Post
 	for rows.Next() {
 		var post models.Post
-		var categories sql.NullString
+		var categoryName sql.NullString
 
 		err := rows.Scan(
 			&post.ID, &post.Title, &post.Content, &post.UserID, &post.CreatedAt, &post.UpdatedAt,
-			&post.Username, &post.LikeCount, &post.CommentCount, &categories,
+			&post.Username, &post.LikeCount, &post.CommentCount, &categoryName,
 		)
 		if err != nil {
 			return nil, err
 		}
 
-		if categories.Valid && categories.String != "" {
-			categoryNames := strings.Split(categories.String, ",")
-			for _, name := range categoryNames {
-				post.Categories = append(post.Categories, models.Category{Name: name})
-			}
+		if categoryName.Valid && categoryName.String != "" {
+			post.Categories = append(post.Categories, models.Category{Name: categoryName.String})
 		}
 
 		posts = append(posts, post)
