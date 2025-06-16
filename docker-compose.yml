@@ -1,0 +1,27 @@
+version: '3.8'
+
+services:
+  forum-backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./backend/forum.db:/app/forum.db
+      - ./backend/schema.sql:/app/schema.sql
+      - ./frontend:/app/frontend
+    environment:
+      - PORT=8080
+      - DB_PATH=forum.db
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost:8080/api/categories"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+networks:
+  default:
+    name: forum-network
