@@ -2,7 +2,8 @@
 
 class ApiClient {
     constructor() {
-        this.baseURL = window.location.origin;
+        // Backend server runs on port 8081, frontend on 8082
+        this.baseURL = 'http://localhost:8081';
         this.defaultHeaders = {
             'Content-Type': 'application/json',
         };

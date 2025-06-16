@@ -47,12 +47,7 @@ This project involves creating a web forum that allows users to communicate by c
 - Middleware is used for authentication and logging.
 
 ### 3. **Frontend**
-- The frontend is built using plain HTML, CSS, and JavaScript (no frameworks like React, Angular, or Vue).
-- The interface includes:
-  - Registration and login forms.
-  - Pages for creating and viewing posts and comments.
-  - Functionality for liking/disliking posts and comments.
-  - Filtering options for posts.
+- The frontend will be implemented separately.
 
 ### 4. **Docker**
 - The application is containerized using Docker.
@@ -102,12 +97,15 @@ forum-project/
 │       └── response_utils.go # Helper functions for JSON responses
 ├── frontend/
 │   ├── index.html            # Main HTML file
-│   ├── app.js                # Main JavaScript file for frontend logic
-│   ├── components/           # Reusable components
+│   ├── js/
+│   │   ├── app.js            # Main JavaScript file for frontend logic
+│   │   ├── api.js            # API communication functions
 │   │   ├── auth.js           # Authentication logic (login, register)
-│   │   └── post.js           # Post-related logic (display, create, like/dislike)
-│   ├── styles/               # CSS files (optional)
-│   │   └── styles.css
+│   │   ├── posts.js          # Post-related logic (display, create, like/dislike)
+│   │   ├── comments.js       # Comment functionality
+│   │   └── utils.js          # Utility functions
+│   ├── css/
+│   │   └── styles.css        # Main stylesheet
 │   └── assets/               # Static assets (images, icons, etc.)
 ├── Dockerfile                # Dockerfile for containerizing the backend
 ├── docker-compose.yml        # Docker Compose file for multi-container setup
