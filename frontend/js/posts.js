@@ -53,7 +53,13 @@ class PostsManager {
             utils.delegate(postsContainer, '.comment-btn', 'click', (e) => {
                 e.stopPropagation();
                 const postId = e.target.closest('.post-card').dataset.postId;
-                this.showPostDetail(postId);
+                this.toggleInlineComments(postId);
+            });
+
+            utils.delegate(postsContainer, '.btn-close-comments', 'click', (e) => {
+                e.stopPropagation();
+                const postId = e.target.dataset.postId;
+                this.hideInlineComments(postId);
             });
 
             utils.delegate(postsContainer, '.delete-post-btn', 'click', (e) => {
@@ -152,7 +158,7 @@ class PostsManager {
                         <i class="fas fa-thumbs-up"></i>
                         <span>${post.like_count || 0}</span>
                     </button>
-                    <button class="action-btn comment-btn">
+                    <button class="action-btn comment-btn" data-post-id="${post.id}">
                         <i class="fas fa-comment"></i>
                         <span>${post.comment_count || 0}</span>
                     </button>
@@ -160,6 +166,40 @@ class PostsManager {
                         <i class="fas fa-share"></i>
                         Share
                     </button>
+                </div>
+
+                <!-- Inline Comments Section (initially hidden) -->
+                <div class="inline-comments-section" id="comments-${post.id}" style="display: none;">
+                    <div class="comments-header">
+                        <h4>Comments (${post.comment_count || 0})</h4>
+                        <button class="btn-close-comments" data-post-id="${post.id}">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+
+                    <!-- Comment Form -->
+                    <div class="comment-form-section">
+                        <div class="comment-form" id="commentForm-${post.id}">
+                            <textarea
+                                id="commentContent-${post.id}"
+                                placeholder="Write a comment..."
+                                rows="3"
+                                class="comment-textarea"
+                            ></textarea>
+                            <div class="comment-form-actions">
+                                <button class="btn btn-primary" onclick="window.posts.submitComment(${post.id})">
+                                    <i class="fas fa-paper-plane"></i> Post Comment
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Comments List -->
+                    <div class="comments-list" id="commentsList-${post.id}">
+                        <div class="loading-comments">
+                            <i class="fas fa-spinner fa-spin"></i> Loading comments...
+                        </div>
+                    </div>
                 </div>
             </div>
         `;
@@ -283,10 +323,93 @@ class PostsManager {
         }
     }
 
-    async showPostDetail(postId) {
-        // This will be implemented in the comments module
-        if (window.comments && window.comments.showPostDetail) {
-            window.comments.showPostDetail(postId);
+    async toggleInlineComments(postId) {
+        const commentsSection = document.getElementById(`comments-${postId}`);
+        if (!commentsSection) return;
+
+        const isVisible = commentsSection.style.display !== 'none';
+
+        if (isVisible) {
+            this.hideInlineComments(postId);
+        } else {
+            this.showInlineComments(postId);
+        }
+    }
+
+    async showInlineComments(postId) {
+        // Hide any other open comment sections
+        document.querySelectorAll('.inline-comments-section').forEach(section => {
+            section.style.display = 'none';
+        });
+
+        const commentsSection = document.getElementById(`comments-${postId}`);
+        if (!commentsSection) return;
+
+        // Show the comments section
+        commentsSection.style.display = 'block';
+
+        // Load comments for this post
+        await this.loadInlineComments(postId);
+
+        // Focus on comment textarea
+        const textarea = document.getElementById(`commentContent-${postId}`);
+        if (textarea) {
+            textarea.focus();
+        }
+    }
+
+    hideInlineComments(postId) {
+        const commentsSection = document.getElementById(`comments-${postId}`);
+        if (commentsSection) {
+            commentsSection.style.display = 'none';
+        }
+    }
+
+    async loadInlineComments(postId) {
+        const commentsList = document.getElementById(`commentsList-${postId}`);
+        if (!commentsList) return;
+
+        try {
+            // Show loading
+            commentsList.innerHTML = `
+                <div class="loading-comments">
+                    <i class="fas fa-spinner fa-spin"></i> Loading comments...
+                </div>
+            `;
+
+
+
+            // Load comments from API
+            const comments = await apiWrapper.getPostComments(postId);
+
+            // Render comments
+            if (comments && comments.length > 0) {
+                commentsList.innerHTML = this.renderInlineComments(comments);
+                this.attachCommentEventListeners(postId);
+            } else {
+                commentsList.innerHTML = `
+                    <div class="empty-comments">
+                        <i class="fas fa-comments fa-2x" style="color: #ddd; margin-bottom: 15px;"></i>
+                        <p>No comments yet. Be the first to comment!</p>
+                    </div>
+                `;
+            }
+
+            // Update comment count in header
+            const commentsHeader = document.querySelector(`#comments-${postId} .comments-header h4`);
+            if (commentsHeader) {
+                const totalCount = this.getTotalCommentCount(comments || []);
+                commentsHeader.textContent = `Comments (${totalCount})`;
+            }
+
+        } catch (error) {
+            console.error('Failed to load comments:', error);
+            commentsList.innerHTML = `
+                <div class="error-comments">
+                    <i class="fas fa-exclamation-triangle" style="color: #dc3545; margin-bottom: 10px;"></i>
+                    <p>Failed to load comments. Please try again.</p>
+                </div>
+            `;
         }
     }
 
@@ -333,6 +456,293 @@ class PostsManager {
         } finally {
             utils.hideLoading('loadingPosts');
         }
+    }
+
+    renderInlineComments(comments) {
+        return comments.map(comment => this.createInlineCommentThread(comment)).join('');
+    }
+
+    createInlineCommentThread(comment, depth = 0) {
+        const commentHtml = this.createInlineCommentElement(comment, depth);
+        let repliesHtml = '';
+
+        if (comment.replies && comment.replies.length > 0) {
+            repliesHtml = comment.replies.map(reply =>
+                this.createInlineCommentThread(reply, depth + 1)
+            ).join('');
+        }
+
+        return commentHtml + repliesHtml;
+    }
+
+    createInlineCommentElement(comment, depth = 0) {
+        const avatarColor = utils.generateAvatarColor(comment.username || 'Anonymous');
+        const avatarInitials = utils.getAvatarInitials(comment.username || 'Anonymous');
+        const isOwner = auth.isUserAuthenticated() && auth.getCurrentUser().id === comment.user_id;
+        const isAuthenticated = auth.isUserAuthenticated();
+
+        // Calculate indentation for nested comments (max depth of 5 levels)
+        const maxDepth = 5;
+        const actualDepth = Math.min(depth, maxDepth);
+        const marginLeft = actualDepth * 30; // 30px per level
+
+        return `
+            <div class="inline-comment ${depth > 0 ? 'comment-reply' : ''}" data-comment-id="${comment.id}" data-parent-id="${comment.parent_id || ''}" style="margin-left: ${marginLeft}px;">
+                <div class="comment-header">
+                    <div class="post-avatar" style="background-color: ${avatarColor}; width: 32px; height: 32px; font-size: 0.8rem;">
+                        ${avatarInitials}
+                    </div>
+                    <div class="comment-author">${utils.escapeHtml(comment.username || 'Anonymous')}</div>
+                    <div class="comment-time">${utils.formatDate(comment.created_at)}</div>
+                    ${depth > 0 ? `<span class="reply-indicator">↳ Reply</span>` : ''}
+                    ${isOwner ? `
+                        <button class="action-btn comment-delete-btn" title="Delete comment" data-comment-id="${comment.id}">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    ` : ''}
+                </div>
+                <div class="comment-content">
+                    ${utils.escapeHtml(comment.content).replace(/\n/g, '<br>')}
+                </div>
+                <div class="comment-actions">
+                    <button class="action-btn comment-like-btn ${comment.user_liked ? 'liked' : ''}" data-comment-id="${comment.id}">
+                        <i class="fas fa-thumbs-up"></i>
+                        <span>${comment.likes_count || 0}</span>
+                    </button>
+                    ${isAuthenticated && depth < maxDepth ? `
+                        <button class="action-btn comment-reply-btn" data-comment-id="${comment.id}">
+                            <i class="fas fa-reply"></i>
+                            Reply
+                        </button>
+                    ` : ''}
+                </div>
+
+                <!-- Reply form (initially hidden) -->
+                <div class="reply-form" id="replyForm-${comment.id}" style="display: none;">
+                    <textarea
+                        id="replyContent-${comment.id}"
+                        placeholder="Write a reply..."
+                        rows="2"
+                        class="reply-textarea"
+                    ></textarea>
+                    <div class="reply-form-actions">
+                        <button class="btn btn-primary btn-sm" onclick="window.posts.submitReply(${comment.id})">
+                            <i class="fas fa-paper-plane"></i> Post Reply
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.posts.cancelReply(${comment.id})">
+                            Cancel
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `;
+    }
+
+    attachCommentEventListeners(postId) {
+        const commentsSection = document.getElementById(`comments-${postId}`);
+        if (!commentsSection) return;
+
+        // Comment like buttons
+        commentsSection.querySelectorAll('.comment-like-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const commentId = btn.dataset.commentId;
+                auth.requireAuth(() => this.toggleCommentLike(commentId, postId));
+            });
+        });
+
+        // Reply buttons
+        commentsSection.querySelectorAll('.comment-reply-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const commentId = btn.dataset.commentId;
+                auth.requireAuth(() => this.showReplyForm(commentId));
+            });
+        });
+
+        // Delete buttons
+        commentsSection.querySelectorAll('.comment-delete-btn').forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.preventDefault();
+                const commentId = btn.dataset.commentId;
+                this.deleteComment(commentId, postId);
+            });
+        });
+    }
+
+    async submitComment(postId) {
+        const content = document.getElementById(`commentContent-${postId}`).value.trim();
+
+        if (!content) {
+            toast.error('Please enter a comment');
+            return;
+        }
+
+        if (!auth.isUserAuthenticated()) {
+            toast.error('Please login to comment');
+            return;
+        }
+
+        const commentData = {
+            post_id: parseInt(postId),
+            content: content
+        };
+
+        try {
+            await apiWrapper.createComment(commentData);
+
+            // Clear the comment form
+            document.getElementById(`commentContent-${postId}`).value = '';
+
+            // Reload comments
+            await this.loadInlineComments(postId);
+
+            // Update comment count in post card
+            this.updatePostCommentCount(postId);
+
+            toast.success('Comment posted successfully!');
+
+        } catch (error) {
+            // Error is already handled by apiWrapper
+        }
+    }
+
+    async toggleCommentLike(commentId, postId) {
+        try {
+            await apiWrapper.toggleLike({ comment_id: parseInt(commentId) });
+
+            // Reload comments to show updated like status
+            await this.loadInlineComments(postId);
+
+        } catch (error) {
+            // Error is already handled by apiWrapper
+        }
+    }
+
+    showReplyForm(commentId) {
+        // Hide any other open reply forms
+        document.querySelectorAll('.reply-form').forEach(form => {
+            form.style.display = 'none';
+        });
+
+        // Show the reply form for this comment
+        const replyForm = document.getElementById(`replyForm-${commentId}`);
+        if (replyForm) {
+            replyForm.style.display = 'block';
+            const textarea = document.getElementById(`replyContent-${commentId}`);
+            if (textarea) {
+                textarea.focus();
+            }
+        }
+    }
+
+    cancelReply(commentId) {
+        const replyForm = document.getElementById(`replyForm-${commentId}`);
+        if (replyForm) {
+            replyForm.style.display = 'none';
+            const textarea = document.getElementById(`replyContent-${commentId}`);
+            if (textarea) {
+                textarea.value = '';
+            }
+        }
+    }
+
+    async submitReply(parentCommentId) {
+        const content = document.getElementById(`replyContent-${parentCommentId}`).value.trim();
+
+        if (!content) {
+            toast.error('Please enter a reply');
+            return;
+        }
+
+        // Find the post ID from the comment section
+        const commentElement = document.querySelector(`[data-comment-id="${parentCommentId}"]`);
+        const commentsSection = commentElement.closest('.inline-comments-section');
+        const postId = commentsSection.id.replace('comments-', '');
+
+        const commentData = {
+            post_id: parseInt(postId),
+            parent_id: parseInt(parentCommentId),
+            content: content
+        };
+
+        try {
+            await apiWrapper.createComment(commentData);
+
+            // Clear the reply form
+            this.cancelReply(parentCommentId);
+
+            // Reload comments
+            await this.loadInlineComments(postId);
+
+            // Update comment count
+            this.updatePostCommentCount(postId);
+
+            toast.success('Reply posted successfully!');
+
+        } catch (error) {
+            // Error is already handled by apiWrapper
+        }
+    }
+
+    async deleteComment(commentId, postId) {
+        if (!confirm('Are you sure you want to delete this comment?')) {
+            return;
+        }
+
+        try {
+            await apiWrapper.deleteComment(parseInt(commentId));
+
+            // Reload comments
+            await this.loadInlineComments(postId);
+
+            // Update comment count
+            this.updatePostCommentCount(postId);
+
+            toast.success('Comment deleted successfully!');
+
+        } catch (error) {
+            // Error is already handled by apiWrapper
+        }
+    }
+
+    updatePostCommentCount(postId) {
+        // Update comment count in the post card
+        const commentBtn = document.querySelector(`[data-post-id="${postId}"] .comment-btn span`);
+        const commentsHeader = document.querySelector(`#comments-${postId} .comments-header h4`);
+
+        if (commentBtn && commentsHeader) {
+            // Extract count from header
+            const headerText = commentsHeader.textContent;
+            const match = headerText.match(/\((\d+)\)/);
+            if (match) {
+                const count = match[1];
+                commentBtn.textContent = count;
+
+                // Update post in posts array
+                const post = this.posts.find(p => p.id == postId);
+                if (post) {
+                    post.comment_count = parseInt(count);
+                }
+            }
+        }
+    }
+
+    // Helper method to count total comments including replies
+    getTotalCommentCount(comments) {
+        let count = 0;
+
+        const countComments = (commentList) => {
+            for (const comment of commentList) {
+                count++;
+                if (comment.replies && comment.replies.length > 0) {
+                    countComments(comment.replies);
+                }
+            }
+        };
+
+        countComments(comments);
+        return count;
     }
 }
 
