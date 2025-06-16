@@ -61,13 +61,33 @@ class PostsManager {
                 const postId = e.target.dataset.postId;
                 this.hideInlineComments(postId);
             });
-
-            utils.delegate(postsContainer, '.delete-post-btn', 'click', (e) => {
-                e.stopPropagation();
-                const postId = e.target.closest('.post-card').dataset.postId;
-                this.deletePost(postId);
-            });
         }
+
+        // Global click handler to close comment sections when clicking outside
+        document.addEventListener('click', (e) => {
+            // Don't close if clicking inside a comment section or on a comment button
+            if (e.target.closest('.inline-comments-section') ||
+                e.target.closest('.comment-btn') ||
+                e.target.closest('.btn-close-comments')) {
+                return;
+            }
+
+            // Close all open comment sections
+            this.hideAllInlineComments();
+        });
+
+        // Escape key handler
+        document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape') {
+                this.hideAllInlineComments();
+            }
+        });
+    }
+
+    hideAllInlineComments() {
+        document.querySelectorAll('.inline-comments-section').forEach(section => {
+            section.style.display = 'none';
+        });
     }
 
     async loadCategories() {
