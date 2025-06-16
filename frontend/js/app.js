@@ -392,6 +392,8 @@ class NavigationManager {
         const user = window.auth.getCurrentUser();
         if (!user) return;
 
+        console.log('Loading profile for user:', user);
+
         // Update profile information
         document.getElementById('profileUsername').textContent = user.username || 'Unknown User';
         document.getElementById('profileEmail').textContent = user.email || 'No email';
@@ -403,10 +405,21 @@ class NavigationManager {
         // Update avatar
         const avatarElement = document.getElementById('profileAvatar');
         if (avatarElement) {
-            const avatarColor = window.utils?.generateAvatarColor(user.username || 'User');
-            const avatarInitials = window.utils?.getAvatarInitials(user.username || 'User');
-            avatarElement.style.background = `linear-gradient(135deg, ${avatarColor}, #0056b3)`;
-            avatarElement.textContent = avatarInitials;
+            // Check for avatar_url (backend field name) or avatar (fallback)
+            const avatarUrl = user.avatar_url || user.avatar;
+            if (avatarUrl && avatarUrl.trim() !== '') {
+                // Show uploaded avatar
+                avatarElement.innerHTML = `<img src="${avatarUrl}" alt="${user.username}'s avatar" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;">`;
+                avatarElement.style.background = 'transparent';
+                console.log('Displaying user avatar:', avatarUrl);
+            } else {
+                // Show generated avatar with initials
+                const avatarColor = window.utils?.generateAvatarColor(user.username || 'User');
+                const avatarInitials = window.utils?.getAvatarInitials(user.username || 'User');
+                avatarElement.style.background = `linear-gradient(135deg, ${avatarColor}, #0056b3)`;
+                avatarElement.textContent = avatarInitials;
+                console.log('Displaying generated avatar for user:', user.username);
+            }
         }
 
         // Load user statistics

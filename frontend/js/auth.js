@@ -9,6 +9,7 @@ class AuthManager {
 
     init() {
         this.setupEventListeners();
+        this.setupAvatarUpload();
         this.checkAuthStatus();
     }
 
@@ -57,6 +58,64 @@ class AuthManager {
         if (logoutBtn) {
             logoutBtn.addEventListener('click', () => this.handleLogout());
         }
+    }
+
+    setupAvatarUpload() {
+        const avatarInput = document.getElementById('registerAvatar');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const removeAvatarBtn = document.getElementById('removeAvatarBtn');
+
+        if (avatarInput && avatarPreview) {
+            avatarInput.addEventListener('change', (e) => {
+                const file = e.target.files[0];
+                if (file) {
+                    this.handleAvatarSelection(file, avatarPreview, removeAvatarBtn);
+                }
+            });
+        }
+
+        if (removeAvatarBtn) {
+            removeAvatarBtn.addEventListener('click', () => {
+                this.removeAvatar(avatarInput, avatarPreview, removeAvatarBtn);
+            });
+        }
+    }
+
+    handleAvatarSelection(file, previewElement, removeBtn) {
+        // Validate file type
+        const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif'];
+        if (!allowedTypes.includes(file.type)) {
+            toast.error('Please select a valid image file (JPG, PNG, or GIF)');
+            return;
+        }
+
+        // Validate file size (2MB max)
+        const maxSize = 2 * 1024 * 1024; // 2MB in bytes
+        if (file.size > maxSize) {
+            toast.error('Image size must be less than 2MB');
+            return;
+        }
+
+        // Create preview
+        const reader = new FileReader();
+        reader.onload = (e) => {
+            previewElement.innerHTML = `<img src="${e.target.result}" alt="Avatar preview">`;
+            if (removeBtn) {
+                removeBtn.style.display = 'inline-flex';
+            }
+        };
+        reader.readAsDataURL(file);
+    }
+
+    removeAvatar(inputElement, previewElement, removeBtn) {
+        if (inputElement) inputElement.value = '';
+        if (previewElement) {
+            previewElement.innerHTML = `
+                <i class="fas fa-user"></i>
+                <span class="avatar-text">No image selected</span>
+            `;
+        }
+        if (removeBtn) removeBtn.style.display = 'none';
     }
 
     async checkAuthStatus() {
@@ -111,10 +170,11 @@ class AuthManager {
 
     async handleRegister(event) {
         event.preventDefault();
-        
+
         const username = document.getElementById('registerUsername').value.trim();
         const email = document.getElementById('registerEmail').value.trim();
         const password = document.getElementById('registerPassword').value;
+        const avatarFile = document.getElementById('registerAvatar').files[0];
 
         // Validation
         if (!username || !email || !password) {
@@ -138,20 +198,108 @@ class AuthManager {
         }
 
         try {
-            const response = await apiWrapper.register({ username, email, password });
-            
+            // Step 1: Register user (backend only accepts username, email, password)
+            const registrationData = { username, email, password };
+
+            console.log('Registering user:', { username, email });
+            const response = await apiWrapper.register(registrationData);
+
             if (response) {
+                // Step 2: If avatar is selected, login and upload avatar
+                if (avatarFile) {
+                    console.log('Avatar file selected, will upload after auto-login:', avatarFile.name);
+
+                    // Auto-login the user
+                    const loginResponse = await apiWrapper.login({ email, password });
+                    if (loginResponse) {
+                        // Get user info after login
+                        const user = await apiWrapper.getCurrentUser();
+                        if (user) {
+                            this.setAuthenticatedState(user);
+
+                            // Upload avatar using existing backend implementation
+                            console.log('Uploading avatar using existing backend handler...');
+                            const avatarUploadResult = await this.uploadAvatarFile(avatarFile);
+                            if (avatarUploadResult) {
+                                toast.success('Registration successful! Avatar uploaded.');
+                                // Refresh user data to get updated avatar_url
+                                const updatedUser = await apiWrapper.getCurrentUser();
+                                if (updatedUser) {
+                                    this.setAuthenticatedState(updatedUser);
+                                }
+                            } else {
+                                toast.warning('Registration successful! Avatar upload route not available yet. You can add an avatar later.');
+                                console.log('Avatar upload failed - backend route needs to be added to routes.go');
+                            }
+                        }
+                    }
+                } else {
+                    toast.success('Registration successful! Please log in.');
+                    // Show login modal after successful registration
+                    setTimeout(() => {
+                        this.showLoginModal();
+                    }, 1000);
+                }
+
                 modal.close();
                 this.clearRegisterForm();
-                toast.success('Registration successful! Please log in.');
-                
-                // Show login modal after successful registration
-                setTimeout(() => {
-                    this.showLoginModal();
-                }, 1000);
             }
         } catch (error) {
             // Error is already handled by apiWrapper
+        }
+    }
+
+    fileToBase64(file) {
+        return new Promise((resolve, reject) => {
+            const reader = new FileReader();
+            reader.readAsDataURL(file);
+            reader.onload = () => resolve(reader.result);
+            reader.onerror = error => reject(error);
+        });
+    }
+
+    async uploadAvatarFile(file) {
+        try {
+            // Create FormData for file upload (backend expects multipart/form-data)
+            const formData = new FormData();
+            formData.append('avatar', file);
+
+            console.log('Uploading avatar file:', file.name, file.type, file.size);
+            console.log('Note: Avatar upload requires the route to be added to backend routes.go');
+            console.log('Required route: mux.Handle("/api/user/avatar", middleware.CORS(middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.UploadAvatar))))');
+
+            // Use the expected endpoint pattern based on existing backend implementation
+            const response = await fetch('http://localhost:8081/api/user/avatar', {
+                method: 'POST',
+                body: formData,
+                credentials: 'include' // Include cookies for authentication
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                console.log('Avatar upload successful:', result);
+
+                // Update current user with new avatar URL
+                if (result.avatar_url && this.currentUser) {
+                    this.currentUser.avatar_url = result.avatar_url;
+                    utils.setLocalStorage('currentUser', this.currentUser);
+                }
+
+                return true;
+            } else {
+                console.error('Avatar upload failed:', response.status, response.statusText);
+                if (response.status === 404) {
+                    console.error('Avatar upload route not found. Please add the route to backend routes.go');
+                }
+                return false;
+            }
+
+        } catch (error) {
+            console.error('Avatar upload error:', error);
+            if (error.message.includes('ERR_CONNECTION_RESET')) {
+                console.error('Connection reset - avatar upload route is not registered in backend');
+            }
+            return false;
         }
     }
 
@@ -261,6 +409,13 @@ class AuthManager {
     clearRegisterForm() {
         const form = document.getElementById('registerForm');
         if (form) form.reset();
+
+        // Clear avatar preview
+        const avatarInput = document.getElementById('registerAvatar');
+        const avatarPreview = document.getElementById('avatarPreview');
+        const removeAvatarBtn = document.getElementById('removeAvatarBtn');
+
+        this.removeAvatar(avatarInput, avatarPreview, removeAvatarBtn);
     }
 
     handleUnauthorized() {

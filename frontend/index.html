@@ -272,6 +272,23 @@
                     <label for="registerPassword">Password</label>
                     <input type="password" id="registerPassword" required>
                 </div>
+                <div class="form-group">
+                    <label for="registerAvatar">Profile Avatar (Optional)</label>
+                    <div class="avatar-upload-container">
+                        <div class="avatar-preview" id="avatarPreview">
+                            <i class="fas fa-user"></i>
+                            <span class="avatar-text">No image selected</span>
+                        </div>
+                        <input type="file" id="registerAvatar" accept="image/*" class="avatar-input">
+                        <label for="registerAvatar" class="avatar-upload-btn">
+                            <i class="fas fa-camera"></i> Choose Avatar
+                        </label>
+                        <button type="button" class="avatar-remove-btn" id="removeAvatarBtn" style="display: none;">
+                            <i class="fas fa-times"></i> Remove
+                        </button>
+                    </div>
+                    <small class="form-help">Supported formats: JPG, PNG, GIF. Max size: 2MB</small>
+                </div>
                 <button type="submit" class="btn btn-primary btn-full">Register</button>
                 <div class="form-footer">
                     <p>Already have an account? <a href="#" id="switchToLogin">Login here</a></p>
@@ -341,10 +358,10 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="js/utils.js?v=8.2"></script>
-    <script src="js/api.js?v=8.2"></script>
-    <script src="js/auth.js?v=8.2"></script>
-    <script src="js/posts.js?v=8.2"></script>
-    <script src="js/app.js?v=8.2"></script>
+    <script src="js/utils.js?v=8.7"></script>
+    <script src="js/api.js?v=8.7"></script>
+    <script src="js/auth.js?v=8.7"></script>
+    <script src="js/posts.js?v=8.7"></script>
+    <script src="js/app.js?v=8.7"></script>
 </body>
 </html>
