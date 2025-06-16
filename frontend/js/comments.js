@@ -99,7 +99,7 @@ class CommentsManager {
                 <div class="post-actions">
                     <button class="action-btn like-btn ${post.user_liked ? 'liked' : ''}" onclick="window.posts.togglePostLike(${post.id})">
                         <i class="fas fa-thumbs-up"></i>
-                        <span>${post.likes_count || 0}</span>
+                        <span>${post.like_count || 0}</span>
                     </button>
                     <button class="action-btn comment-btn">
                         <i class="fas fa-comment"></i>
@@ -225,7 +225,7 @@ class CommentsManager {
                 const post = window.posts.posts.find(p => p.id == this.currentPostId);
                 if (post) {
                     // Update comment count in the post
-                    post.comments_count = this.comments.length;
+                    post.comment_count = this.comments.length;
                     
                     // Re-render just the comments part
                     const commentsList = document.querySelector('.comments-list');
@@ -310,7 +310,7 @@ class CommentsManager {
             // Update post in posts array
             const post = window.posts.posts.find(p => p.id == this.currentPostId);
             if (post) {
-                post.comments_count = this.comments.length;
+                post.comment_count = this.comments.length;
             }
             
         } catch (error) {

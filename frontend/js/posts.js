@@ -150,11 +150,11 @@ class PostsManager {
                 <div class="post-actions">
                     <button class="action-btn like-btn ${post.user_liked ? 'liked' : ''}" data-post-id="${post.id}">
                         <i class="fas fa-thumbs-up"></i>
-                        <span>${post.likes_count || 0}</span>
+                        <span>${post.like_count || 0}</span>
                     </button>
                     <button class="action-btn comment-btn">
                         <i class="fas fa-comment"></i>
-                        <span>${post.comments_count || 0}</span>
+                        <span>${post.comment_count || 0}</span>
                     </button>
                     <button class="action-btn share-btn" onclick="utils.copyToClipboard('${window.location.origin}#post-${post.id}')">
                         <i class="fas fa-share"></i>
