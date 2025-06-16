@@ -1,9 +1,7 @@
-// Likes and Dislikes Management
-
+// Likes and Reactions Management
 class Likes {
     constructor() {
         this.reactions = {};
-        this.userReactions = {};
         this.init();
     }
 
@@ -12,18 +10,18 @@ class Likes {
     }
 
     setupEventListeners() {
-        // Event delegation for like/dislike buttons
+        // Handle like/dislike button clicks
         document.addEventListener('click', (e) => {
             if (e.target.matches('.like-btn') || e.target.closest('.like-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
                 const button = e.target.matches('.like-btn') ? e.target : e.target.closest('.like-btn');
-                this.handleLike(button);
+                this.handleLikeClick(button, 'like');
             } else if (e.target.matches('.dislike-btn') || e.target.closest('.dislike-btn')) {
                 e.preventDefault();
                 e.stopPropagation();
                 const button = e.target.matches('.dislike-btn') ? e.target : e.target.closest('.dislike-btn');
-                this.handleDislike(button);
+                this.handleLikeClick(button, 'dislike');
             }
         });
     }
@@ -50,117 +48,100 @@ class Likes {
         }
     }
 
-    // Render like/dislike buttons
-    renderLikeButtons(id, type) {
-        const container = document.querySelector(`[data-${type}-id="${id}"] .like-buttons`);
-        if (!container) return;
-
-        const reactions = this.reactions[`${type}-${id}`] || { likes: 0, dislikes: 0 };
-        const userReaction = this.userReactions[`${type}-${id}`] || null;
-
-        const likeActive = userReaction === 'like' ? 'active' : '';
-        const dislikeActive = userReaction === 'dislike' ? 'active' : '';
-
-        container.innerHTML = `
-            <button class="like-btn ${likeActive}" data-${type}-id="${id}" data-type="like">
-                <span>👍</span>
-                <span class="like-count">${reactions.likes || 0}</span>
-            </button>
-            <button class="dislike-btn ${dislikeActive}" data-${type}-id="${id}" data-type="dislike">
-                <span>👎</span>
-                <span class="dislike-count">${reactions.dislikes || 0}</span>
-            </button>
-        `;
-    }
-
-    // Handle like button click
-    async handleLike(button) {
+    // Handle like/dislike button click
+    async handleLikeClick(button, type) {
         if (!AuthHelpers.requireAuth()) return;
 
         const postId = button.dataset.postId;
         const commentId = button.dataset.commentId;
-        const type = 'like';
+        const replyId = button.dataset.replyId;
 
-        await this.toggleReaction(postId, commentId, type);
-    }
+        if (!postId && !commentId && !replyId) {
+            console.error('No ID found for like button');
+            return;
+        }
 
-    // Handle dislike button click
-    async handleDislike(button) {
-        if (!AuthHelpers.requireAuth()) return;
-
-        const postId = button.dataset.postId;
-        const commentId = button.dataset.commentId;
-        const type = 'dislike';
-
-        await this.toggleReaction(postId, commentId, type);
-    }
-
-    // Toggle like/dislike reaction
-    async toggleReaction(postId, commentId, type) {
         try {
-            const data = { type };
+            // Disable button during request
+            button.disabled = true;
+
+            const likeData = { type };
             
             if (postId) {
-                data.post_id = parseInt(postId);
+                likeData.post_id = parseInt(postId);
             } else if (commentId) {
-                data.comment_id = parseInt(commentId);
-            } else {
-                throw new Error('Invalid reaction target');
+                likeData.comment_id = parseInt(commentId);
+            } else if (replyId) {
+                likeData.comment_id = parseInt(replyId); // Replies use comment_id in backend
             }
 
-            await api.toggleLike(data);
+            await api.toggleLike(likeData);
 
-            // Update local state
-            const key = postId ? `post-${postId}` : `comment-${commentId}`;
-            const currentReaction = this.userReactions[key];
-
-            if (currentReaction === type) {
-                // Remove reaction
-                this.userReactions[key] = null;
-                this.reactions[key][type === 'like' ? 'likes' : 'dislikes']--;
-            } else {
-                // Add or change reaction
-                if (currentReaction) {
-                    // Remove previous reaction
-                    this.reactions[key][currentReaction === 'like' ? 'likes' : 'dislikes']--;
-                }
-                // Add new reaction
-                this.userReactions[key] = type;
-                this.reactions[key][type === 'like' ? 'likes' : 'dislikes']++;
+            // Refresh reactions for this item
+            if (postId) {
+                await this.refreshReactions(postId, 'post');
+            } else if (commentId) {
+                await this.refreshReactions(commentId, 'comment');
+            } else if (replyId) {
+                await this.refreshReactions(replyId, 'reply');
             }
-
-            // Re-render buttons
-            const id = postId || commentId;
-            const targetType = postId ? 'post' : 'comment';
-            this.renderLikeButtons(id, targetType);
 
         } catch (error) {
             ApiHelpers.handleError(error);
+        } finally {
+            button.disabled = false;
         }
     }
 
-    // Load user's current reactions for a post and its comments
-    async loadUserReactions(postId) {
-        if (!AuthHelpers.isLoggedIn()) return;
+    // Render like buttons for an item
+    renderLikeButtons(id, type) {
+        const reactions = this.reactions[`${type}-${id}`] || { likes: 0, dislikes: 0, user_reaction: null };
+        
+        // Find all reaction containers for this item
+        const containers = Utils.$$(`[data-${type}-id="${id}"] .${type}-reactions, [data-${type}-id="${id}"].${type}-reactions`);
+        
+        containers.forEach(container => {
+            if (!container) return;
 
-        try {
-            // This would require a new API endpoint to get user's reactions
-            // For now, we'll determine reactions based on button states
-            // In a real implementation, you'd want to fetch this from the server
-        } catch (error) {
-            console.error('Error loading user reactions:', error);
+            const currentUser = AuthHelpers.getCurrentUser();
+            const userReaction = reactions.user_reaction;
+
+            container.innerHTML = `
+                <div class="reactions-display">
+                    <span class="likes-count">👍 ${reactions.likes || 0}</span>
+                    <span class="dislikes-count">👎 ${reactions.dislikes || 0}</span>
+                </div>
+                
+                ${AuthHelpers.isLoggedIn() ? `
+                    <div class="reaction-buttons">
+                        <button class="btn btn-sm like-btn ${userReaction === 'like' ? 'active' : ''}" 
+                                data-${type}-id="${id}" data-type="like">
+                            👍 ${userReaction === 'like' ? 'Liked' : 'Like'}
+                        </button>
+                        <button class="btn btn-sm dislike-btn ${userReaction === 'dislike' ? 'active' : ''}" 
+                                data-${type}-id="${id}" data-type="dislike">
+                            👎 ${userReaction === 'dislike' ? 'Disliked' : 'Dislike'}
+                        </button>
+                    </div>
+                ` : ''}
+            `;
+        });
+
+        // Update counts in post cards
+        if (type === 'post') {
+            const postCards = Utils.$$(`[data-post-id="${id}"]`);
+            postCards.forEach(card => {
+                const likesCount = card.querySelector('.likes-count');
+                const dislikesCount = card.querySelector('.dislikes-count');
+                
+                if (likesCount) {
+                    likesCount.textContent = `👍 ${reactions.likes || 0}`;
+                }
+                if (dislikesCount) {
+                    dislikesCount.textContent = `👎 ${reactions.dislikes || 0}`;
+                }
+            });
         }
-    }
-
-    // Get reaction counts for display
-    getReactionCounts(id, type) {
-        const reactions = this.reactions[`${type}-${id}`];
-        return reactions || { likes: 0, dislikes: 0 };
-    }
-
-    // Check if user has reacted to a post/comment
-    getUserReaction(id, type) {
-        return this.userReactions[`${type}-${id}`] || null;
     }
 
     // Update reaction counts from server
@@ -192,35 +173,51 @@ class Likes {
 
     // Initialize all likes for comments currently visible
     initVisibleComments() {
-        const commentCards = document.querySelectorAll('.comment-card[data-comment-id]');
-        commentCards.forEach(card => {
-            const commentId = card.dataset.commentId;
+        const comments = document.querySelectorAll('.comment[data-comment-id]');
+        comments.forEach(comment => {
+            const commentId = comment.dataset.commentId;
             this.initCommentLikes(commentId);
+        });
+
+        const replies = document.querySelectorAll('.reply[data-reply-id]');
+        replies.forEach(reply => {
+            const replyId = reply.dataset.replyId;
+            this.initCommentLikes(replyId);
         });
     }
 
-    // Clear reactions cache
+    // Get reaction data for an item
+    getReactions(id, type) {
+        return this.reactions[`${type}-${id}`] || { likes: 0, dislikes: 0, user_reaction: null };
+    }
+
+    // Clear cached reactions
     clearCache() {
         this.reactions = {};
-        this.userReactions = {};
     }
 
-    // Get total engagement (likes + dislikes) for sorting
-    getTotalEngagement(id, type) {
-        const reactions = this.reactions[`${type}-${id}`];
-        if (!reactions) return 0;
-        return (reactions.likes || 0) + (reactions.dislikes || 0);
-    }
+    // Refresh all visible reactions
+    async refreshAll() {
+        // Refresh post reactions
+        const postCards = document.querySelectorAll('.post-card[data-post-id]');
+        for (const card of postCards) {
+            const postId = card.dataset.postId;
+            await this.refreshReactions(postId, 'post');
+        }
 
-    // Get like ratio for sorting (likes / total reactions)
-    getLikeRatio(id, type) {
-        const reactions = this.reactions[`${type}-${id}`];
-        if (!reactions) return 0;
-        
-        const total = (reactions.likes || 0) + (reactions.dislikes || 0);
-        if (total === 0) return 0;
-        
-        return (reactions.likes || 0) / total;
+        // Refresh comment reactions
+        const comments = document.querySelectorAll('.comment[data-comment-id]');
+        for (const comment of comments) {
+            const commentId = comment.dataset.commentId;
+            await this.refreshReactions(commentId, 'comment');
+        }
+
+        // Refresh reply reactions
+        const replies = document.querySelectorAll('.reply[data-reply-id]');
+        for (const reply of replies) {
+            const replyId = reply.dataset.replyId;
+            await this.refreshReactions(replyId, 'reply');
+        }
     }
 }
 
@@ -228,43 +225,3 @@ class Likes {
 document.addEventListener('DOMContentLoaded', () => {
     window.Likes = new Likes();
 });
-
-// Helper functions for other modules
-window.LikesHelpers = {
-    // Initialize likes for a specific post
-    initPost: (postId) => {
-        if (window.Likes) {
-            window.Likes.initPostLikes(postId);
-        }
-    },
-
-    // Initialize likes for a specific comment
-    initComment: (commentId) => {
-        if (window.Likes) {
-            window.Likes.initCommentLikes(commentId);
-        }
-    },
-
-    // Get reaction counts
-    getReactions: (id, type) => {
-        if (window.Likes) {
-            return window.Likes.getReactionCounts(id, type);
-        }
-        return { likes: 0, dislikes: 0 };
-    },
-
-    // Check user reaction
-    getUserReaction: (id, type) => {
-        if (window.Likes) {
-            return window.Likes.getUserReaction(id, type);
-        }
-        return null;
-    },
-
-    // Refresh reactions from server
-    refresh: (id, type) => {
-        if (window.Likes) {
-            window.Likes.refreshReactions(id, type);
-        }
-    }
-};
