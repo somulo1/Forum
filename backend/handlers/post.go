@@ -60,8 +60,16 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	// Extract pagination parameters from the URL query
 	page, limit := utils.GetPaginationParams(r)
 
-	// Fetch posts with pagination
-	posts, err := sqlite.GetPosts(db, page, limit)
+	// Extract category filter from query parameters
+	var categoryID *int
+	if categoryIDStr := r.URL.Query().Get("category_id"); categoryIDStr != "" {
+		if id, err := strconv.Atoi(categoryIDStr); err == nil {
+			categoryID = &id
+		}
+	}
+
+	// Fetch posts with pagination and optional category filter
+	posts, err := sqlite.GetPosts(db, page, limit, categoryID)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
@@ -71,7 +79,6 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 }
 
 //handle the user profile pic
-
 
 // UpdatePost updates an existing post
 func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
