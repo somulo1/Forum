@@ -26,6 +26,9 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux := http.NewServeMux()
 
 	// User routes
+	mux.HandleFunc("/api/user/avatar", func(w http.ResponseWriter, r *http.Request) {
+		applyMiddleware(middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.UploadAvatar))).ServeHTTP(w, r)
+	})
 	mux.Handle("/api/user", middleware.CORS(middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.GetUser))))
 
 	// Authentication routes
@@ -65,6 +68,9 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.Handle("/js/", http.StripPrefix("/js/", http.FileServer(http.Dir("../frontend/js/"))))
 	mux.Handle("/assets/", http.StripPrefix("/assets/", http.FileServer(http.Dir("../frontend/assets/"))))
 
+	// Static file serving for uploaded files
+	mux.Handle("/uploads/", http.StripPrefix("/uploads/", http.FileServer(http.Dir("uploads/"))))
+
 	// Favicon route
 	mux.HandleFunc("/favicon.ico", func(w http.ResponseWriter, r *http.Request) {
 		http.ServeFile(w, r, "../frontend/favicon.ico")
@@ -72,11 +78,11 @@ func SetupRoutes(db *sql.DB) http.Handler {
 
 	// Serve the main HTML file for all non-API routes
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		fmt.Printf("📥 Request: %s %s\n", r.Method, r.URL.Path)
+		fmt.Printf("Request: %s %s\n", r.Method, r.URL.Path)
 
 		// If it's an API route, let it pass through (don't handle it here)
 		if strings.HasPrefix(r.URL.Path, "/api/") {
-			fmt.Printf("🔄 API route detected, should be handled by specific handler: %s\n", r.URL.Path)
+			fmt.Printf("API route detected, should be handled by specific handler: %s\n", r.URL.Path)
 			http.NotFound(w, r)
 			return
 		}
@@ -84,13 +90,13 @@ func SetupRoutes(db *sql.DB) http.Handler {
 		// If it's not an API route and not root, serve the main HTML file
 		if r.URL.Path != "/" {
 			// For SPA routing, serve the main HTML file
-			fmt.Printf("📄 Serving SPA file for: %s\n", r.URL.Path)
+			fmt.Printf("Serving SPA file for: %s\n", r.URL.Path)
 			http.ServeFile(w, r, "../frontend/index.html")
 			return
 		}
 		// Serve the main HTML file for root
 		if r.URL.Path == "/" {
-			fmt.Printf("📄 Serving index.html for root\n")
+			fmt.Printf("Serving index.html for root\n")
 			http.ServeFile(w, r, "../frontend/index.html")
 			return
 		}
