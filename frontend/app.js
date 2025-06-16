@@ -72,7 +72,6 @@ document.addEventListener("DOMContentLoaded", async () => {
     setupMenuHandlers();
 });
 
-
 // function to render nav logo
 function renderNavLogo() {
     const navLogoContainer = document.getElementById("navLogoContainer");
@@ -1265,128 +1264,19 @@ function setupMenuHandlers() {
             try {
                 switch(view) {
                     case 'home':
-                        // Reuse existing fetch and render functionality
-                        forumPosts = await fetchForumPosts();
-                        await renderPosts(forumPosts);
+                        await renderFeedView();
                         break;
 
                     case 'profile':
-                        const userResponse = await fetch('http://localhost:8080/api/user', {
-                            credentials: 'include'
-                        });
-                        
-                        if (!userResponse.ok) {
-                            throw new Error('Please log in to view your profile');
-                        }
-                        
-                        const userData = await userResponse.json();
-                        
-                        // Filter posts by user_id
-                        const userPosts = forumPosts.filter(post => post.user_id === userData.id);
-                        
-                        // Get user's total likes
-                        let totalLikes = 0;
-                        await Promise.all(userPosts.map(async (post) => {
-                            try {
-                                const response = await fetch(`http://localhost:8080/api/likes/reactions?post_id=${post.id}`);
-                                if (response.ok) {
-                                    const likeData = await response.json();
-                                    totalLikes += likeData.likes || 0;
-                                }
-                            } catch (error) {
-                                console.error(`Error fetching likes for post ${post.id}:`, error);
-                            }
-                        }));
-
-                        // Create enhanced profile header with stats
-                        const profileHeader = document.createElement('div');
-                        profileHeader.classList.add('profile-header', 'post-card');
-                        profileHeader.innerHTML = `
-                            <div class="profile-banner" style="background: var(--bg-color); padding: 2rem; border-radius: var(--radius) var(--radius) 0 0;">
-                                <div class="profile-avatar" style="text-align: center; margin-bottom: 1rem;">
-                                    <img src="http://localhost:8080${userData.avatar_url || '/static/pictures/default-avatar.png'}" 
-                                         alt="Profile" 
-                                         style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--primary-color); object-fit: cover;">
-                                </div>
-                                <div class="profile-info" style="text-align: center; color: var(--primary-color);">
-                                    <h2 style="margin-bottom: 0.5rem;">${userData.username}</h2>
-                                    <p style="color: rgba(255,255,255,0.8);">${userData.email}</p>
-                                </div>
-                            </div>
-                            <div class="profile-stats" style="display: flex; justify-content: space-around; padding: 1rem; border-top: 1px solid var(--border-color);">
-                                <div class="stat-item" style="text-align: center;">
-                                    <div style="font-size: 1.5rem; font-weight: bold;">${userPosts.length}</div>
-                                    <div style="color: var(--muted-text);">Posts</div>
-                                </div>
-                                <div class="stat-item" style="text-align: center;">
-                                    <div style="font-size: 1.5rem; font-weight: bold;">${totalLikes}</div>
-                                    <div style="color: var(--muted-text);">Total Likes</div>
-                                </div>
-                            </div>
-                            <div class="profile-posts-header" style="padding: 1rem; border-top: 1px solid var(--border-color);">
-                                <h3>My Posts</h3>
-                            </div>
-                        `;
-                        
-                        postFeed.innerHTML = '';
-                        postFeed.appendChild(profileHeader);
-                        await renderPosts(userPosts);
+                        await renderProfileView();
                         break;
 
                     case 'trending':
-                        // Get all posts with their likes
-                        const postsWithLikes = await Promise.all(forumPosts.map(async (post) => {
-                            try {
-                                const response = await fetch(`http://localhost:8080/api/likes/reactions?post_id=${post.id}`);
-                                if (!response.ok) throw new Error('Failed to fetch likes');
-                                const likeData = await response.json();
-                                return { ...post, totalLikes: likeData.likes || 0 };
-                            } catch (error) {
-                                console.error(`Error fetching likes for post ${post.id}:`, error);
-                                return { ...post, totalLikes: 0 };
-                            }
-                        }));
-
-                        // Sort by likes and get top 5
-                        const trendingPosts = postsWithLikes
-                            .sort((a, b) => b.totalLikes - a.totalLikes)
-                            .slice(0, 5);
-
-                        // Create trending header
-                        const trendingHeader = document.createElement('div');
-                        trendingHeader.classList.add('trending-header', 'post-card');
-                        trendingHeader.innerHTML = `
-                            <div class="post-header">
-                                <div class="post-author-info">
-                                    <i class="fas fa-fire" style="font-size: 2rem; color: var(--accent-color);"></i>
-                                    <span class="post-author-name">Top 5 Trending Posts</span>
-                                </div>
-                            </div>
-                        `;
-                        
-                        postFeed.innerHTML = '';
-                        postFeed.appendChild(trendingHeader);
-                        await renderPosts(trendingPosts);
+                        await renderTrendingView();
                         break;
 
                     case 'saved':
-                        // Reuse post-card styling for saved posts message
-                        const savedHeader = document.createElement('div');
-                        savedHeader.classList.add('saved-header', 'post-card');
-                        savedHeader.innerHTML = `
-                            <div class="post-header">
-                                <div class="post-author-info">
-                                    <i class="fas fa-bookmark" style="font-size: 2rem; color: var(--accent-color);"></i>
-                                    <span class="post-author-name">Saved Posts</span>
-                                </div>
-                            </div>
-                            <div class="post-content">
-                                <p>The saved posts feature will be implemented soon! Stay tuned for updates.</p>
-                                <p>You'll be able to save your favorite posts and find them here.</p>
-                            </div>
-                        `;
-                        postFeed.innerHTML = '';
-                        postFeed.appendChild(savedHeader);
+                        renderSavedView();
                         break;
                 }
 
@@ -1407,4 +1297,137 @@ function setupMenuHandlers() {
             }
         });
     });
+}
+
+// Dedicated view functions
+
+async function renderFeedView() {
+    renderCreatePostSection();
+    forumPosts = await fetchForumPosts();
+    await renderPosts(forumPosts);
+    await renderCategories();
+}
+
+async function renderProfileView() {
+    const postFeed = document.getElementById('postFeed');
+    postFeed.innerHTML = '';
+    try {
+        const userResponse = await fetch('http://localhost:8080/api/user', {
+            credentials: 'include'
+        });
+        if (!userResponse.ok) throw new Error('Please log in to view your profile');
+        const userData = await userResponse.json();
+        const userPosts = forumPosts.filter(post => post.user_id === userData.id);
+
+        // Get user's total likes
+        let totalLikes = 0;
+        await Promise.all(userPosts.map(async (post) => {
+            try {
+                const response = await fetch(`http://localhost:8080/api/likes/reactions?post_id=${post.id}`);
+                if (response.ok) {
+                    const likeData = await response.json();
+                    totalLikes += likeData.likes || 0;
+                }
+            } catch (error) {
+                console.error(`Error fetching likes for post ${post.id}:`, error);
+            }
+        }));
+
+        // Profile header
+        const profileHeader = document.createElement('div');
+        profileHeader.classList.add('profile-header', 'post-card');
+        profileHeader.innerHTML = `
+            <div class="profile-banner" style="background: var(--bg-color); padding: 2rem; border-radius: var(--radius) var(--radius) 0 0;">
+                <div class="profile-avatar" style="text-align: center; margin-bottom: 1rem;">
+                    <img src="http://localhost:8080${userData.avatar_url || '/static/pictures/default-avatar.png'}" 
+                         alt="Profile" 
+                         style="width: 120px; height: 120px; border-radius: 50%; border: 4px solid var(--primary-color); object-fit: cover;">
+                </div>
+                <div class="profile-info" style="text-align: center; color: var(--primary-color);">
+                    <h2 style="margin-bottom: 0.5rem;">${userData.username}</h2>
+                    <p style="color: rgba(255,255,255,0.8);">${userData.email}</p>
+                </div>
+            </div>
+            <div class="profile-stats" style="display: flex; justify-content: space-around; padding: 1rem; border-top: 1px solid var(--border-color);">
+                <div class="stat-item" style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold;">${userPosts.length}</div>
+                    <div style="color: var(--muted-text);">Posts</div>
+                </div>
+                <div class="stat-item" style="text-align: center;">
+                    <div style="font-size: 1.5rem; font-weight: bold;">${totalLikes}</div>
+                    <div style="color: var(--muted-text);">Total Likes</div>
+                </div>
+            </div>
+            <div class="profile-posts-header" style="padding: 1rem; border-top: 1px solid var(--border-color);">
+                <h3>My Posts</h3>
+            </div>
+        `;
+        postFeed.appendChild(profileHeader);
+        await renderPosts(userPosts);
+    } catch (error) {
+        if (error.message === 'Please log in to view your profile') {
+            const authModal = document.getElementById('authModal');
+            document.querySelector('.main-container').classList.add('blur');
+            authModal.classList.remove('hidden');
+            document.querySelector('.cont').classList.remove('s-signup');
+        }
+        console.error('Error rendering profile view:', error);
+    }
+}
+
+async function renderTrendingView() {
+    const postFeed = document.getElementById('postFeed');
+    postFeed.innerHTML = '';
+    try {
+        const postsWithLikes = await Promise.all(forumPosts.map(async (post) => {
+            try {
+                const response = await fetch(`http://localhost:8080/api/likes/reactions?post_id=${post.id}`);
+                if (!response.ok) throw new Error('Failed to fetch likes');
+                const likeData = await response.json();
+                return { ...post, totalLikes: likeData.likes || 0 };
+            } catch (error) {
+                console.error(`Error fetching likes for post ${post.id}:`, error);
+                return { ...post, totalLikes: 0 };
+            }
+        }));
+
+        const trendingPosts = postsWithLikes
+            .sort((a, b) => b.totalLikes - a.totalLikes)
+            .slice(0, 5);
+
+        const trendingHeader = document.createElement('div');
+        trendingHeader.classList.add('trending-header', 'post-card');
+        trendingHeader.innerHTML = `
+            <div class="post-header">
+                <div class="post-author-info">
+                    <i class="fas fa-fire" style="font-size: 2rem; color: var(--accent-color);"></i>
+                    <span class="post-author-name">Top 5 Trending Posts</span>
+                </div>
+            </div>
+        `;
+        postFeed.appendChild(trendingHeader);
+        await renderPosts(trendingPosts);
+    } catch (error) {
+        console.error('Error rendering trending view:', error);
+    }
+}
+
+function renderSavedView() {
+    const postFeed = document.getElementById('postFeed');
+    const savedHeader = document.createElement('div');
+    savedHeader.classList.add('saved-header', 'post-card');
+    savedHeader.innerHTML = `
+        <div class="post-header">
+            <div class="post-author-info">
+                <i class="fas fa-bookmark" style="font-size: 2rem; color: var(--accent-color);"></i>
+                <span class="post-author-name">Saved Posts</span>
+            </div>
+        </div>
+        <div class="post-content">
+            <p>The saved posts feature will be implemented soon! Stay tuned for updates.</p>
+            <p>You'll be able to save your favorite posts and find them here.</p>
+        </div>
+    `;
+    postFeed.innerHTML = '';
+    postFeed.appendChild(savedHeader);
 }
