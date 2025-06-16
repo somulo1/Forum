@@ -6,7 +6,7 @@ import (
 	"io"
 	"os"
 
-	_ "github.com/mattn/go-sqlite3"
+	_ "modernc.org/sqlite"
 )
 
 var DB *sql.DB
@@ -24,7 +24,7 @@ func InitializeDatabase(dbPath string) error {
 	if err != nil {
 		return fmt.Errorf("failed to enable foreign key constraints: %w", err)
 	}
-	
+
 	// Apply schema from schema.sql file
 	if err := applySchemaFromFile("schema.sql"); err != nil {
 		return fmt.Errorf("failed to apply schema: %w", err)
