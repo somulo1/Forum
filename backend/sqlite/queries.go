@@ -213,6 +213,48 @@ func DeletePost(db *sql.DB, postID int) error {
 	return err
 }
 
+// DeleteAllPosts removes all posts from the database
+func DeleteAllPosts(db *sql.DB) error {
+	// Delete in order to maintain referential integrity
+	// 1. Delete all likes related to posts
+	_, err := db.Exec(`DELETE FROM likes WHERE post_id IS NOT NULL`)
+	if err != nil {
+		return fmt.Errorf("failed to delete post likes: %w", err)
+	}
+
+	// 2. Delete all comments (and their likes will be deleted by foreign key cascade)
+	_, err = db.Exec(`DELETE FROM comments`)
+	if err != nil {
+		return fmt.Errorf("failed to delete comments: %w", err)
+	}
+
+	// 3. Delete all reply comments
+	_, err = db.Exec(`DELETE FROM replycomments`)
+	if err != nil {
+		return fmt.Errorf("failed to delete reply comments: %w", err)
+	}
+
+	// 4. Delete all post-category relationships
+	_, err = db.Exec(`DELETE FROM post_categories`)
+	if err != nil {
+		return fmt.Errorf("failed to delete post categories: %w", err)
+	}
+
+	// 5. Finally delete all posts
+	_, err = db.Exec(`DELETE FROM posts`)
+	if err != nil {
+		return fmt.Errorf("failed to delete posts: %w", err)
+	}
+
+	// Reset the auto-increment counter for posts
+	_, err = db.Exec(`DELETE FROM sqlite_sequence WHERE name='posts'`)
+	if err != nil {
+		return fmt.Errorf("failed to reset posts sequence: %w", err)
+	}
+
+	return nil
+}
+
 // GetOrCreateCategoryIDs resolves category names to IDs, creating new ones if needed.
 func GetOrCreateCategoryIDs(db *sql.DB, names []string) ([]int, error) {
 	var ids []int

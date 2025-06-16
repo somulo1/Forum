@@ -31,6 +31,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.HandleFunc("/api/posts", HandlerWrapper(db, handlers.GetPosts)) // Allow public access
 	mux.Handle("/api/posts/update", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.UpdatePost)))
 	mux.Handle("/api/posts/delete", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.DeletePost)))
+	mux.Handle("/api/posts/delete-all", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.DeleteAllPosts)))
 
 	// Comment routes (protected by auth middleware)
 	mux.Handle("/api/comments/delete", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.DeleteComment)))

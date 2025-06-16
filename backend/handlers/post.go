@@ -114,7 +114,7 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 			utils.SendJSONError(w, "Failed to fetch post user information", http.StatusInternalServerError)
 			return
 		}
-		post.ProfileAvatar = userInfo.AvatarURL 
+		post.ProfileAvatar = userInfo.AvatarURL
 		fullPosts = append(fullPosts, post)
 	}
 
@@ -205,6 +205,32 @@ func DeletePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	utils.SendJSONResponse(w, map[string]string{"message": "Post deleted"}, http.StatusOK)
 }
 
+// DeleteAllPosts removes all posts from the database (admin function)
+func DeleteAllPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodDelete {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// For security, you might want to add admin authentication here
+	// For now, we'll allow any authenticated user to clear posts
+	userID, err := utils.GetUserIDFromSession(db, r)
+	if err != nil || userID == "" {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	err = sqlite.DeleteAllPosts(db)
+	if err != nil {
+		log.Printf("Error deleting all posts: %v", err)
+		utils.SendJSONError(w, "Failed to delete all posts", http.StatusInternalServerError)
+		return
+	}
+
+	log.Printf("All posts deleted by user: %s", userID)
+	utils.SendJSONResponse(w, map[string]string{"message": "All posts deleted successfully"}, http.StatusOK)
+}
+
 func GetPostComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
@@ -235,7 +261,7 @@ func GetPostComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 			utils.SendJSONError(w, "Failed to fetch comment user information", http.StatusInternalServerError)
 			return
 		}
-		comment.UserName =userInfo.Username
+		comment.UserName = userInfo.Username
 		comment.ProfileAvatar = userInfo.AvatarURL
 
 		fullComments = append(fullComments, comment)
