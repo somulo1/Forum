@@ -232,7 +232,7 @@ window.ApiHelpers = {
     // Check if user is authenticated
     async checkAuth() {
         try {
-            const user = await api.getCurrentUser();
+            const user = await window.api.getCurrentUser();
             return user;
         } catch (error) {
             return null;
@@ -267,7 +267,7 @@ window.ApiHelpers = {
             created_at: Utils.formatDate(post.created_at),
             updated_at: Utils.formatDate(post.updated_at),
             avatar_url: Utils.getAvatarUrl(post.avatar_url),
-            image_url: Utils.getImageUrl(post.image_url),
+            image_url: post.image_url && post.image_url.trim() !== '' ? Utils.getImageUrl(post.image_url) : null,
             content_preview: Utils.truncateText(post.content, 200)
         };
     },

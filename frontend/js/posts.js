@@ -200,7 +200,7 @@ class Posts {
                 <h2 class="post-title">${Utils.escapeHtml(post.title)}</h2>
                 <div class="post-content">${Utils.escapeHtml(formattedPost.content_preview)}</div>
                 
-                ${post.image_url ? `
+                ${post.image_url && post.image_url.trim() !== '' ? `
                     <img src="${formattedPost.image_url}" alt="Post image" class="post-image" onerror="Utils.handleImageError(this)">
                 ` : ''}
                 
@@ -282,7 +282,7 @@ class Posts {
                 <h1 class="post-title">${Utils.escapeHtml(post.title)}</h1>
                 <div class="post-content">${Utils.escapeHtml(post.content)}</div>
                 
-                ${post.image_url ? `
+                ${post.image_url && post.image_url.trim() !== '' ? `
                     <img src="${formattedPost.image_url}" alt="Post image" class="post-image" onerror="Utils.handleImageError(this)">
                 ` : ''}
                 
