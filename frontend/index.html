@@ -299,27 +299,99 @@
 
     <!-- Create Post Modal -->
     <div id="createPostModal" class="modal">
-        <div class="modal-content">
+        <div class="modal-content modal-large">
             <div class="modal-header">
-                <h2>Create New Post</h2>
+                <h2><i class="fas fa-edit"></i> Create New Post</h2>
                 <button class="modal-close">&times;</button>
             </div>
-            <form id="createPostForm">
-                <div class="form-group">
-                    <label for="postTitle">Title</label>
-                    <input type="text" id="postTitle" required>
+            <form id="createPostForm" class="create-post-form">
+                <div class="form-row">
+                    <div class="form-group form-group-flex-2">
+                        <label for="postTitle">
+                            <i class="fas fa-heading"></i> Post Title
+                        </label>
+                        <input type="text" id="postTitle" placeholder="Enter an engaging title for your post..." required>
+                        <div class="form-help">
+                            <span class="char-counter" id="titleCounter">0/100</span>
+                        </div>
+                    </div>
+                    <div class="form-group form-group-flex-1">
+                        <label for="postCategory">
+                            <i class="fas fa-tags"></i> Category
+                        </label>
+                        <div class="select-wrapper">
+                            <select id="postCategory">
+                                <option value="">Choose category...</option>
+                            </select>
+                            <i class="fas fa-chevron-down select-arrow"></i>
+                        </div>
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label for="postCategory">Category</label>
-                    <select id="postCategory">
-                        <option value="">Select a category (optional)</option>
-                    </select>
+                    <label for="postContent">
+                        <i class="fas fa-align-left"></i> Content
+                    </label>
+                    <div class="textarea-wrapper">
+                        <textarea id="postContent" rows="8" placeholder="Share your thoughts, ideas, or questions with the community..." required></textarea>
+                        <div class="textarea-toolbar">
+                            <div class="toolbar-left">
+                                <button type="button" class="toolbar-btn" title="Bold" data-format="bold">
+                                    <i class="fas fa-bold"></i>
+                                </button>
+                                <button type="button" class="toolbar-btn" title="Italic" data-format="italic">
+                                    <i class="fas fa-italic"></i>
+                                </button>
+                                <button type="button" class="toolbar-btn" title="Link" data-format="link">
+                                    <i class="fas fa-link"></i>
+                                </button>
+                                <button type="button" class="toolbar-btn" title="Code" data-format="code">
+                                    <i class="fas fa-code"></i>
+                                </button>
+                            </div>
+                            <div class="toolbar-right">
+                                <span class="char-counter" id="contentCounter">0/5000</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-help">
+                        <i class="fas fa-info-circle"></i>
+                        You can use basic formatting. Be respectful and follow community guidelines.
+                    </div>
                 </div>
+
                 <div class="form-group">
-                    <label for="postContent">Content</label>
-                    <textarea id="postContent" rows="6" required></textarea>
+                    <label>
+                        <i class="fas fa-hashtag"></i> Tags (Optional)
+                    </label>
+                    <div class="tags-input-wrapper">
+                        <div class="tags-container" id="tagsContainer">
+                            <input type="text" id="tagsInput" placeholder="Add tags to help others find your post..." class="tags-input">
+                        </div>
+                    </div>
+                    <div class="form-help">
+                        <i class="fas fa-lightbulb"></i>
+                        Press Enter or comma to add tags. Use relevant keywords.
+                    </div>
                 </div>
-                <button type="submit" class="btn btn-primary btn-full">Create Post</button>
+
+                <div class="form-actions">
+                    <div class="form-actions-left">
+                        <label class="checkbox-wrapper">
+                            <input type="checkbox" id="postDraft">
+                            <span class="checkmark"></span>
+                            Save as draft
+                        </label>
+                    </div>
+                    <div class="form-actions-right">
+                        <button type="button" class="btn btn-secondary" onclick="window.modal.close()">
+                            <i class="fas fa-times"></i> Cancel
+                        </button>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-paper-plane"></i> Publish Post
+                        </button>
+                    </div>
+                </div>
             </form>
         </div>
     </div>
@@ -358,10 +430,10 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="js/utils.js?v=8.7"></script>
-    <script src="js/api.js?v=8.7"></script>
-    <script src="js/auth.js?v=8.7"></script>
-    <script src="js/posts.js?v=8.7"></script>
-    <script src="js/app.js?v=8.7"></script>
+    <script src="js/utils.js?v=8.9"></script>
+    <script src="js/api.js?v=8.9"></script>
+    <script src="js/auth.js?v=8.9"></script>
+    <script src="js/posts.js?v=8.9"></script>
+    <script src="js/app.js?v=8.9"></script>
 </body>
 </html>

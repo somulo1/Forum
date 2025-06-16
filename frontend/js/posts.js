@@ -297,10 +297,14 @@ class PostsManager {
 
             this.posts = posts || [];
             this.renderPosts();
+            // Update category counts after posts are loaded
+            this.renderCategoriesInSidebar();
         } catch (error) {
             console.error('Failed to load posts:', error);
             this.posts = [];
             this.renderPosts();
+            // Update category counts even if posts failed to load
+            this.renderCategoriesInSidebar();
         } finally {
             utils.hideLoading('loadingPosts');
         }
@@ -411,12 +415,18 @@ class PostsManager {
             return;
         }
 
-        container.innerHTML = this.categories.map(category => `
-            <div class="category-item" data-category-id="${category.id}">
-                <span>${utils.escapeHtml(category.name)}</span>
-                <span class="category-count">${category.posts_count || 0}</span>
-            </div>
-        `).join('');
+        // Calculate category counts from loaded posts
+        const categoryCounts = this.calculateCategoryCounts();
+
+        container.innerHTML = this.categories.map(category => {
+            const count = categoryCounts[category.id] || 0;
+            return `
+                <div class="category-item" data-category-id="${category.id}">
+                    <span>${utils.escapeHtml(category.name)}</span>
+                    <span class="category-count">${count}</span>
+                </div>
+            `;
+        }).join('');
 
         // Add click handlers for category filtering
         container.querySelectorAll('.category-item').forEach(item => {
@@ -425,6 +435,26 @@ class PostsManager {
                 this.filterByCategory(categoryId);
             });
         });
+    }
+
+    calculateCategoryCounts() {
+        const counts = {};
+
+        // Initialize all categories with 0 count
+        this.categories.forEach(category => {
+            counts[category.id] = 0;
+        });
+
+        // Count posts for each category
+        if (this.posts && this.posts.length > 0) {
+            this.posts.forEach(post => {
+                if (post.category_id) {
+                    counts[post.category_id] = (counts[post.category_id] || 0) + 1;
+                }
+            });
+        }
+
+        return counts;
     }
 
     renderCategoriesInForm() {
