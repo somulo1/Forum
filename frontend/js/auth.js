@@ -21,6 +21,10 @@ class Auth {
             this.isAuthenticated = true;
             return true;
         } catch (error) {
+            // 401 errors are expected when not logged in - don't log them
+            if (!error.message.includes('401') && !error.message.includes('Unauthorized')) {
+                console.error('Auth check error:', error);
+            }
             this.currentUser = null;
             this.isAuthenticated = false;
             return false;

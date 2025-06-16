@@ -201,7 +201,7 @@ class Posts {
                 <div class="post-content">${Utils.escapeHtml(formattedPost.content_preview)}</div>
                 
                 ${post.image_url ? `
-                    <img src="${formattedPost.image_url}" alt="Post image" class="post-image">
+                    <img src="${formattedPost.image_url}" alt="Post image" class="post-image" onerror="Utils.handleImageError(this)">
                 ` : ''}
                 
                 ${post.category_ids && post.category_ids.length > 0 ? `
@@ -283,7 +283,7 @@ class Posts {
                 <div class="post-content">${Utils.escapeHtml(post.content)}</div>
                 
                 ${post.image_url ? `
-                    <img src="${formattedPost.image_url}" alt="Post image" class="post-image">
+                    <img src="${formattedPost.image_url}" alt="Post image" class="post-image" onerror="Utils.handleImageError(this)">
                 ` : ''}
                 
                 <footer class="post-actions">

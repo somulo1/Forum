@@ -39,7 +39,10 @@ class API {
 
             return data;
         } catch (error) {
-            console.error('API request failed:', error);
+            // Only log non-authentication errors to avoid console spam
+            if (!error.message.includes('401') && !error.message.includes('Unauthorized')) {
+                console.error('API request failed:', error);
+            }
             throw error;
         }
     }

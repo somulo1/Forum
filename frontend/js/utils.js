@@ -99,9 +99,16 @@ const getImageUrl = (imagePath) => {
     return `/${imagePath}`;
 };
 
+// Handle image loading errors
+const handleImageError = (imgElement) => {
+    imgElement.style.display = 'none';
+    imgElement.onerror = null; // Prevent infinite loop
+};
+
 const getAvatarUrl = (avatarPath) => {
     if (!avatarPath || avatarPath === '') {
-        return '/static/profiles/default.png';
+        // Use a data URL for a simple default avatar instead of a file that might not exist
+        return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2MzY2ZjEiLz4KPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+';
     }
     return getImageUrl(avatarPath);
 };
@@ -271,7 +278,7 @@ window.Utils = {
     showMessage, showError, showSuccess,
     formatDate, formatDateTime,
     truncateText, escapeHtml,
-    getImageUrl, getAvatarUrl,
+    getImageUrl, getAvatarUrl, handleImageError,
     getFormData, clearForm,
     validateEmail, validatePassword, validateUsername,
     openModal, closeModal,
