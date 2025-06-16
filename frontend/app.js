@@ -1,12 +1,48 @@
 let forumPosts;
 
-document.addEventListener("DOMContentLoaded", async () => {
-    renderCreatePostSection();
-    forumPosts = await fetchForumPosts();
-    await renderPosts(forumPosts);
-    await renderCategories();
+// SPA Route handler setup
+const routes = {
+    home: renderFeedView,
+    profile: renderProfileView,
+    trending: renderTrendingView,
+    saved: renderSavedView,
+};
+
+function handleRoute(view, pushState = true) {
+    if (routes[view]) {
+        routes[view]();
+        if (pushState) {
+            window.history.pushState({ view }, "", "/" + view);
+        }
+        setActiveSidebar(view);
+    } else {
+        // fallback to home/feed if route not found
+        routes.home();
+        setActiveSidebar("home");
+    }
+}
+
+function setActiveSidebar(view) {
+    document.querySelectorAll(".menu-item").forEach(item => {
+        item.classList.toggle("active", item.dataset.view === view);
+    });
+}
+
+// Ensure the logo is injected when the page loads
+document.addEventListener("DOMContentLoaded", () => {
+    renderNavLogo();
     setupAuthButtons();
     setupMenuHandlers();
+
+    // SPA routing: load view based on URL path
+    const path = window.location.pathname.replace("/", "") || "home";
+    handleRoute(path);
+});
+
+// SPA navigation for browser back/forward
+window.addEventListener("popstate", (e) => {
+    const view = e.state?.view || "home";
+    handleRoute(view, false);
 });
 
 // function to render nav logo
@@ -22,11 +58,6 @@ function renderNavLogo() {
         <img src="http://localhost:8080/static/pictures/forum-logo.png" alt="Forum" class="nav-logo">
     `;
 }
-
-// Ensure the logo is injected when the page loads
-document.addEventListener("DOMContentLoaded", () => {
-    renderNavLogo();
-});
 
 // getTimeAgo() returns the time that has passed (i.e "1 day ago.")
 function getTimeAgo(date) {
