@@ -27,11 +27,17 @@ class CommentsManager {
                 const commentId = e.target.closest('.comment').dataset.commentId;
                 auth.requireAuth(() => this.toggleCommentLike(commentId));
             }
-            
+
             if (e.target.closest('.comment-delete-btn')) {
                 e.preventDefault();
                 const commentId = e.target.closest('.comment').dataset.commentId;
                 this.deleteComment(commentId);
+            }
+
+            if (e.target.closest('.comment-reply-btn')) {
+                e.preventDefault();
+                const commentId = e.target.closest('.comment').dataset.commentId;
+                auth.requireAuth(() => this.showReplyForm(commentId));
             }
         });
     }
@@ -155,22 +161,43 @@ class CommentsManager {
             `;
         }
 
-        return this.comments.map(comment => this.createCommentElement(comment)).join('');
+        // The backend now returns comments in threaded structure
+        return this.comments.map(comment => this.createCommentThread(comment)).join('');
     }
 
-    createCommentElement(comment) {
+    createCommentThread(comment, depth = 0) {
+        const commentHtml = this.createCommentElement(comment, depth);
+        let repliesHtml = '';
+
+        if (comment.replies && comment.replies.length > 0) {
+            repliesHtml = comment.replies.map(reply =>
+                this.createCommentThread(reply, depth + 1)
+            ).join('');
+        }
+
+        return commentHtml + repliesHtml;
+    }
+
+    createCommentElement(comment, depth = 0) {
         const avatarColor = utils.generateAvatarColor(comment.username || 'Anonymous');
         const avatarInitials = utils.getAvatarInitials(comment.username || 'Anonymous');
         const isOwner = auth.isUserAuthenticated() && auth.getCurrentUser().id === comment.user_id;
+        const isAuthenticated = auth.isUserAuthenticated();
+
+        // Calculate indentation for nested comments (max depth of 5 levels)
+        const maxDepth = 5;
+        const actualDepth = Math.min(depth, maxDepth);
+        const marginLeft = actualDepth * 30; // 30px per level
 
         return `
-            <div class="comment" data-comment-id="${comment.id}">
+            <div class="comment ${depth > 0 ? 'comment-reply' : ''}" data-comment-id="${comment.id}" data-parent-id="${comment.parent_id || ''}" style="margin-left: ${marginLeft}px;">
                 <div class="comment-header">
                     <div class="post-avatar" style="background-color: ${avatarColor}; width: 32px; height: 32px; font-size: 0.8rem;">
                         ${avatarInitials}
                     </div>
                     <div class="comment-author">${utils.escapeHtml(comment.username || 'Anonymous')}</div>
                     <div class="comment-time">${utils.formatDate(comment.created_at)}</div>
+                    ${depth > 0 ? `<span class="reply-indicator">↳ Reply</span>` : ''}
                     ${isOwner ? `
                         <button class="action-btn comment-delete-btn" title="Delete comment">
                             <i class="fas fa-trash"></i>
@@ -185,6 +212,30 @@ class CommentsManager {
                         <i class="fas fa-thumbs-up"></i>
                         <span>${comment.likes_count || 0}</span>
                     </button>
+                    ${isAuthenticated && depth < maxDepth ? `
+                        <button class="action-btn comment-reply-btn" data-comment-id="${comment.id}">
+                            <i class="fas fa-reply"></i>
+                            Reply
+                        </button>
+                    ` : ''}
+                </div>
+
+                <!-- Reply form (initially hidden) -->
+                <div class="reply-form" id="replyForm-${comment.id}" style="display: none;">
+                    <textarea
+                        id="replyContent-${comment.id}"
+                        placeholder="Write a reply..."
+                        rows="2"
+                        class="reply-textarea"
+                    ></textarea>
+                    <div class="reply-form-actions">
+                        <button class="btn btn-primary btn-sm" onclick="window.comments.submitReply(${comment.id})">
+                            <i class="fas fa-paper-plane"></i> Post Reply
+                        </button>
+                        <button class="btn btn-secondary btn-sm" onclick="window.comments.cancelReply(${comment.id})">
+                            Cancel
+                        </button>
+                    </div>
                 </div>
             </div>
         `;
@@ -316,6 +367,108 @@ class CommentsManager {
         } catch (error) {
             // Error is already handled by apiWrapper
         }
+    }
+
+    showReplyForm(commentId) {
+        // Hide any other open reply forms
+        document.querySelectorAll('.reply-form').forEach(form => {
+            form.style.display = 'none';
+        });
+
+        // Show the reply form for this comment
+        const replyForm = document.getElementById(`replyForm-${commentId}`);
+        if (replyForm) {
+            replyForm.style.display = 'block';
+            const textarea = document.getElementById(`replyContent-${commentId}`);
+            if (textarea) {
+                textarea.focus();
+            }
+        }
+    }
+
+    cancelReply(commentId) {
+        const replyForm = document.getElementById(`replyForm-${commentId}`);
+        if (replyForm) {
+            replyForm.style.display = 'none';
+            const textarea = document.getElementById(`replyContent-${commentId}`);
+            if (textarea) {
+                textarea.value = '';
+            }
+        }
+    }
+
+    async submitReply(parentCommentId) {
+        const content = document.getElementById(`replyContent-${parentCommentId}`).value.trim();
+
+        if (!content) {
+            toast.error('Please enter a reply');
+            return;
+        }
+
+        if (!this.currentPostId) {
+            toast.error('No post selected');
+            return;
+        }
+
+        const commentData = {
+            post_id: parseInt(this.currentPostId),
+            parent_id: parseInt(parentCommentId),
+            content: content
+        };
+
+        try {
+            await apiWrapper.createComment(commentData);
+
+            // Clear the reply form
+            this.cancelReply(parentCommentId);
+
+            // Reload comments to show the new reply
+            await this.loadComments(this.currentPostId);
+
+            // Re-render the comments section
+            const commentsList = document.querySelector('.comments-list');
+            if (commentsList) {
+                commentsList.innerHTML = this.renderComments();
+            }
+
+            // Update comment count
+            const commentsHeader = document.querySelector('.comments-section h3');
+            if (commentsHeader) {
+                commentsHeader.textContent = `Comments (${this.getTotalCommentCount()})`;
+            }
+
+            // Update comment count in post actions
+            const commentCountSpan = document.querySelector('.post-actions .comment-btn span');
+            if (commentCountSpan) {
+                commentCountSpan.textContent = this.getTotalCommentCount();
+            }
+
+            // Update post in posts array
+            const post = window.posts.posts.find(p => p.id == this.currentPostId);
+            if (post) {
+                post.comment_count = this.getTotalCommentCount();
+            }
+
+        } catch (error) {
+            // Error is already handled by apiWrapper
+        }
+    }
+
+    // Helper method to count total comments including replies
+    getTotalCommentCount() {
+        let count = 0;
+
+        const countComments = (comments) => {
+            for (const comment of comments) {
+                count++;
+                if (comment.replies && comment.replies.length > 0) {
+                    countComments(comment.replies);
+                }
+            }
+        };
+
+        countComments(this.comments);
+        return count;
     }
 }
 
