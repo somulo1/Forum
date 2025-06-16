@@ -238,21 +238,45 @@ func IsUniqueConstraintError(err error) bool {
 
 // CreateComment inserts a new comment
 func CreateComment(db *sql.DB, userID, postID int, content string) error {
+	return CreateCommentWithParent(db, userID, postID, nil, content)
+}
+
+// CreateCommentWithParent inserts a new comment with optional parent (for replies)
+func CreateCommentWithParent(db *sql.DB, userID, postID int, parentID *int, content string) error {
 	_, err := db.Exec(`
-		INSERT INTO comments (user_id, post_id, content)
-		VALUES (?, ?, ?)
-	`, userID, postID, content)
+		INSERT INTO comments (user_id, post_id, parent_id, content)
+		VALUES (?, ?, ?, ?)
+	`, userID, postID, parentID, content)
 	return err
 }
 
-// GetPostComments retrieves comments for a specific post
+// GetPostComments retrieves comments for a specific post with like data
 func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
-	rows, err := db.Query(`
-		SELECT id, user_id, content, created_at
-		FROM comments
-		WHERE post_id = ?
-		ORDER BY created_at ASC
-	`, postID)
+	return GetPostCommentsWithUser(db, postID, 0)
+}
+
+// GetPostCommentsWithUser retrieves comments for a specific post with like data and user like status
+func GetPostCommentsWithUser(db *sql.DB, postID int, userID int) ([]models.Comment, error) {
+	query := `
+		SELECT
+			c.id,
+			c.user_id,
+			c.parent_id,
+			c.content,
+			c.created_at,
+			u.username,
+			COUNT(DISTINCT l.user_id) as like_count,
+			CASE WHEN ul.user_id IS NOT NULL THEN 1 ELSE 0 END as user_liked
+		FROM comments c
+		JOIN users u ON c.user_id = u.id
+		LEFT JOIN likes l ON c.id = l.comment_id
+		LEFT JOIN likes ul ON c.id = ul.comment_id AND ul.user_id = ?
+		WHERE c.post_id = ?
+		GROUP BY c.id, c.user_id, c.parent_id, c.content, c.created_at, u.username, ul.user_id
+		ORDER BY c.parent_id ASC, c.created_at ASC
+	`
+
+	rows, err := db.Query(query, userID, postID)
 	if err != nil {
 		return nil, err
 	}
@@ -261,12 +285,46 @@ func GetPostComments(db *sql.DB, postID int) ([]models.Comment, error) {
 	var comments []models.Comment
 	for rows.Next() {
 		var comment models.Comment
-		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.Content, &comment.CreatedAt); err != nil {
+		var username string
+		var likeCount int
+		var userLiked int
+		if err := rows.Scan(&comment.ID, &comment.UserID, &comment.ParentID, &comment.Content, &comment.CreatedAt, &username, &likeCount, &userLiked); err != nil {
 			return nil, err
 		}
+		comment.Username = username
+		comment.LikesCount = likeCount
+		comment.UserLiked = userLiked == 1
 		comments = append(comments, comment)
 	}
-	return comments, nil
+	// Organize comments into threaded structure
+	return organizeCommentsIntoThreads(comments), nil
+}
+
+// organizeCommentsIntoThreads converts flat comment list into nested structure
+func organizeCommentsIntoThreads(flatComments []models.Comment) []models.Comment {
+	commentMap := make(map[int]*models.Comment)
+	var rootComments []models.Comment
+
+	// First pass: create map of all comments
+	for i := range flatComments {
+		comment := flatComments[i]
+		commentMap[comment.ID] = &comment
+	}
+
+	// Second pass: organize into threads
+	for _, comment := range flatComments {
+		if comment.ParentID == nil {
+			// Root comment
+			rootComments = append(rootComments, comment)
+		} else {
+			// Reply comment - add to parent's replies
+			if parent, exists := commentMap[*comment.ParentID]; exists {
+				parent.Replies = append(parent.Replies, comment)
+			}
+		}
+	}
+
+	return rootComments
 }
 
 // CreateCategory inserts a new category

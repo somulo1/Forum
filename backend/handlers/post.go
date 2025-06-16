@@ -180,7 +180,10 @@ func GetPostComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid post_id parameter", http.StatusBadRequest)
 		return
 	}
-	comments, err := sqlite.GetPostComments(db, postID)
+	// Get user ID for like status (0 if not authenticated)
+	userID, _ := utils.GetUserIDFromSession(db, r)
+
+	comments, err := sqlite.GetPostCommentsWithUser(db, postID, userID)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
 		return

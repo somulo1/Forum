@@ -39,16 +39,18 @@ CREATE TABLE IF NOT EXISTS posts (
     FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE SET NULL
 );
 
--- Comments Table
+-- Comments Table (with nested comment support)
 CREATE TABLE IF NOT EXISTS comments (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     user_id INTEGER NOT NULL,
     post_id INTEGER NOT NULL,
+    parent_id INTEGER DEFAULT NULL,
     content TEXT NOT NULL,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE,
-    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE
+    FOREIGN KEY (post_id) REFERENCES posts(id) ON DELETE CASCADE,
+    FOREIGN KEY (parent_id) REFERENCES comments(id) ON DELETE CASCADE
 );
 
 -- Likes Table (Supports both post and comment likes)

@@ -44,7 +44,7 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	comment.UserID = userID
 
-	err = sqlite.CreateComment(db, comment.UserID, comment.PostID, comment.Content)
+	err = sqlite.CreateCommentWithParent(db, comment.UserID, comment.PostID, comment.ParentID, comment.Content)
 	if err != nil {
 		fmt.Printf("❌ Database error: %v\n", err)
 		utils.SendJSONError(w, "Failed to create comment", http.StatusInternalServerError)
@@ -75,8 +75,11 @@ func GetComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Fetch comments from the database
-	comments, err := sqlite.GetPostComments(db, postID)
+	// Get user ID for like status (0 if not authenticated)
+	userID, _ := utils.GetUserIDFromSession(db, r)
+
+	// Fetch comments from the database with user like status
+	comments, err := sqlite.GetPostCommentsWithUser(db, postID, userID)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to fetch comments", http.StatusInternalServerError)
 		return
