@@ -71,6 +71,18 @@
                 <button id="next-page" class="btn btn-outline">Next</button>
             </div>
         </div>
+
+        <!-- Categories Container -->
+        <div class="categories-container" id="categories-container" style="display: none;">
+            <div class="categories-header">
+                <h2>Categories</h2>
+                <button id="create-category-btn" class="btn btn-primary" style="display: none;">Create Category</button>
+            </div>
+
+            <div id="categories-list" class="categories-list">
+                <!-- Categories will be loaded here -->
+            </div>
+        </div>
     </main>
 
     <!-- Login Modal -->
@@ -147,7 +159,7 @@
                 </div>
                 <div class="form-group">
                     <label for="post-categories">Categories:</label>
-                    <div id="categories-container" class="categories-container">
+                    <div id="categories-container" class="form-categories-container">
                         <!-- Categories will be loaded here -->
                     </div>
                 </div>
@@ -173,6 +185,26 @@
             <div id="post-detail-content">
                 <!-- Post details will be loaded here -->
             </div>
+        </div>
+    </div>
+
+    <!-- Create Category Modal -->
+    <div id="create-category-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Category</h3>
+                <span class="close" data-modal="create-category-modal">&times;</span>
+            </div>
+            <form id="create-category-form" class="form">
+                <div class="form-group">
+                    <label for="category-name">Category Name:</label>
+                    <input type="text" id="category-name" name="name" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Category</button>
+                    <button type="button" class="btn btn-outline" onclick="closeModal('create-category-modal')">Cancel</button>
+                </div>
+            </form>
         </div>
     </div>
 

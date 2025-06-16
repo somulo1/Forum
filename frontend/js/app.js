@@ -134,11 +134,12 @@ class App {
     navigateToHome() {
         this.currentPage = 'home';
         this.updateActiveNavigation();
-        
-        // Show posts container, hide other content
+
+        // Show posts container, hide categories container
         Utils.show('.posts-container');
+        Utils.hide('#categories-container');
         Utils.show('.sidebar');
-        
+
         // Refresh posts
         if (window.Posts) {
             window.Posts.refresh();
@@ -148,9 +149,16 @@ class App {
     navigateToCategories() {
         this.currentPage = 'categories';
         this.updateActiveNavigation();
-        
-        // For now, just show a message
-        Utils.showWarning('Categories page not implemented yet');
+
+        // Hide posts container, show categories container
+        Utils.hide('.posts-container');
+        Utils.show('#categories-container');
+        Utils.show('.sidebar');
+
+        // Load categories
+        if (window.Categories) {
+            window.Categories.loadCategoriesPage();
+        }
     }
 
     updateActiveNavigation() {

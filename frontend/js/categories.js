@@ -24,6 +24,12 @@ class Categories {
         if (createCategoryForm) {
             createCategoryForm.addEventListener('submit', (e) => this.handleCreateCategory(e));
         }
+
+        // Create category button
+        const createCategoryBtn = Utils.$('#create-category-btn');
+        if (createCategoryBtn) {
+            createCategoryBtn.addEventListener('click', () => this.showCreateCategoryModal());
+        }
     }
 
     // Load categories from API
@@ -80,10 +86,16 @@ class Categories {
             
             Utils.showSuccess('Category created successfully');
             Utils.clearForm(event.target);
-            
+            Utils.closeModal('#create-category-modal');
+
             // Reload categories
             await this.loadCategories();
             this.renderCategoryFilter();
+
+            // Refresh categories page if we're on it
+            if (window.App && window.App.currentPage === 'categories') {
+                this.renderCategoriesList('#categories-list');
+            }
 
         } catch (error) {
             ApiHelpers.handleError(error);
@@ -137,8 +149,8 @@ class Categories {
                         </div>
                         ${AuthHelpers.isLoggedIn() ? `
                             <div class="category-actions">
-                                <button class="btn btn-sm btn-outline" onclick="Categories.editCategory(${category.id})">Edit</button>
-                                <button class="btn btn-sm btn-danger" onclick="Categories.deleteCategory(${category.id})">Delete</button>
+                                <button class="btn btn-sm btn-outline" onclick="window.Categories.editCategory(${category.id})">Edit</button>
+                                <button class="btn btn-sm btn-danger" onclick="window.Categories.deleteCategory(${category.id})">Delete</button>
                             </div>
                         ` : ''}
                     </div>
@@ -202,6 +214,37 @@ class Categories {
     // Clear categories cache
     clearCache() {
         this.categories = [];
+    }
+
+    // Load categories page
+    async loadCategoriesPage() {
+        try {
+            Utils.showLoading();
+
+            // Load categories
+            await this.loadCategories();
+
+            // Render categories list
+            this.renderCategoriesList('#categories-list');
+
+            // Show create button if logged in
+            const createBtn = Utils.$('#create-category-btn');
+            if (createBtn) {
+                createBtn.style.display = AuthHelpers.isLoggedIn() ? 'block' : 'none';
+            }
+
+        } catch (error) {
+            console.error('Error loading categories page:', error);
+            Utils.showError('Failed to load categories');
+        } finally {
+            Utils.hideLoading();
+        }
+    }
+
+    // Show create category modal
+    showCreateCategoryModal() {
+        if (!AuthHelpers.requireAuth()) return;
+        Utils.openModal('#create-category-modal');
     }
 }
 
