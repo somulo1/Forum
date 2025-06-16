@@ -24,8 +24,8 @@ func CheckPasswordHash(password, hash string) bool {
 }
 
 // IsAuthor checks if the given user is the author of a specific comment
-func IsAuthor(db *sql.DB, userID, id int, isPost bool) (bool, error) {
-	var authorID int
+func IsAuthor(db *sql.DB, userID string, id int, isPost bool) (bool, error) {
+	var authorID string
 	query := "SELECT user_id FROM comments WHERE id = ?"
 	if isPost {
 		query = "SELECT user_id FROM posts WHERE id = ?"
@@ -56,10 +56,10 @@ func IsAuthenticated(db *sql.DB, r *http.Request) (bool, error) {
 }
 
 // GetUserIDFromSession retrieves the user ID from the session
-func GetUserIDFromSession(db *sql.DB, r *http.Request) (int, error) {
+func GetUserIDFromSession(db *sql.DB, r *http.Request) (string, error) {
 	sessionCookie, err := r.Cookie("session_id")
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	return getUserIDFromSession(db, sessionCookie.Value)
 }
@@ -85,10 +85,10 @@ func validateSession(db *sql.DB, sessionID string) (bool, error) {
 }
 
 // getUserIDFromSession retrieves the user ID from the session
-func getUserIDFromSession(db *sql.DB, sessionID string) (int, error) {
+func getUserIDFromSession(db *sql.DB, sessionID string) (string, error) {
 	userID, err := sqlite.GetUserIDFromSession(db, sessionID)
 	if err != nil {
-		return 0, err
+		return "", err
 	}
 	return userID, nil
 }

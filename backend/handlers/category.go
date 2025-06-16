@@ -3,7 +3,6 @@ package handlers
 import (
 	"database/sql"
 	"encoding/json"
-	"log"
 	"net/http"
 
 	"forum/models"
@@ -41,13 +40,7 @@ func GetCategories(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	categories, err := sqlite.GetCategories(db)
 	if err != nil {
-		log.Printf("Error fetching categories: %v", err) // Log the error
 		utils.SendJSONError(w, "Failed to fetch categories", http.StatusInternalServerError)
-		return
-	}
-
-	if len(categories) == 0 {
-		utils.SendJSONResponse(w, []models.Category{}, http.StatusOK) // Return an empty array if no categories
 		return
 	}
 
