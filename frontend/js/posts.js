@@ -178,8 +178,8 @@ class Posts {
                     </div>
                     ${isOwner ? `
                         <div class="post-actions">
-                            <button class="btn btn-sm btn-outline" onclick="Posts.editPost(${post.id})">Edit</button>
-                            <button class="btn btn-sm btn-danger" onclick="Posts.deletePost(${post.id})">Delete</button>
+                            <button class="btn btn-sm btn-outline" onclick="window.Posts.editPost(${post.id})">Edit</button>
+                            <button class="btn btn-sm btn-danger" onclick="window.Posts.deletePost(${post.id})">Delete</button>
                         </div>
                     ` : ''}
                 </div>
@@ -380,7 +380,7 @@ class Posts {
                     <h3>No posts found</h3>
                     <p>There are no posts matching your current filters.</p>
                     ${AuthHelpers.isLoggedIn() ? `
-                        <button class="btn btn-primary" onclick="Posts.showCreatePostModal()">Create First Post</button>
+                        <button class="btn btn-primary" onclick="window.Posts.showCreatePostModal()">Create First Post</button>
                     ` : ''}
                 </div>
             `;

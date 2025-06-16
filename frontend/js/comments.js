@@ -67,7 +67,7 @@ class Comments {
                     </div>
                     ${isOwner ? `
                         <div class="comment-actions">
-                            <button class="btn btn-sm btn-danger" onclick="Comments.deleteComment(${comment.id})">Delete</button>
+                            <button class="btn btn-sm btn-danger" onclick="window.Comments.deleteComment(${comment.id})">Delete</button>
                         </div>
                     ` : ''}
                 </div>
@@ -86,7 +86,7 @@ class Comments {
                                 👎 Dislike
                             </button>
                         </div>
-                        <button class="btn btn-sm btn-outline reply-btn" onclick="Comments.showReplyForm(${comment.id})">
+                        <button class="btn btn-sm btn-outline reply-btn" onclick="window.Comments.showReplyForm(${comment.id})">
                             Reply
                         </button>
                     ` : ''}
@@ -97,7 +97,7 @@ class Comments {
                         <textarea name="content" placeholder="Write a reply..." required></textarea>
                         <div class="form-actions">
                             <button type="submit" class="btn btn-primary">Post Reply</button>
-                            <button type="button" class="btn btn-outline" onclick="Comments.hideReplyForm(${comment.id})">Cancel</button>
+                            <button type="button" class="btn btn-outline" onclick="window.Comments.hideReplyForm(${comment.id})">Cancel</button>
                         </div>
                     </form>
                 </div>
@@ -129,7 +129,7 @@ class Comments {
                     </div>
                     ${isOwner ? `
                         <div class="reply-actions">
-                            <button class="btn btn-sm btn-danger" onclick="Comments.deleteReply(${reply.id})">Delete</button>
+                            <button class="btn btn-sm btn-danger" onclick="window.Comments.deleteReply(${reply.id})">Delete</button>
                         </div>
                     ` : ''}
                 </div>
