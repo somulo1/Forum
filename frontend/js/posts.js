@@ -122,22 +122,29 @@ class PostsManager {
     }
 
     async loadPosts(filter = this.currentFilter, page = 1) {
+        console.log('loadPosts called with filter:', filter, 'page:', page); // Debug log
         this.currentFilter = filter;
         this.currentPage = page;
-        
+
         utils.showLoading('loadingPosts');
-        
+
         try {
             const filters = {};
-            
+
             // Apply filters based on current filter
             if (filter === 'my-posts' && auth.isUserAuthenticated()) {
                 filters.user_id = auth.getCurrentUser().id;
+                console.log('Applying my-posts filter with user_id:', filters.user_id); // Debug log
             } else if (filter === 'liked' && auth.isUserAuthenticated()) {
                 filters.liked_by = auth.getCurrentUser().id;
+                console.log('Applying liked filter with liked_by:', filters.liked_by); // Debug log
             }
-            
+
+            console.log('Final filters object:', filters); // Debug log
+            console.log('Calling API with filters...'); // Debug log
+
             const posts = await apiWrapper.getPosts(page, this.postsPerPage, filters);
+            console.log('API returned posts:', posts ? posts.length : 0, 'posts'); // Debug log
             this.posts = posts || [];
             this.renderPosts();
         } catch (error) {
@@ -315,11 +322,17 @@ class PostsManager {
     }
 
     handleFilterChange(event) {
+        console.log('Filter button clicked:', event.target.textContent); // Debug log
         const filterButtons = document.querySelectorAll('.filter-btn');
         filterButtons.forEach(btn => btn.classList.remove('active'));
-        
+
         event.target.classList.add('active');
         const filter = event.target.dataset.filter;
+        console.log('Filter value:', filter); // Debug log
+        console.log('User authenticated:', auth.isUserAuthenticated()); // Debug log
+        if (auth.isUserAuthenticated()) {
+            console.log('Current user:', auth.getCurrentUser()); // Debug log
+        }
         this.loadPosts(filter);
     }
 
