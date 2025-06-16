@@ -108,25 +108,28 @@ class Posts {
     async loadPosts() {
         try {
             Utils.showLoading();
-            
+
             const params = ApiHelpers.getPaginationParams(this.currentPage, this.postsPerPage);
-            
+
             // Add filter parameters
             if (this.currentCategory) {
                 params.category = this.currentCategory;
             }
-            
+
             if (this.currentFilter === 'my' && AuthHelpers.isLoggedIn()) {
                 params.user_id = AuthHelpers.getCurrentUser().id;
             } else if (this.currentFilter === 'liked' && AuthHelpers.isLoggedIn()) {
                 params.liked_by = AuthHelpers.getCurrentUser().id;
             }
 
-            this.posts = await api.getPosts(params);
+            const result = await api.getPosts(params);
+            this.posts = Array.isArray(result) ? result : [];
             this.renderPosts();
             this.updatePagination();
 
         } catch (error) {
+            console.error('Error loading posts:', error);
+            this.posts = []; // Ensure posts is always an array
             ApiHelpers.handleError(error);
             this.renderEmptyState();
         } finally {
@@ -188,8 +191,8 @@ class Posts {
                     ${post.image_url ? `
                         <img src="${post.image_url}" alt="Post image" class="post-image">
                     ` : ''}
-                    
-                    ${post.category_ids && post.category_ids.length > 0 ? `
+
+                    ${post.category_ids && Array.isArray(post.category_ids) && post.category_ids.length > 0 ? `
                         <div class="post-categories">
                             ${post.category_ids.map(catId => `
                                 <span class="category-tag">Category ${catId}</span>
@@ -254,13 +257,13 @@ class Posts {
     // Render post detail view
     renderPostDetail(post, comments) {
         const formattedPost = ApiHelpers.formatPost(post);
-        const isOwner = AuthHelpers.isOwner(post.user_id);
-        
+        const commentsArray = Array.isArray(comments) ? comments : [];
+
         return `
             <div class="post-detail">
                 <div class="post-header">
                     <div class="post-author">
-                        <img src="${post.profile_avatar || '/static/profiles/default.png'}" 
+                        <img src="${post.profile_avatar || '/static/profiles/default.png'}"
                              alt="${Utils.escapeHtml(post.username)}" class="avatar">
                         <div class="author-info">
                             <span class="username">${Utils.escapeHtml(post.username)}</span>
@@ -268,24 +271,24 @@ class Posts {
                         </div>
                     </div>
                 </div>
-                
+
                 <div class="post-content">
                     <h2 class="post-title">${Utils.escapeHtml(post.title)}</h2>
                     <div class="post-text">${Utils.escapeHtml(post.content)}</div>
-                    
+
                     ${post.image_url ? `
                         <img src="${post.image_url}" alt="Post image" class="post-image">
                     ` : ''}
                 </div>
-                
+
                 <div class="post-footer">
                     <div class="post-reactions" data-post-id="${post.id}">
                         <!-- Likes will be initialized here -->
                     </div>
                 </div>
-                
+
                 <div class="comments-section">
-                    <h3>Comments (${comments.length})</h3>
+                    <h3>Comments (${commentsArray.length})</h3>
                     
                     ${AuthHelpers.isLoggedIn() ? `
                         <form class="comment-form" data-post-id="${post.id}">
