@@ -11,13 +11,16 @@ class API {
     // Generic request method
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
+
+        // Don't set Content-Type for FormData - let browser set it automatically
+        const headers = options.body instanceof FormData
+            ? { ...options.headers }
+            : { ...this.defaultHeaders, ...options.headers };
+
         const config = {
             credentials: 'include', // Include cookies for session management
             ...options,
-            headers: {
-                ...this.defaultHeaders,
-                ...options.headers,
-            },
+            headers,
         };
 
         try {
@@ -73,7 +76,6 @@ class API {
     async postFormData(endpoint, formData) {
         return this.request(endpoint, {
             method: 'POST',
-            headers: {}, // Don't set Content-Type for FormData
             body: formData,
         });
     }
@@ -96,16 +98,23 @@ class API {
 
     // Authentication endpoints
     async register(userData) {
-        const formData = new FormData();
-        formData.append('username', userData.username);
-        formData.append('email', userData.email);
-        formData.append('password', userData.password);
-        
+        // If there's an avatar, use FormData, otherwise use JSON
         if (userData.avatar) {
+            const formData = new FormData();
+            formData.append('username', userData.username);
+            formData.append('email', userData.email);
+            formData.append('password', userData.password);
             formData.append('avatar', userData.avatar);
+
+            return this.postFormData('/api/register', formData);
+        } else {
+            // Use JSON for registration without avatar
+            return this.post('/api/register', {
+                username: userData.username,
+                email: userData.email,
+                password: userData.password
+            });
         }
-        
-        return this.postFormData('/api/register', formData);
     }
 
     async login(credentials) {

@@ -6,9 +6,11 @@ import (
 	"fmt"
 	"io"
 	"log"
+	"mime/multipart"
 	"net/http"
 	"os"
 	"path/filepath"
+	"strings"
 	"time"
 
 	"forum/sqlite"
@@ -21,93 +23,153 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse multipart form data (e.g., image + text)
-	err := r.ParseMultipartForm(10 << 20) // 10 MB max
-	if err != nil {
-		utils.SendJSONError(w, "Error parsing form data", http.StatusBadRequest)
-		return
+	log.Printf("Registration request received")
+
+	var username, email, password string
+	var avatarFile *multipart.FileHeader
+
+	// Check content type to determine how to parse the request
+	contentType := r.Header.Get("Content-Type")
+	log.Printf("Content-Type: %s", contentType)
+
+	if strings.Contains(contentType, "multipart/form-data") {
+		// Parse multipart form data (e.g., image + text)
+		err := r.ParseMultipartForm(10 << 20) // 10 MB max
+		if err != nil {
+			log.Printf("Error parsing multipart form: %v", err)
+			utils.SendJSONError(w, "Error parsing form data", http.StatusBadRequest)
+			return
+		}
+
+		username = r.FormValue("username")
+		email = r.FormValue("email")
+		password = r.FormValue("password")
+
+		// Handle avatar file if present
+		if file, handler, err := r.FormFile("avatar"); err == nil {
+			file.Close() // Close immediately, we'll reopen later if needed
+			avatarFile = handler
+		}
+	} else {
+		// Parse JSON data
+		var requestData struct {
+			Username string `json:"username"`
+			Email    string `json:"email"`
+			Password string `json:"password"`
+		}
+
+		// Read the body first to log it
+		body, err := io.ReadAll(r.Body)
+		if err != nil {
+			log.Printf("Error reading request body: %v", err)
+			utils.SendJSONError(w, "Error reading request data", http.StatusBadRequest)
+			return
+		}
+		log.Printf("Raw request body: %s", string(body))
+
+		err = json.Unmarshal(body, &requestData)
+		if err != nil {
+			log.Printf("Error parsing JSON: %v", err)
+			log.Printf("JSON content: %s", string(body))
+			utils.SendJSONError(w, "Error parsing request data", http.StatusBadRequest)
+			return
+		}
+
+		username = requestData.Username
+		email = requestData.Email
+		password = requestData.Password
 	}
 
-	username := r.FormValue("username")
-	email := r.FormValue("email")
-	password := r.FormValue("password")
+	log.Printf("Registration data - Username: %s, Email: %s", username, email)
 
 	if username == "" || email == "" || password == "" {
+		log.Printf("Missing required fields")
 		utils.SendJSONError(w, "Missing required fields", http.StatusBadRequest)
 		return
 	}
 
-	// Handle avatar upload
-	var avatarURL string
+	// Handle avatar upload - simplified approach
+	var avatarURL string = "/static/default.png" // Default avatar
 
-	file, handler, err := r.FormFile("avatar")
-	if err != nil {
-		log.Printf("No avatar uploaded or failed to read: %v\n", err)
-		avatarURL = "/static/default.png"
-	} else {
-		defer file.Close()
+	if avatarFile != nil {
+		log.Printf("Avatar file received: %s", avatarFile.Filename)
 
-		// Ensure the static directory exists
-		staticDir := "static"
-		if _, err := os.Stat(staticDir); os.IsNotExist(err) {
-			if err := os.MkdirAll(staticDir, 0o755); err != nil {
-				utils.SendJSONError(w, "Failed to create static directory", http.StatusInternalServerError)
-				return
+		// Reopen the file for processing
+		file, err := avatarFile.Open()
+		if err != nil {
+			log.Printf("Error opening avatar file: %v", err)
+			// Use default avatar, continue with registration
+		} else {
+			defer file.Close()
+
+			// Ensure the static directory exists
+			staticDir := "static"
+			if _, err := os.Stat(staticDir); os.IsNotExist(err) {
+				log.Printf("Creating static directory")
+				if err := os.MkdirAll(staticDir, 0o755); err != nil {
+					log.Printf("Failed to create static directory: %v", err)
+					// Don't fail registration, just use default avatar
+					avatarURL = "/static/default.png"
+				} else {
+					// Try to save the avatar
+					safeFilename := filepath.Base(avatarFile.Filename)
+					avatarFilename := fmt.Sprintf("avatar_%d_%s", time.Now().UnixNano(), safeFilename)
+					avatarPath := filepath.Join(staticDir, avatarFilename)
+
+					dst, err := os.Create(avatarPath)
+					if err != nil {
+						log.Printf("Error creating file: %v", err)
+						// Don't fail registration, use default avatar
+						avatarURL = "/static/default.png"
+					} else {
+						defer dst.Close()
+
+						// Check MIME type
+						buf := make([]byte, 512)
+						_, err = file.Read(buf)
+						if err != nil {
+							log.Printf("Error reading avatar data: %v", err)
+							avatarURL = "/static/default.png"
+						} else {
+							filetype := http.DetectContentType(buf)
+							if filetype != "image/jpeg" && filetype != "image/png" && filetype != "image/gif" {
+								log.Printf("Unsupported image format: %s", filetype)
+								avatarURL = "/static/default.png"
+							} else {
+								// Reset file pointer and save
+								file.Seek(0, io.SeekStart)
+								_, err = io.Copy(dst, file)
+								if err != nil {
+									log.Printf("Error saving avatar: %v", err)
+									avatarURL = "/static/default.png"
+								} else {
+									avatarURL = "/" + avatarPath
+									log.Printf("Avatar uploaded successfully: %s", avatarURL)
+								}
+							}
+						}
+					}
+				}
 			}
 		}
-
-		// Sanitize and build a safe filename
-		safeFilename := filepath.Base(handler.Filename)
-		avatarFilename := fmt.Sprintf("avatar_%d_%s", time.Now().UnixNano(), safeFilename)
-		avatarPath := filepath.Join(staticDir, avatarFilename)
-
-		// Create destination file
-		dst, err := os.Create(avatarPath)
-		if err != nil {
-			log.Printf("Error creating file: %v\n", err)
-			utils.SendJSONError(w, "Failed to save avatar", http.StatusInternalServerError)
-			return
-		}
-		defer dst.Close()
-
-		// Optionally check MIME type (optional and basic)
-		buf := make([]byte, 512)
-		_, err = file.Read(buf)
-		if err != nil {
-			utils.SendJSONError(w, "Error reading avatar data", http.StatusBadRequest)
-			return
-		}
-		filetype := http.DetectContentType(buf)
-		if filetype != "image/jpeg" && filetype != "image/png" && filetype != "image/gif" {
-			utils.SendJSONError(w, "Unsupported image format (use JPG, PNG, or GIF)", http.StatusBadRequest)
-			return
-		}
-
-		// Reset file pointer before copying
-		file.Seek(0, io.SeekStart)
-
-		// Save the file
-		_, err = io.Copy(dst, file)
-		if err != nil {
-			log.Printf("Error saving avatar: %v\n", err)
-			utils.SendJSONError(w, "Error saving avatar", http.StatusInternalServerError)
-			return
-		}
-
-		avatarURL = "/" + avatarPath
-		log.Printf("Avatar uploaded successfully: %s\n", avatarURL)
 	}
+
+	log.Printf("Using avatar URL: %s", avatarURL)
 
 	// Hash password
 	hashedPassword, err := utils.HashPassword(password)
 	if err != nil {
+		log.Printf("Error hashing password: %v", err)
 		utils.SendJSONError(w, "Error hashing password", http.StatusInternalServerError)
 		return
 	}
 
+	log.Printf("Password hashed successfully")
+
 	// Save user to DB
 	err = sqlite.CreateUser(db, username, email, hashedPassword, avatarURL)
 	if err != nil {
+		log.Printf("Database error creating user: %v", err)
 		if sqlite.IsUniqueConstraintError(err) {
 			utils.SendJSONError(w, "Username or email already exists", http.StatusConflict)
 		} else {
@@ -116,6 +178,7 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	log.Printf("User created successfully: %s", username)
 	utils.SendJSONResponse(w, map[string]string{"message": "User registered successfully"}, http.StatusCreated)
 }
 
