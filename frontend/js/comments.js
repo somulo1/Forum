@@ -27,12 +27,18 @@ class Comments {
     // Initialize comments for a specific post
     async initPostComments(postId) {
         try {
-            const comments = await api.getComments(postId);
+            const result = await api.getComments(postId);
+            const comments = Array.isArray(result) ? result : [];
             this.comments[postId] = comments;
             this.renderComments(postId, comments);
             this.updateCommentsCount(postId, comments.length);
         } catch (error) {
             console.error('Error loading comments:', error);
+            // Set empty array on error
+            const comments = [];
+            this.comments[postId] = comments;
+            this.renderComments(postId, comments);
+            this.updateCommentsCount(postId, comments.length);
         }
     }
 
@@ -41,12 +47,14 @@ class Comments {
         const container = Utils.$(`[data-post-id="${postId}"] .comments-list`);
         if (!container) return;
 
-        if (comments.length === 0) {
+        const commentsArray = Array.isArray(comments) ? comments : [];
+
+        if (commentsArray.length === 0) {
             container.innerHTML = '<p class="no-comments">No comments yet. Be the first to comment!</p>';
             return;
         }
 
-        container.innerHTML = comments.map(comment => this.renderComment(comment)).join('');
+        container.innerHTML = commentsArray.map(comment => this.renderComment(comment)).join('');
     }
 
     // Render individual comment

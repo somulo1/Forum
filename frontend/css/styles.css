@@ -29,6 +29,32 @@ body {
     justify-content: space-between;
     align-items: center;
     height: 60px;
+    flex-wrap: wrap;
+}
+
+/* Mobile navigation */
+@media (max-width: 768px) {
+    .nav-container {
+        padding: 10px;
+        height: auto;
+        min-height: 60px;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .nav-brand h1 {
+        font-size: 1.2rem;
+    }
+
+    .nav-menu {
+        order: 3;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .nav-auth {
+        order: 2;
+    }
 }
 
 .nav-brand h1 {
@@ -71,8 +97,12 @@ body {
     font-size: 14px;
     font-weight: 500;
     text-decoration: none;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     transition: all 0.2s;
+    min-height: 44px; /* Minimum touch target size for mobile */
+    box-sizing: border-box;
 }
 
 .btn-primary {
@@ -124,6 +154,16 @@ body {
     gap: 20px;
 }
 
+/* Mobile-first responsive layout */
+@media (max-width: 768px) {
+    .main-content {
+        grid-template-columns: 1fr;
+        margin: 10px auto;
+        padding: 0 10px;
+        gap: 15px;
+    }
+}
+
 /* Sidebar */
 .sidebar {
     background: white;
@@ -131,6 +171,23 @@ body {
     border-radius: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
     height: fit-content;
+}
+
+/* Mobile sidebar */
+@media (max-width: 768px) {
+    .sidebar {
+        padding: 15px;
+        margin-bottom: 15px;
+        order: -1; /* Show sidebar first on mobile */
+    }
+
+    .sidebar-section {
+        margin-bottom: 15px;
+    }
+
+    .sidebar-section h3 {
+        font-size: 0.9rem;
+    }
 }
 
 .sidebar-section {
@@ -185,11 +242,32 @@ body {
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
 }
 
 .posts-header h2 {
     margin: 0;
     color: #333;
+}
+
+/* Mobile posts container */
+@media (max-width: 768px) {
+    .posts-container {
+        border-radius: 4px;
+    }
+
+    .posts-header {
+        padding: 15px;
+        flex-direction: column;
+        align-items: stretch;
+        text-align: center;
+    }
+
+    .posts-header h2 {
+        font-size: 1.3rem;
+        margin-bottom: 10px;
+    }
 }
 
 /* Posts List */
@@ -491,29 +569,155 @@ body {
     cursor: pointer;
 }
 
-/* Responsive */
+/* Responsive Design */
 @media (max-width: 768px) {
+    /* Layout */
     .main-content {
         grid-template-columns: 1fr;
         gap: 10px;
         margin: 10px auto;
         padding: 0 10px;
     }
-    
+
+    /* Navigation */
     .nav-container {
-        padding: 0 10px;
+        padding: 10px;
+        flex-direction: column;
+        gap: 10px;
     }
-    
+
     .nav-menu {
-        display: none;
+        order: 3;
+        width: 100%;
+        justify-content: center;
     }
-    
+
+    .nav-auth {
+        order: 2;
+    }
+
+    .nav-brand h1 {
+        font-size: 1.2rem;
+    }
+
+    /* Posts */
+    .posts-list {
+        padding: 10px;
+    }
+
     .post-card {
         padding: 15px;
+        margin-bottom: 15px;
     }
-    
+
+    .post-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .post-meta {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 5px;
+    }
+
+    .post-actions {
+        margin-top: 10px;
+    }
+
+    .post-actions .btn {
+        font-size: 0.8rem;
+        padding: 4px 8px;
+    }
+
+    .post-footer {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .post-stats {
+        font-size: 12px;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        padding: 15px;
+        margin-bottom: 15px;
+        order: -1;
+    }
+
+    /* Modals */
     .modal-content {
         width: 95%;
-        margin: 20px;
+        margin: 10px;
+        max-height: 95vh;
+    }
+
+    .modal-header {
+        padding: 15px;
+    }
+
+    .form {
+        padding: 15px;
+    }
+
+    /* Forms */
+    .form-actions {
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .form-actions .btn {
+        width: 100%;
+        min-height: 48px; /* Larger touch targets on mobile */
+    }
+
+    .form-group input,
+    .form-group textarea,
+    .form-group select {
+        padding: 12px;
+        font-size: 16px; /* Prevents zoom on iOS */
+        min-height: 44px;
+    }
+
+    .form-group textarea {
+        min-height: 120px;
+    }
+
+    /* Categories */
+    .categories-container {
+        grid-template-columns: 1fr;
+    }
+
+    /* Notifications */
+    .notification {
+        top: 10px;
+        right: 10px;
+        left: 10px;
+        max-width: none;
+    }
+
+    /* Pagination */
+    .pagination {
+        padding: 15px;
+        flex-wrap: wrap;
+    }
+}
+
+/* Tablet responsive */
+@media (max-width: 1024px) and (min-width: 769px) {
+    .main-content {
+        grid-template-columns: 200px 1fr;
+        gap: 15px;
+    }
+
+    .sidebar {
+        padding: 15px;
+    }
+
+    .post-card {
+        padding: 18px;
     }
 }
