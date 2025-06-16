@@ -3,7 +3,6 @@
 ## Overview
 
 This project involves creating a web forum that allows users to communicate by creating posts and comments, associating categories with posts, and liking/disliking content. The forum also provides filtering options for posts and ensures secure user authentication. The project is implemented using **SQLite** for the database, **Docker** for containerization, and **Go** for the backend. The frontend is built using plain HTML, CSS, and JavaScript without any frameworks.
-
 ---
 
 ## Features
