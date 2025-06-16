@@ -100,27 +100,7 @@ select:focus {
     background-color: rgba(0, 123, 255, 0.1);
 }
 
-.nav-menu {
-    display: flex;
-    gap: 20px;
-}
-
-.nav-link {
-    text-decoration: none;
-    color: #666;
-    padding: 8px 16px;
-    border-radius: 6px;
-    transition: all 0.3s ease;
-    display: flex;
-    align-items: center;
-    gap: 6px;
-}
-
-.nav-link:hover,
-.nav-link.active {
-    color: #007bff;
-    background-color: #f0f8ff;
-}
+/* Nav menu removed - using left sidebar navigation instead */
 
 .nav-actions {
     display: flex;
@@ -1418,9 +1398,7 @@ select:focus {
         align-self: flex-start;
     }
 
-    .nav-menu {
-        display: none;
-    }
+    /* Nav menu already removed */
 
     .nav-search {
         width: 100%;
@@ -1557,9 +1535,7 @@ select:focus {
         gap: 10px;
     }
 
-    .nav-menu {
-        display: none;
-    }
+    /* Nav menu already removed */
 
     .nav-search {
         order: 3;

@@ -14,17 +14,7 @@ class ForumApp {
     }
 
     setupEventListeners() {
-        // Navigation
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.addEventListener('click', (e) => {
-                e.preventDefault();
-                const page = link.dataset.page;
-                if (page) {
-                    this.navigateToPage(page);
-                }
-            });
-        });
+        // Old navigation removed - using left sidebar navigation instead
 
         // Create category button
         const createCategoryBtn = document.getElementById('createCategoryBtn');
@@ -83,33 +73,7 @@ class ForumApp {
         }
     }
 
-    navigateToPage(page) {
-        // Update navigation
-        const navLinks = document.querySelectorAll('.nav-link');
-        navLinks.forEach(link => {
-            link.classList.remove('active');
-            if (link.dataset.page === page) {
-                link.classList.add('active');
-            }
-        });
-
-        // Hide all pages
-        const pages = document.querySelectorAll('.page');
-        pages.forEach(p => p.classList.remove('active'));
-
-        // Show target page
-        const targetPage = document.getElementById(`${page}Page`);
-        if (targetPage) {
-            targetPage.classList.add('active');
-            this.currentPage = page;
-        }
-
-        // Load page-specific data
-        this.loadPageData(page);
-
-        // Update URL hash
-        window.location.hash = page;
-    }
+    // Old navigation method removed - using left sidebar navigation instead
 
     async loadPageData(page) {
         switch (page) {
@@ -309,7 +273,10 @@ class NavigationManager {
 
     init() {
         this.setupNavigationListeners();
-        this.updateAuthenticatedNavigation();
+        // Delay initial update to ensure auth is initialized
+        setTimeout(() => {
+            this.updateAuthenticatedNavigation();
+        }, 100);
     }
 
     setupNavigationListeners() {
@@ -341,22 +308,34 @@ class NavigationManager {
         document.getElementById('postsSection')?.classList.remove('active');
         document.getElementById('profileSection')?.classList.remove('active');
 
+        // Update feed header title and filters
+        const feedHeader = document.querySelector('.feed-header h2');
+        const feedFilters = document.querySelector('.feed-filters');
+
         // Show appropriate section and load content
         switch(view) {
             case 'home':
                 document.getElementById('postsSection')?.classList.add('active');
+                if (feedHeader) feedHeader.textContent = 'Latest Posts';
+                if (feedFilters) feedFilters.style.display = 'flex';
                 window.posts?.loadPosts('all');
                 break;
             case 'my-posts':
                 document.getElementById('postsSection')?.classList.add('active');
+                if (feedHeader) feedHeader.textContent = 'My Posts';
+                if (feedFilters) feedFilters.style.display = 'none';
                 window.posts?.loadPosts('my-posts');
                 break;
             case 'liked-posts':
                 document.getElementById('postsSection')?.classList.add('active');
+                if (feedHeader) feedHeader.textContent = 'Liked Posts';
+                if (feedFilters) feedFilters.style.display = 'none';
                 window.posts?.loadPosts('liked');
                 break;
             case 'trending':
                 document.getElementById('postsSection')?.classList.add('active');
+                if (feedHeader) feedHeader.textContent = 'Trending Posts';
+                if (feedFilters) feedFilters.style.display = 'none';
                 window.posts?.loadPosts('all'); // TODO: Implement trending
                 break;
             case 'profile':
@@ -371,14 +350,32 @@ class NavigationManager {
     updateAuthenticatedNavigation() {
         const isAuthenticated = window.auth?.isUserAuthenticated();
 
+        console.log('Updating navigation, authenticated:', isAuthenticated);
+
         // Show/hide authenticated navigation buttons
         const myPostsBtn = document.getElementById('myPostsNavBtn');
         const likedPostsBtn = document.getElementById('likedPostsNavBtn');
         const profileBtn = document.getElementById('profileNavBtn');
 
-        if (myPostsBtn) myPostsBtn.style.display = isAuthenticated ? 'flex' : 'none';
-        if (likedPostsBtn) likedPostsBtn.style.display = isAuthenticated ? 'flex' : 'none';
-        if (profileBtn) profileBtn.style.display = isAuthenticated ? 'flex' : 'none';
+        if (myPostsBtn) {
+            myPostsBtn.style.display = isAuthenticated ? 'flex' : 'none';
+            console.log('My Posts button display:', myPostsBtn.style.display);
+        }
+        if (likedPostsBtn) {
+            likedPostsBtn.style.display = isAuthenticated ? 'flex' : 'none';
+            console.log('Liked Posts button display:', likedPostsBtn.style.display);
+        }
+        if (profileBtn) {
+            profileBtn.style.display = isAuthenticated ? 'flex' : 'none';
+            console.log('Profile button display:', profileBtn.style.display);
+        }
+
+        // Also update the old filter buttons for consistency
+        const myPostsFilter = document.getElementById('myPostsFilter');
+        const likedPostsFilter = document.getElementById('likedPostsFilter');
+
+        if (myPostsFilter) myPostsFilter.style.display = isAuthenticated ? 'flex' : 'none';
+        if (likedPostsFilter) likedPostsFilter.style.display = isAuthenticated ? 'flex' : 'none';
 
         // If user logged out and was viewing authenticated content, redirect to home
         if (!isAuthenticated && ['my-posts', 'liked-posts', 'profile'].includes(this.currentView)) {
@@ -446,6 +443,26 @@ class NavigationManager {
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new ForumApp();
     window.navigation = new NavigationManager();
+
+    // Debug function for testing navigation
+    window.testNavigation = function() {
+        console.log('Testing navigation...');
+        console.log('Navigation manager:', window.navigation);
+        console.log('Auth manager:', window.auth);
+        console.log('Is authenticated:', window.auth?.isUserAuthenticated());
+
+        // Test showing profile if authenticated
+        if (window.auth?.isUserAuthenticated()) {
+            console.log('Testing profile view...');
+            window.navigation.showView('profile');
+        } else {
+            console.log('User not authenticated, testing home view...');
+            window.navigation.showView('home');
+        }
+    };
+
+    console.log('Forum application initialized with navigation');
+    console.log('Use window.testNavigation() to test navigation manually');
 });
 
 // Handle service worker registration for PWA capabilities (optional)

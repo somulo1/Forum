@@ -193,6 +193,14 @@ class AuthManager {
 
         // Store user info in localStorage for persistence
         utils.setLocalStorage('currentUser', user);
+
+        // Trigger navigation update
+        if (window.navigation && window.navigation.updateAuthenticatedNavigation) {
+            window.navigation.updateAuthenticatedNavigation();
+        }
+
+        // Dispatch auth state change event
+        document.dispatchEvent(new CustomEvent('authStateChanged', { detail: { authenticated: true, user } }));
     }
 
     setUnauthenticatedState() {
@@ -217,6 +225,14 @@ class AuthManager {
 
         // Clear stored user info
         utils.removeLocalStorage('currentUser');
+
+        // Trigger navigation update
+        if (window.navigation && window.navigation.updateAuthenticatedNavigation) {
+            window.navigation.updateAuthenticatedNavigation();
+        }
+
+        // Dispatch auth state change event
+        document.dispatchEvent(new CustomEvent('authStateChanged', { detail: { authenticated: false, user: null } }));
     }
 
     showLoginModal() {
