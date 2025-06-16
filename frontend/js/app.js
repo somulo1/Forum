@@ -300,9 +300,152 @@ class ForumApp {
     }
 }
 
+// Navigation Manager for left sidebar
+class NavigationManager {
+    constructor() {
+        this.currentView = 'home';
+        this.init();
+    }
+
+    init() {
+        this.setupNavigationListeners();
+        this.updateAuthenticatedNavigation();
+    }
+
+    setupNavigationListeners() {
+        // Left sidebar navigation buttons
+        const navButtons = document.querySelectorAll('.nav-btn');
+        navButtons.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                const view = e.currentTarget.dataset.view;
+                this.showView(view);
+            });
+        });
+
+        // Listen for auth state changes
+        document.addEventListener('authStateChanged', () => {
+            this.updateAuthenticatedNavigation();
+        });
+    }
+
+    showView(view) {
+        console.log('Showing view:', view);
+
+        // Update active nav button
+        document.querySelectorAll('.nav-btn').forEach(btn => {
+            btn.classList.remove('active');
+        });
+        document.querySelector(`[data-view="${view}"]`)?.classList.add('active');
+
+        // Hide all sections
+        document.getElementById('postsSection')?.classList.remove('active');
+        document.getElementById('profileSection')?.classList.remove('active');
+
+        // Show appropriate section and load content
+        switch(view) {
+            case 'home':
+                document.getElementById('postsSection')?.classList.add('active');
+                window.posts?.loadPosts('all');
+                break;
+            case 'my-posts':
+                document.getElementById('postsSection')?.classList.add('active');
+                window.posts?.loadPosts('my-posts');
+                break;
+            case 'liked-posts':
+                document.getElementById('postsSection')?.classList.add('active');
+                window.posts?.loadPosts('liked');
+                break;
+            case 'trending':
+                document.getElementById('postsSection')?.classList.add('active');
+                window.posts?.loadPosts('all'); // TODO: Implement trending
+                break;
+            case 'profile':
+                document.getElementById('profileSection')?.classList.add('active');
+                this.loadProfile();
+                break;
+        }
+
+        this.currentView = view;
+    }
+
+    updateAuthenticatedNavigation() {
+        const isAuthenticated = window.auth?.isUserAuthenticated();
+
+        // Show/hide authenticated navigation buttons
+        const myPostsBtn = document.getElementById('myPostsNavBtn');
+        const likedPostsBtn = document.getElementById('likedPostsNavBtn');
+        const profileBtn = document.getElementById('profileNavBtn');
+
+        if (myPostsBtn) myPostsBtn.style.display = isAuthenticated ? 'flex' : 'none';
+        if (likedPostsBtn) likedPostsBtn.style.display = isAuthenticated ? 'flex' : 'none';
+        if (profileBtn) profileBtn.style.display = isAuthenticated ? 'flex' : 'none';
+
+        // If user logged out and was viewing authenticated content, redirect to home
+        if (!isAuthenticated && ['my-posts', 'liked-posts', 'profile'].includes(this.currentView)) {
+            this.showView('home');
+        }
+    }
+
+    async loadProfile() {
+        if (!window.auth?.isUserAuthenticated()) {
+            this.showView('home');
+            return;
+        }
+
+        const user = window.auth.getCurrentUser();
+        if (!user) return;
+
+        // Update profile information
+        document.getElementById('profileUsername').textContent = user.username || 'Unknown User';
+        document.getElementById('profileEmail').textContent = user.email || 'No email';
+
+        // Format join date
+        const joinDate = user.created_at ? new Date(user.created_at).toLocaleDateString() : 'Unknown';
+        document.getElementById('profileJoined').textContent = `Member since: ${joinDate}`;
+
+        // Update avatar
+        const avatarElement = document.getElementById('profileAvatar');
+        if (avatarElement) {
+            const avatarColor = window.utils?.generateAvatarColor(user.username || 'User');
+            const avatarInitials = window.utils?.getAvatarInitials(user.username || 'User');
+            avatarElement.style.background = `linear-gradient(135deg, ${avatarColor}, #0056b3)`;
+            avatarElement.textContent = avatarInitials;
+        }
+
+        // Load user statistics
+        await this.loadUserStats(user.id);
+    }
+
+    async loadUserStats(userId) {
+        try {
+            // Get user's posts
+            const userPosts = await window.apiWrapper?.getPosts(1, 100, { user_id: userId });
+            const postsCount = userPosts ? userPosts.length : 0;
+            document.getElementById('userPostsCount').textContent = postsCount;
+
+            // Calculate total likes received on user's posts
+            let totalLikes = 0;
+            if (userPosts) {
+                totalLikes = userPosts.reduce((sum, post) => sum + (post.like_count || 0), 0);
+            }
+            document.getElementById('userLikesCount').textContent = totalLikes;
+
+            // TODO: Implement comments count when comment API is available
+            document.getElementById('userCommentsCount').textContent = '0';
+
+        } catch (error) {
+            console.error('Failed to load user stats:', error);
+            document.getElementById('userPostsCount').textContent = '0';
+            document.getElementById('userLikesCount').textContent = '0';
+            document.getElementById('userCommentsCount').textContent = '0';
+        }
+    }
+}
+
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new ForumApp();
+    window.navigation = new NavigationManager();
 });
 
 // Handle service worker registration for PWA capabilities (optional)

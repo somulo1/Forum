@@ -80,8 +80,36 @@
         <div id="homePage" class="page active">
             <div class="container">
                 <div class="content-grid">
-                    <!-- Posts Feed -->
-                    <section class="posts-feed">
+                    <!-- Left Navigation Sidebar -->
+                    <aside class="left-sidebar">
+                        <nav class="nav-buttons">
+                            <button class="nav-btn active" data-view="home">
+                                <i class="fas fa-home"></i>
+                                <span>Home</span>
+                            </button>
+                            <button class="nav-btn" data-view="my-posts" id="myPostsNavBtn" style="display: none;">
+                                <i class="fas fa-user-edit"></i>
+                                <span>My Posts</span>
+                            </button>
+                            <button class="nav-btn" data-view="liked-posts" id="likedPostsNavBtn" style="display: none;">
+                                <i class="fas fa-heart"></i>
+                                <span>Liked Posts</span>
+                            </button>
+                            <button class="nav-btn" data-view="trending">
+                                <i class="fas fa-fire"></i>
+                                <span>Trending</span>
+                            </button>
+                            <button class="nav-btn" data-view="profile" id="profileNavBtn" style="display: none;">
+                                <i class="fas fa-user"></i>
+                                <span>Profile</span>
+                            </button>
+                        </nav>
+                    </aside>
+
+                    <!-- Main Content Area -->
+                    <main class="main-content-area">
+                        <!-- Posts Feed -->
+                        <section class="posts-feed active" id="postsSection">
                         <div class="feed-header">
                             <h2>Latest Posts</h2>
                             <div class="feed-filters">
@@ -99,6 +127,60 @@
                             <i class="fas fa-spinner fa-spin"></i> Loading posts...
                         </div>
                     </section>
+
+                    <!-- Profile View -->
+                    <section class="profile-view" id="profileSection">
+                        <div class="profile-header">
+                            <div class="profile-avatar" id="profileAvatar">
+                                <!-- Avatar initials will be inserted here -->
+                            </div>
+                            <div class="profile-info">
+                                <h2 id="profileUsername">Loading...</h2>
+                                <div class="profile-email" id="profileEmail">Loading...</div>
+                                <div class="profile-joined" id="profileJoined">Member since: Loading...</div>
+                            </div>
+                        </div>
+
+                        <div class="profile-stats">
+                            <div class="profile-stat">
+                                <span class="profile-stat-number" id="userPostsCount">0</span>
+                                <span class="profile-stat-label">Posts Created</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="profile-stat-number" id="userLikesCount">0</span>
+                                <span class="profile-stat-label">Likes Received</span>
+                            </div>
+                            <div class="profile-stat">
+                                <span class="profile-stat-number" id="userCommentsCount">0</span>
+                                <span class="profile-stat-label">Comments Made</span>
+                            </div>
+                        </div>
+
+                        <div class="profile-section">
+                            <h3>Account Actions</h3>
+                            <div class="profile-actions">
+                                <button class="btn btn-primary" onclick="window.posts.loadPosts('my-posts'); window.navigation.showView('home');">
+                                    <i class="fas fa-eye"></i> View My Posts
+                                </button>
+                                <button class="btn btn-outline" onclick="window.posts.loadPosts('liked'); window.navigation.showView('home');">
+                                    <i class="fas fa-heart"></i> View Liked Posts
+                                </button>
+                                <button class="btn btn-secondary" onclick="window.auth.logout();">
+                                    <i class="fas fa-sign-out-alt"></i> Logout
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="profile-section">
+                            <h3>Recent Activity</h3>
+                            <div id="recentActivity">
+                                <p style="color: #666; text-align: center; padding: 20px;">
+                                    <i class="fas fa-clock"></i> Recent activity will be displayed here
+                                </p>
+                            </div>
+                        </div>
+                    </section>
+                </main>
 
                     <!-- Sidebar -->
                     <aside class="sidebar">
@@ -269,10 +351,10 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="js/utils.js?v=7.1"></script>
-    <script src="js/api.js?v=7.1"></script>
-    <script src="js/auth.js?v=7.1"></script>
-    <script src="js/posts.js?v=7.1"></script>
-    <script src="js/app.js?v=7.1"></script>
+    <script src="js/utils.js?v=8.0"></script>
+    <script src="js/api.js?v=8.0"></script>
+    <script src="js/auth.js?v=8.0"></script>
+    <script src="js/posts.js?v=8.0"></script>
+    <script src="js/app.js?v=8.0"></script>
 </body>
 </html>
