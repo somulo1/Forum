@@ -58,7 +58,9 @@ class PostsManager {
 
             utils.delegate(postsContainer, '.btn-close-comments', 'click', (e) => {
                 e.stopPropagation();
-                const postId = e.target.dataset.postId;
+                e.preventDefault();
+                const button = e.target.closest('.btn-close-comments');
+                const postId = button.dataset.postId;
                 this.hideInlineComments(postId);
             });
         }
@@ -192,7 +194,7 @@ class PostsManager {
                 <div class="inline-comments-section" id="comments-${post.id}" style="display: none;">
                     <div class="comments-header">
                         <h4>Comments (${post.comment_count || 0})</h4>
-                        <button class="btn-close-comments" data-post-id="${post.id}">
+                        <button class="btn-close-comments" data-post-id="${post.id}" onclick="window.posts.hideInlineComments(${post.id}); event.stopPropagation();">
                             <i class="fas fa-times"></i>
                         </button>
                     </div>
@@ -379,9 +381,13 @@ class PostsManager {
     }
 
     hideInlineComments(postId) {
+        console.log('Hiding comments for post:', postId); // Debug log
         const commentsSection = document.getElementById(`comments-${postId}`);
         if (commentsSection) {
             commentsSection.style.display = 'none';
+            console.log('Comments section hidden successfully'); // Debug log
+        } else {
+            console.log('Comments section not found for post:', postId); // Debug log
         }
     }
 
