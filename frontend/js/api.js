@@ -264,6 +264,15 @@ window.apiWrapper = {
         }
     },
 
+    async getPostComments(postId) {
+        try {
+            const response = await api.getComments(postId);
+            return ApiResponseHandler.handleSuccess(response);
+        } catch (error) {
+            ApiResponseHandler.handleError(error, 'Failed to load comments');
+        }
+    },
+
     async createComment(commentData) {
         try {
             const response = await api.createComment(commentData);
