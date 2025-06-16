@@ -149,7 +149,7 @@ class PostsManager {
                 </div>
                 <div class="post-actions">
                     <button class="action-btn like-btn ${post.user_liked ? 'liked' : ''}" data-post-id="${post.id}">
-                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-thumbs-up"></i>
                         <span>${post.likes_count || 0}</span>
                     </button>
                     <button class="action-btn comment-btn">

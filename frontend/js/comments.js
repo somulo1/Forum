@@ -98,7 +98,7 @@ class CommentsManager {
                 
                 <div class="post-actions">
                     <button class="action-btn like-btn ${post.user_liked ? 'liked' : ''}" onclick="window.posts.togglePostLike(${post.id})">
-                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-thumbs-up"></i>
                         <span>${post.likes_count || 0}</span>
                     </button>
                     <button class="action-btn comment-btn">
@@ -182,7 +182,7 @@ class CommentsManager {
                 </div>
                 <div class="comment-actions">
                     <button class="action-btn comment-like-btn ${comment.user_liked ? 'liked' : ''}">
-                        <i class="fas fa-heart"></i>
+                        <i class="fas fa-thumbs-up"></i>
                         <span>${comment.likes_count || 0}</span>
                     </button>
                 </div>
