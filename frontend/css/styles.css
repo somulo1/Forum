@@ -32,6 +32,7 @@ body {
     align-items: center;
     justify-content: space-between;
     height: 100%;
+    gap: 20px;
 }
 
 .nav-brand {
@@ -84,6 +85,98 @@ body {
     display: flex;
     align-items: center;
     gap: 10px;
+}
+
+/* Navbar Search Styles */
+.nav-search {
+    flex: 1;
+    max-width: 400px;
+    position: relative;
+    margin: 0 20px;
+}
+
+.nav-search .search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+    background: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 20px;
+    padding: 0 15px;
+    transition: all 0.3s ease;
+    height: 40px;
+}
+
+.nav-search .search-box:focus-within {
+    border-color: #007bff;
+    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
+    background: white;
+}
+
+.nav-search .search-icon {
+    color: #666;
+    margin-right: 10px;
+    font-size: 14px;
+}
+
+.nav-search .search-input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 0;
+    font-size: 14px;
+    outline: none;
+    color: #333;
+}
+
+.nav-search .search-input::placeholder {
+    color: #999;
+    font-size: 14px;
+}
+
+.nav-search .clear-search-btn {
+    background: none;
+    border: none;
+    color: #666;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.3s ease;
+    margin-left: 5px;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.nav-search .clear-search-btn:hover {
+    background: #e9ecef;
+    color: #333;
+}
+
+.search-results-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    background: white;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 1000;
+    margin-top: 5px;
+}
+
+.search-results-dropdown .search-info {
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 13px;
+    color: #0056b3;
+    background: #e3f2fd;
+    border-radius: 8px 8px 0 0;
 }
 
 /* Buttons */
@@ -245,98 +338,12 @@ body {
     padding: 20px;
     border-bottom: 1px solid #eee;
     display: flex;
-    flex-direction: column;
-    gap: 20px;
+    justify-content: space-between;
+    align-items: center;
 }
 
 .feed-header h2 {
     margin: 0;
-}
-
-/* Search Bar Styles */
-.search-container {
-    width: 100%;
-}
-
-.search-box {
-    position: relative;
-    display: flex;
-    align-items: center;
-    background: #f8f9fa;
-    border: 1px solid #ddd;
-    border-radius: 25px;
-    padding: 0 15px;
-    transition: all 0.3s ease;
-}
-
-.search-box:focus-within {
-    border-color: #007bff;
-    box-shadow: 0 0 0 3px rgba(0,123,255,0.1);
-    background: white;
-}
-
-.search-icon {
-    color: #666;
-    margin-right: 10px;
-    font-size: 16px;
-}
-
-.search-input {
-    flex: 1;
-    border: none;
-    background: transparent;
-    padding: 12px 0;
-    font-size: 16px;
-    outline: none;
-    color: #333;
-}
-
-.search-input::placeholder {
-    color: #999;
-}
-
-.clear-search-btn {
-    background: none;
-    border: none;
-    color: #666;
-    cursor: pointer;
-    padding: 5px;
-    border-radius: 50%;
-    transition: all 0.3s ease;
-    margin-left: 10px;
-}
-
-.clear-search-btn:hover {
-    background: #e9ecef;
-    color: #333;
-}
-
-.search-results {
-    margin-top: 15px;
-    padding: 10px 15px;
-    background: #e3f2fd;
-    border-radius: 6px;
-    border-left: 4px solid #007bff;
-}
-
-.search-info {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    font-size: 14px;
-    color: #0056b3;
-}
-
-.btn-sm {
-    padding: 4px 8px;
-    font-size: 12px;
-}
-
-.filter-controls {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
 }
 
 .feed-filters {
@@ -1089,12 +1096,35 @@ body {
 
 /* Responsive Design */
 @media (max-width: 768px) {
+    .navbar {
+        height: auto;
+        min-height: 60px;
+        padding: 10px 0;
+    }
+
     .nav-container {
         padding: 0 15px;
+        flex-wrap: wrap;
+        gap: 10px;
     }
 
     .nav-menu {
         display: none;
+    }
+
+    .nav-search {
+        order: 3;
+        width: 100%;
+        max-width: none;
+        margin: 10px 0 0 0;
+    }
+
+    .nav-actions {
+        order: 2;
+    }
+
+    .main-content {
+        margin-top: 100px; /* Adjust for taller navbar on mobile */
     }
 
     .content-grid {

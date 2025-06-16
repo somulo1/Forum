@@ -28,6 +28,23 @@
                 </a>
             </nav>
 
+            <!-- Search Bar in Navbar -->
+            <div class="nav-search">
+                <div class="search-box">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" id="searchInput" placeholder="Search posts..." class="search-input">
+                    <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div id="searchResults" class="search-results-dropdown" style="display: none;">
+                    <div class="search-info">
+                        <span id="searchResultsCount">0</span> results for "<span id="searchQuery"></span>"
+                        <button id="clearSearchResults" class="btn btn-sm btn-outline">Clear</button>
+                    </div>
+                </div>
+            </div>
+
             <div class="nav-actions">
                 <div class="user-menu" id="userMenu" style="display: none;">
                     <button class="btn btn-primary" id="createPostBtn">
@@ -83,24 +100,6 @@
                     <section class="posts-feed">
                         <div class="feed-header">
                             <h2>Latest Posts</h2>
-
-                            <!-- Search Bar -->
-                            <div class="search-container">
-                                <div class="search-box">
-                                    <i class="fas fa-search search-icon"></i>
-                                    <input type="text" id="searchInput" placeholder="Search posts by title, content, or author..." class="search-input">
-                                    <button id="clearSearchBtn" class="clear-search-btn" style="display: none;">
-                                        <i class="fas fa-times"></i>
-                                    </button>
-                                </div>
-                                <div id="searchResults" class="search-results" style="display: none;">
-                                    <div class="search-info">
-                                        <span id="searchResultsCount">0</span> results found for "<span id="searchQuery"></span>"
-                                        <button id="clearSearchResults" class="btn btn-sm btn-outline">Clear Search</button>
-                                    </div>
-                                </div>
-                            </div>
-
                             <div class="feed-filters">
                                 <button class="filter-btn active" data-filter="all">All Posts</button>
                                 <button class="filter-btn" data-filter="my-posts" id="myPostsFilter" style="display: none;">My Posts</button>
@@ -262,10 +261,10 @@
     <div id="toastContainer" class="toast-container"></div>
 
     <!-- Scripts -->
-    <script src="js/utils.js?v=6.0"></script>
-    <script src="js/api.js?v=6.0"></script>
-    <script src="js/auth.js?v=6.0"></script>
-    <script src="js/posts.js?v=6.0"></script>
-    <script src="js/app.js?v=6.0"></script>
+    <script src="js/utils.js?v=6.1"></script>
+    <script src="js/api.js?v=6.1"></script>
+    <script src="js/auth.js?v=6.1"></script>
+    <script src="js/posts.js?v=6.1"></script>
+    <script src="js/app.js?v=6.1"></script>
 </body>
 </html>
