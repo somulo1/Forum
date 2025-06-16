@@ -145,6 +145,22 @@ class PostsManager {
 
             const posts = await apiWrapper.getPosts(page, this.postsPerPage, filters);
             console.log('API returned posts:', posts ? posts.length : 0, 'posts'); // Debug log
+
+            // Debug: Log post details to see what we're getting
+            if (posts && posts.length > 0) {
+                console.log('First 3 posts details:');
+                posts.slice(0, 3).forEach((post, index) => {
+                    console.log(`Post ${index + 1}:`, {
+                        id: post.id,
+                        title: post.title,
+                        author: post.username,
+                        user_id: post.user_id,
+                        user_liked: post.user_liked,
+                        like_count: post.like_count
+                    });
+                });
+            }
+
             this.posts = posts || [];
             this.renderPosts();
         } catch (error) {
