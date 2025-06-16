@@ -1,288 +1,297 @@
 // Utility Functions
+class Utils {
+    // DOM Helpers
+    static $(selector) {
+        return document.querySelector(selector);
+    }
 
-// DOM Helper Functions
-const $ = (selector) => document.querySelector(selector);
-const $$ = (selector) => document.querySelectorAll(selector);
+    static $$(selector) {
+        return document.querySelectorAll(selector);
+    }
 
-// Show/Hide Elements
-const show = (element) => {
-    if (typeof element === 'string') element = $(element);
-    if (element) element.classList.remove('hidden');
-};
+    static createElement(tag, className = '', content = '') {
+        const element = document.createElement(tag);
+        if (className) element.className = className;
+        if (content) element.innerHTML = content;
+        return element;
+    }
 
-const hide = (element) => {
-    if (typeof element === 'string') element = $(element);
-    if (element) element.classList.add('hidden');
-};
+    // Show/Hide Elements
+    static show(selector) {
+        const element = typeof selector === 'string' ? this.$(selector) : selector;
+        if (element) element.style.display = 'block';
+    }
 
-const toggle = (element) => {
-    if (typeof element === 'string') element = $(element);
-    if (element) element.classList.toggle('hidden');
-};
+    static hide(selector) {
+        const element = typeof selector === 'string' ? this.$(selector) : selector;
+        if (element) element.style.display = 'none';
+    }
 
-// Loading Spinner
-const showLoading = () => show('#loading-spinner');
-const hideLoading = () => hide('#loading-spinner');
+    static toggle(selector) {
+        const element = typeof selector === 'string' ? this.$(selector) : selector;
+        if (element) {
+            element.style.display = element.style.display === 'none' ? 'block' : 'none';
+        }
+    }
 
-// Message Display
-const showMessage = (message, type = 'success') => {
-    const messageEl = $(`#${type}-message`);
-    const textEl = $(`#${type}-text`);
-    
-    if (messageEl && textEl) {
-        textEl.textContent = message;
-        show(messageEl);
+    // Loading States
+    static showLoading() {
+        this.show('#loading');
+    }
+
+    static hideLoading() {
+        this.hide('#loading');
+    }
+
+    // Notifications
+    static showNotification(message, type = 'info') {
+        const notification = this.$('#notification');
+        const messageEl = this.$('#notification-message');
         
-        // Auto-hide after 5 seconds
-        setTimeout(() => hide(messageEl), 5000);
+        if (notification && messageEl) {
+            messageEl.textContent = message;
+            notification.className = `notification ${type}`;
+            this.show(notification);
+            
+            // Auto hide after 5 seconds
+            setTimeout(() => {
+                this.hide(notification);
+            }, 5000);
+        }
     }
-};
 
-const showError = (message) => showMessage(message, 'error');
-const showSuccess = (message) => showMessage(message, 'success');
-
-// Close message handlers
-const initMessageHandlers = () => {
-    $('#close-error')?.addEventListener('click', () => hide('#error-message'));
-    $('#close-success')?.addEventListener('click', () => hide('#success-message'));
-};
-
-// Date Formatting
-const formatDate = (dateString) => {
-    const date = new Date(dateString);
-    const now = new Date();
-    const diffTime = Math.abs(now - date);
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 1) {
-        return 'Yesterday';
-    } else if (diffDays < 7) {
-        return `${diffDays} days ago`;
-    } else {
-        return date.toLocaleDateString('en-US', {
-            year: 'numeric',
-            month: 'short',
-            day: 'numeric'
-        });
+    static showSuccess(message) {
+        this.showNotification(message, 'success');
     }
-};
 
-const formatDateTime = (dateString) => {
-    const date = new Date(dateString);
-    return date.toLocaleString('en-US', {
-        year: 'numeric',
-        month: 'short',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-    });
-};
-
-// Text Truncation
-const truncateText = (text, maxLength = 150) => {
-    if (text.length <= maxLength) return text;
-    return text.substring(0, maxLength) + '...';
-};
-
-// HTML Escaping
-const escapeHtml = (text) => {
-    const div = document.createElement('div');
-    div.textContent = text;
-    return div.innerHTML;
-};
-
-// URL Helpers
-const getImageUrl = (imagePath) => {
-    if (!imagePath) return null;
-    if (imagePath.startsWith('http')) return imagePath;
-    if (imagePath.startsWith('/')) return imagePath;
-    return `/${imagePath}`;
-};
-
-// Handle image loading errors
-const handleImageError = (imgElement) => {
-    imgElement.style.display = 'none';
-    imgElement.onerror = null; // Prevent infinite loop
-};
-
-const getAvatarUrl = (avatarPath) => {
-    if (!avatarPath || avatarPath === '') {
-        // Use a data URL for a simple default avatar instead of a file that might not exist
-        return 'data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiM2MzY2ZjEiLz4KPGNpcmNsZSBjeD0iMjAiIGN5PSIxNiIgcj0iNiIgZmlsbD0id2hpdGUiLz4KPHBhdGggZD0iTTggMzJjMC02LjYyNyA1LjM3My0xMiAxMi0xMnMxMiA1LjM3MyAxMiAxMiIgZmlsbD0id2hpdGUiLz4KPC9zdmc+';
+    static showError(message) {
+        this.showNotification(message, 'error');
     }
-    return getImageUrl(avatarPath);
-};
 
-// Form Helpers
-const getFormData = (formElement) => {
-    const formData = new FormData(formElement);
-    const data = {};
-    
-    for (let [key, value] of formData.entries()) {
-        if (data[key]) {
-            // Handle multiple values (like checkboxes)
-            if (Array.isArray(data[key])) {
-                data[key].push(value);
+    static showWarning(message) {
+        this.showNotification(message, 'warning');
+    }
+
+    // Modal Helpers
+    static openModal(selector) {
+        const modal = this.$(selector);
+        if (modal) {
+            modal.style.display = 'flex';
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+    static closeModal(selector) {
+        const modal = this.$(selector);
+        if (modal) {
+            modal.style.display = 'none';
+            document.body.style.overflow = 'auto';
+        }
+    }
+
+    // Form Helpers
+    static getFormData(form) {
+        const formData = new FormData(form);
+        const data = {};
+        
+        for (let [key, value] of formData.entries()) {
+            if (data[key]) {
+                // Handle multiple values (like checkboxes)
+                if (Array.isArray(data[key])) {
+                    data[key].push(value);
+                } else {
+                    data[key] = [data[key], value];
+                }
             } else {
-                data[key] = [data[key], value];
+                data[key] = value;
             }
-        } else {
-            data[key] = value;
         }
-    }
-    
-    return data;
-};
-
-const clearForm = (formElement) => {
-    if (typeof formElement === 'string') formElement = $(formElement);
-    if (formElement) formElement.reset();
-};
-
-// Validation Helpers
-const validateEmail = (email) => {
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    return emailRegex.test(email);
-};
-
-const validatePassword = (password) => {
-    return password.length >= 6;
-};
-
-const validateUsername = (username) => {
-    return username.length >= 3 && /^[a-zA-Z0-9_]+$/.test(username);
-};
-
-// Modal Helpers
-const openModal = (modalId) => {
-    const modal = $(modalId);
-    if (modal) {
-        show(modal);
-        document.body.style.overflow = 'hidden';
-    }
-};
-
-const closeModal = (modalId) => {
-    const modal = $(modalId);
-    if (modal) {
-        hide(modal);
-        document.body.style.overflow = 'auto';
-    }
-};
-
-const initModalHandlers = () => {
-    // Close modal when clicking outside or on close button
-    $$('.modal').forEach(modal => {
-        modal.addEventListener('click', (e) => {
-            if (e.target === modal) {
-                closeModal(`#${modal.id}`);
-            }
-        });
         
-        const closeBtn = modal.querySelector('.close-modal');
-        if (closeBtn) {
-            closeBtn.addEventListener('click', () => {
-                closeModal(`#${modal.id}`);
-            });
+        return data;
+    }
+
+    static clearForm(form) {
+        if (typeof form === 'string') {
+            form = this.$(form);
         }
-    });
-    
-    // Close modal on Escape key
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape') {
-            $$('.modal:not(.hidden)').forEach(modal => {
-                closeModal(`#${modal.id}`);
-            });
+        if (form) {
+            form.reset();
         }
-    });
-};
-
-// Local Storage Helpers
-const setLocalStorage = (key, value) => {
-    try {
-        localStorage.setItem(key, JSON.stringify(value));
-    } catch (error) {
-        console.error('Error saving to localStorage:', error);
     }
-};
 
-const getLocalStorage = (key, defaultValue = null) => {
-    try {
-        const item = localStorage.getItem(key);
-        return item ? JSON.parse(item) : defaultValue;
-    } catch (error) {
-        console.error('Error reading from localStorage:', error);
-        return defaultValue;
+    // String Helpers
+    static escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
     }
-};
 
-const removeLocalStorage = (key) => {
-    try {
-        localStorage.removeItem(key);
-    } catch (error) {
-        console.error('Error removing from localStorage:', error);
+    static truncateText(text, maxLength = 100) {
+        if (text.length <= maxLength) return text;
+        return text.substring(0, maxLength) + '...';
     }
-};
 
-// Debounce Function
-const debounce = (func, wait) => {
-    let timeout;
-    return function executedFunction(...args) {
-        const later = () => {
+    // Date Helpers
+    static formatDate(dateString) {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) {
+            return 'Just now';
+        } else if (diffInSeconds < 3600) {
+            const minutes = Math.floor(diffInSeconds / 60);
+            return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+        } else if (diffInSeconds < 86400) {
+            const hours = Math.floor(diffInSeconds / 3600);
+            return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+        } else if (diffInSeconds < 604800) {
+            const days = Math.floor(diffInSeconds / 86400);
+            return `${days} day${days > 1 ? 's' : ''} ago`;
+        } else {
+            return date.toLocaleDateString();
+        }
+    }
+
+    // Array Helpers
+    static groupBy(array, key) {
+        return array.reduce((groups, item) => {
+            const group = item[key];
+            groups[group] = groups[group] || [];
+            groups[group].push(item);
+            return groups;
+        }, {});
+    }
+
+    // Local Storage Helpers
+    static setStorage(key, value) {
+        try {
+            localStorage.setItem(key, JSON.stringify(value));
+        } catch (error) {
+            console.error('Error saving to localStorage:', error);
+        }
+    }
+
+    static getStorage(key, defaultValue = null) {
+        try {
+            const item = localStorage.getItem(key);
+            return item ? JSON.parse(item) : defaultValue;
+        } catch (error) {
+            console.error('Error reading from localStorage:', error);
+            return defaultValue;
+        }
+    }
+
+    static removeStorage(key) {
+        try {
+            localStorage.removeItem(key);
+        } catch (error) {
+            console.error('Error removing from localStorage:', error);
+        }
+    }
+
+    // Validation Helpers
+    static validateEmail(email) {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return emailRegex.test(email);
+    }
+
+    static validatePassword(password) {
+        // At least 6 characters
+        return password.length >= 6;
+    }
+
+    // Debounce Helper
+    static debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+            const later = () => {
+                clearTimeout(timeout);
+                func(...args);
+            };
             clearTimeout(timeout);
-            func(...args);
+            timeout = setTimeout(later, wait);
         };
-        clearTimeout(timeout);
-        timeout = setTimeout(later, wait);
-    };
-};
+    }
 
-// Throttle Function
-const throttle = (func, limit) => {
-    let inThrottle;
-    return function() {
-        const args = arguments;
-        const context = this;
-        if (!inThrottle) {
-            func.apply(context, args);
-            inThrottle = true;
-            setTimeout(() => inThrottle = false, limit);
+    // URL Helpers
+    static getQueryParam(param) {
+        const urlParams = new URLSearchParams(window.location.search);
+        return urlParams.get(param);
+    }
+
+    static setQueryParam(param, value) {
+        const url = new URL(window.location);
+        url.searchParams.set(param, value);
+        window.history.pushState({}, '', url);
+    }
+}
+
+// API Helper Functions
+class ApiHelpers {
+    static handleError(error) {
+        console.error('API Error:', error);
+        
+        if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+            Utils.showError('Please log in to continue');
+            if (window.Auth) {
+                window.Auth.showLoginForm();
+            }
+        } else if (error.message.includes('403') || error.message.includes('Forbidden')) {
+            Utils.showError('You do not have permission to perform this action');
+        } else if (error.message.includes('404')) {
+            Utils.showError('The requested resource was not found');
+        } else if (error.message.includes('500')) {
+            Utils.showError('Server error. Please try again later');
+        } else {
+            Utils.showError(error.message || 'An unexpected error occurred');
         }
-    };
-};
+    }
 
-// Array Helpers
-const unique = (array) => [...new Set(array)];
+    static getPaginationParams(page = 1, limit = 10) {
+        return { page, limit };
+    }
 
-const groupBy = (array, key) => {
-    return array.reduce((result, item) => {
-        const group = item[key];
-        if (!result[group]) {
-            result[group] = [];
+    static formatPost(post) {
+        return {
+            ...post,
+            formattedDate: Utils.formatDate(post.created_at),
+            truncatedContent: Utils.truncateText(post.content, 200)
+        };
+    }
+}
+
+// Authentication Helper Functions
+class AuthHelpers {
+    static isLoggedIn() {
+        return window.currentUser !== null && window.currentUser !== undefined;
+    }
+
+    static getCurrentUser() {
+        return window.currentUser;
+    }
+
+    static isOwner(userId) {
+        return this.isLoggedIn() && this.getCurrentUser().id === userId;
+    }
+
+    static requireAuth() {
+        if (!this.isLoggedIn()) {
+            Utils.showError('Please log in to continue');
+            if (window.Auth) {
+                window.Auth.showLoginForm();
+            }
+            return false;
         }
-        result[group].push(item);
-        return result;
-    }, {});
-};
+        return true;
+    }
+}
 
-// Initialize utility functions
-document.addEventListener('DOMContentLoaded', () => {
-    initMessageHandlers();
-    initModalHandlers();
+// Global error handler
+window.addEventListener('error', (event) => {
+    console.error('Global error:', event.error);
 });
 
-// Export for use in other modules
-window.Utils = {
-    $, $$, show, hide, toggle,
-    showLoading, hideLoading,
-    showMessage, showError, showSuccess,
-    formatDate, formatDateTime,
-    truncateText, escapeHtml,
-    getImageUrl, getAvatarUrl, handleImageError,
-    getFormData, clearForm,
-    validateEmail, validatePassword, validateUsername,
-    openModal, closeModal,
-    setLocalStorage, getLocalStorage, removeLocalStorage,
-    debounce, throttle,
-    unique, groupBy
-};
+window.addEventListener('unhandledrejection', (event) => {
+    console.error('Unhandled promise rejection:', event.reason);
+});

@@ -3,189 +3,188 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Forum - Community Discussion Platform</title>
+    <title>Forum - Community Discussion</title>
     <link rel="stylesheet" href="css/styles.css">
-    <link rel="stylesheet" href="css/components.css">
-    <link rel="stylesheet" href="css/responsive.css">
 </head>
 <body>
-    <!-- Navigation Header -->
-    <header class="navbar">
+    <!-- Navigation -->
+    <nav class="navbar">
         <div class="nav-container">
             <div class="nav-brand">
                 <h1>Forum</h1>
             </div>
-            <nav class="nav-menu">
-                <ul class="nav-list">
-                    <li><a href="#" id="home-link" class="nav-link active">Home</a></li>
-                    <li><a href="#" id="categories-link" class="nav-link">Categories</a></li>
-                    <li id="auth-section">
-                        <!-- Will be populated by JavaScript based on auth status -->
-                    </li>
-                </ul>
-            </nav>
-        </div>
-    </header>
-
-    <!-- Main Content Area -->
-    <main class="main-content">
-        <!-- Loading Spinner -->
-        <div id="loading-spinner" class="loading-spinner hidden">
-            <div class="spinner"></div>
-            <p>Loading...</p>
-        </div>
-
-        <!-- Error Message -->
-        <div id="error-message" class="error-message hidden">
-            <p id="error-text"></p>
-            <button id="close-error" class="close-btn">&times;</button>
-        </div>
-
-        <!-- Success Message -->
-        <div id="success-message" class="success-message hidden">
-            <p id="success-text"></p>
-            <button id="close-success" class="close-btn">&times;</button>
-        </div>
-
-        <!-- Authentication Modal -->
-        <div id="auth-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <div id="auth-tabs">
-                    <button id="login-tab" class="tab-btn active">Login</button>
-                    <button id="register-tab" class="tab-btn">Register</button>
+            <div class="nav-menu">
+                <a href="#" id="home-nav" class="nav-link active">Home</a>
+                <a href="#" id="categories-nav" class="nav-link">Categories</a>
+            </div>
+            <div class="nav-auth">
+                <div id="auth-buttons" class="auth-buttons">
+                    <button id="login-btn" class="btn btn-outline">Login</button>
+                    <button id="register-btn" class="btn btn-primary">Register</button>
                 </div>
-
-                <!-- Login Form -->
-                <form id="login-form" class="auth-form">
-                    <h2>Login to Forum</h2>
-                    <div class="form-group">
-                        <label for="login-email">Email:</label>
-                        <input type="email" id="login-email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="login-password">Password:</label>
-                        <input type="password" id="login-password" name="password" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Login</button>
-                </form>
-
-                <!-- Register Form -->
-                <form id="register-form" class="auth-form hidden">
-                    <h2>Join Forum</h2>
-                    <div class="form-group">
-                        <label for="register-username">Username:</label>
-                        <input type="text" id="register-username" name="username" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-email">Email:</label>
-                        <input type="email" id="register-email" name="email" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-password">Password:</label>
-                        <input type="password" id="register-password" name="password" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="register-avatar">Avatar (optional):</label>
-                        <input type="file" id="register-avatar" name="avatar" accept="image/*">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Register</button>
-                </form>
+                <div id="user-menu" class="user-menu" style="display: none;">
+                    <span id="username-display"></span>
+                    <button id="logout-btn" class="btn btn-outline">Logout</button>
+                </div>
             </div>
         </div>
+    </nav>
 
-        <!-- Create Post Modal -->
-        <div id="create-post-modal" class="modal hidden">
-            <div class="modal-content">
-                <span class="close-modal">&times;</span>
-                <form id="create-post-form" class="post-form">
-                    <h2>Create New Post</h2>
-                    <div class="form-group">
-                        <label for="post-title">Title:</label>
-                        <input type="text" id="post-title" name="title" required>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-content">Content:</label>
-                        <textarea id="post-content" name="content" rows="6" required></textarea>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-categories">Categories:</label>
-                        <div id="categories-container">
-                            <!-- Categories will be loaded dynamically -->
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="post-image">Image (optional):</label>
-                        <input type="file" id="post-image" name="image" accept="image/*">
-                    </div>
-                    <button type="submit" class="btn btn-primary">Create Post</button>
-                </form>
-            </div>
-        </div>
-
+    <!-- Main Content -->
+    <main class="main-content">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-section">
-                <h3>Filters</h3>
-                <div class="filter-group">
-                    <label for="category-filter">Filter by Category:</label>
-                    <select id="category-filter">
-                        <option value="">All Categories</option>
-                        <!-- Categories will be loaded dynamically -->
-                    </select>
-                </div>
-                <div class="filter-group" id="user-filters" style="display: none;">
-                    <button id="my-posts-filter" class="btn btn-secondary">My Posts</button>
-                    <button id="liked-posts-filter" class="btn btn-secondary">Liked Posts</button>
-                    <button id="all-posts-filter" class="btn btn-secondary active">All Posts</button>
-                </div>
+                <h3>Categories</h3>
+                <select id="category-filter" class="form-select">
+                    <option value="">All Categories</option>
+                </select>
             </div>
-
-            <div class="sidebar-section" id="user-info" style="display: none;">
-                <h3>User Profile</h3>
-                <div class="user-card">
-                    <img id="user-avatar" src="" alt="User Avatar" class="user-avatar">
-                    <div class="user-details">
-                        <h4 id="user-username"></h4>
-                        <p id="user-email"></p>
-                    </div>
-                </div>
+            
+            <div class="sidebar-section" id="user-filters" style="display: none;">
+                <h3>My Posts</h3>
+                <button id="all-posts-filter" class="filter-btn active">All Posts</button>
+                <button id="my-posts-filter" class="filter-btn">My Posts</button>
+                <button id="liked-posts-filter" class="filter-btn">Liked Posts</button>
             </div>
         </aside>
 
         <!-- Posts Container -->
-        <section class="posts-container">
+        <div class="posts-container">
             <div class="posts-header">
                 <h2>Latest Posts</h2>
                 <button id="create-post-btn" class="btn btn-primary" style="display: none;">Create Post</button>
             </div>
             
+            <div id="loading" class="loading" style="display: none;">
+                <div class="spinner"></div>
+                <p>Loading...</p>
+            </div>
+            
             <div id="posts-list" class="posts-list">
-                <!-- Posts will be loaded dynamically -->
+                <!-- Posts will be loaded here -->
             </div>
-
-            <!-- Pagination -->
-            <div id="pagination" class="pagination">
-                <button id="prev-page" class="btn btn-secondary">Previous</button>
+            
+            <div class="pagination">
+                <button id="prev-page" class="btn btn-outline">Previous</button>
                 <span id="page-info">Page 1</span>
-                <button id="next-page" class="btn btn-secondary">Next</button>
+                <button id="next-page" class="btn btn-outline">Next</button>
             </div>
-        </section>
+        </div>
     </main>
 
+    <!-- Login Modal -->
+    <div id="login-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Login</h3>
+                <span class="close" data-modal="login-modal">&times;</span>
+            </div>
+            <form id="login-form" class="form">
+                <div class="form-group">
+                    <label for="login-email">Email:</label>
+                    <input type="email" id="login-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password:</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Login</button>
+                    <button type="button" class="btn btn-outline" onclick="showRegisterModal()">Register Instead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Register Modal -->
+    <div id="register-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Register</h3>
+                <span class="close" data-modal="register-modal">&times;</span>
+            </div>
+            <form id="register-form" class="form">
+                <div class="form-group">
+                    <label for="register-username">Username:</label>
+                    <input type="text" id="register-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email:</label>
+                    <input type="email" id="register-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password:</label>
+                    <input type="password" id="register-password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-avatar">Avatar (optional):</label>
+                    <input type="file" id="register-avatar" name="avatar" accept="image/*">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Register</button>
+                    <button type="button" class="btn btn-outline" onclick="showLoginModal()">Login Instead</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Create Post Modal -->
+    <div id="create-post-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Create New Post</h3>
+                <span class="close" data-modal="create-post-modal">&times;</span>
+            </div>
+            <form id="create-post-form" class="form">
+                <div class="form-group">
+                    <label for="post-title">Title:</label>
+                    <input type="text" id="post-title" name="title" required>
+                </div>
+                <div class="form-group">
+                    <label for="post-content">Content:</label>
+                    <textarea id="post-content" name="content" rows="6" required></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="post-categories">Categories:</label>
+                    <div id="categories-container" class="categories-container">
+                        <!-- Categories will be loaded here -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="post-image">Image (optional):</label>
+                    <input type="file" id="post-image" name="image" accept="image/*">
+                </div>
+                <div class="form-actions">
+                    <button type="submit" class="btn btn-primary">Create Post</button>
+                    <button type="button" class="btn btn-outline" onclick="closeModal('create-post-modal')">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <!-- Post Detail Modal -->
-    <div id="post-detail-modal" class="modal hidden">
+    <div id="post-detail-modal" class="modal">
         <div class="modal-content large">
-            <span class="close-modal">&times;</span>
+            <div class="modal-header">
+                <h3>Post Details</h3>
+                <span class="close" data-modal="post-detail-modal">&times;</span>
+            </div>
             <div id="post-detail-content">
-                <!-- Post details and comments will be loaded here -->
+                <!-- Post details will be loaded here -->
             </div>
         </div>
     </div>
 
-    <!-- JavaScript Files -->
-    <script src="js/utils.js"></script>
+    <!-- Notification -->
+    <div id="notification" class="notification" style="display: none;">
+        <span id="notification-message"></span>
+        <button id="notification-close">&times;</button>
+    </div>
+
+    <!-- Scripts -->
     <script src="js/api.js"></script>
+    <script src="js/utils.js"></script>
     <script src="js/auth.js"></script>
     <script src="js/posts.js"></script>
     <script src="js/comments.js"></script>

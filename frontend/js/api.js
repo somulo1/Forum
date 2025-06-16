@@ -1,8 +1,7 @@
-// API Communication Layer
-
+// API Configuration and Methods
 class API {
     constructor() {
-        this.baseURL = '';  // Since we're serving from the same domain
+        this.baseURL = 'http://localhost:8080';
         this.defaultHeaders = {
             'Content-Type': 'application/json',
         };
@@ -11,12 +10,12 @@ class API {
     // Generic request method
     async request(endpoint, options = {}) {
         const url = `${this.baseURL}${endpoint}`;
-
+        
         // Don't set Content-Type for FormData - let browser set it automatically
-        const headers = options.body instanceof FormData
-            ? { ...options.headers }
+        const headers = options.body instanceof FormData 
+            ? { ...options.headers } 
             : { ...this.defaultHeaders, ...options.headers };
-
+        
         const config = {
             credentials: 'include', // Include cookies for session management
             ...options,
@@ -37,22 +36,19 @@ class API {
             }
 
             if (!response.ok) {
-                throw new Error(data.error || data.message || `HTTP error! status: ${response.status}`);
+                throw new Error(data.error || data || `HTTP ${response.status}: ${response.statusText}`);
             }
 
             return data;
         } catch (error) {
-            // Only log non-authentication errors to avoid console spam
-            if (!error.message.includes('401') && !error.message.includes('Unauthorized')) {
-                console.error('API request failed:', error);
-            }
+            console.error('API Request failed:', error);
             throw error;
         }
     }
 
-    // GET request
+    // HTTP Methods
     async get(endpoint, params = {}) {
-        const url = new URL(endpoint, window.location.origin);
+        const url = new URL(`${this.baseURL}${endpoint}`);
         Object.keys(params).forEach(key => {
             if (params[key] !== undefined && params[key] !== null) {
                 url.searchParams.append(key, params[key]);
@@ -64,10 +60,23 @@ class API {
         });
     }
 
-    // POST request
-    async post(endpoint, data = {}) {
+    async post(endpoint, data) {
         return this.request(endpoint, {
             method: 'POST',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async put(endpoint, data) {
+        return this.request(endpoint, {
+            method: 'PUT',
+            body: JSON.stringify(data),
+        });
+    }
+
+    async delete(endpoint, data = {}) {
+        return this.request(endpoint, {
+            method: 'DELETE',
             body: JSON.stringify(data),
         });
     }
@@ -80,22 +89,6 @@ class API {
         });
     }
 
-    // PUT request
-    async put(endpoint, data = {}) {
-        return this.request(endpoint, {
-            method: 'PUT',
-            body: JSON.stringify(data),
-        });
-    }
-
-    // DELETE request
-    async delete(endpoint, data = {}) {
-        return this.request(endpoint, {
-            method: 'DELETE',
-            body: JSON.stringify(data),
-        });
-    }
-
     // Authentication endpoints
     async register(userData) {
         // If there's an avatar, use FormData, otherwise use JSON
@@ -105,7 +98,7 @@ class API {
             formData.append('email', userData.email);
             formData.append('password', userData.password);
             formData.append('avatar', userData.avatar);
-
+            
             return this.postFormData('/api/register', formData);
         } else {
             // Use JSON for registration without avatar
@@ -129,7 +122,7 @@ class API {
         return this.get('/api/user');
     }
 
-    // Posts endpoints
+    // Posts endpoints - FIXED TO MATCH BACKEND
     async getPosts(params = {}) {
         return this.get('/api/posts', params);
     }
@@ -161,7 +154,11 @@ class API {
         return this.delete('/api/posts/delete', { post_id: postId });
     }
 
-    // Comments endpoints
+    async deleteAllPosts() {
+        return this.delete('/api/posts/delete-all');
+    }
+
+    // Comments endpoints - FIXED TO MATCH BACKEND
     async getComments(postId) {
         return this.get('/api/comments/get', { post_id: postId });
     }
@@ -178,7 +175,7 @@ class API {
         return this.delete('/api/comments/delete', { comment_id: commentId });
     }
 
-    // Categories endpoints
+    // Categories endpoints - FIXED TO MATCH BACKEND
     async getCategories() {
         return this.get('/api/categories');
     }
@@ -187,7 +184,7 @@ class API {
         return this.post('/api/categories/create', categoryData);
     }
 
-    // Likes endpoints
+    // Likes endpoints - FIXED TO MATCH BACKEND
     async toggleLike(likeData) {
         return this.post('/api/likes/toggle', likeData);
     }
@@ -196,7 +193,7 @@ class API {
         return this.get('/api/likes/reactions', params);
     }
 
-    // User info endpoint
+    // User info endpoint - FIXED TO MATCH BACKEND
     async getUserInfo(userId) {
         return this.get('/api/owner', { user_id: userId });
     }
@@ -204,93 +201,3 @@ class API {
 
 // Create a global API instance
 window.api = new API();
-
-// Helper functions for common API operations
-window.ApiHelpers = {
-    // Handle API errors consistently
-    handleError: (error) => {
-        console.error('API Error:', error);
-        
-        if (error.message.includes('Unauthorized')) {
-            // User session expired or not logged in
-            window.Auth.handleLogout();
-            Utils.showError('Please log in to continue');
-        } else if (error.message.includes('Forbidden')) {
-            Utils.showError('You do not have permission to perform this action');
-        } else if (error.message.includes('Not Found')) {
-            Utils.showError('The requested resource was not found');
-        } else {
-            Utils.showError(error.message || 'An unexpected error occurred');
-        }
-    },
-
-    // Wrapper for API calls with loading and error handling
-    async withLoading(apiCall, showLoadingSpinner = true) {
-        try {
-            if (showLoadingSpinner) Utils.showLoading();
-            const result = await apiCall();
-            return result;
-        } catch (error) {
-            this.handleError(error);
-            throw error;
-        } finally {
-            if (showLoadingSpinner) Utils.hideLoading();
-        }
-    },
-
-    // Check if user is authenticated
-    async checkAuth() {
-        try {
-            const user = await window.api.getCurrentUser();
-            return user;
-        } catch (error) {
-            return null;
-        }
-    },
-
-    // Validate file upload
-    validateFile: (file, maxSize = 5 * 1024 * 1024, allowedTypes = ['image/jpeg', 'image/png', 'image/gif']) => {
-        if (!file) return { valid: true };
-        
-        if (file.size > maxSize) {
-            return {
-                valid: false,
-                error: `File size must be less than ${Math.round(maxSize / 1024 / 1024)}MB`
-            };
-        }
-        
-        if (!allowedTypes.includes(file.type)) {
-            return {
-                valid: false,
-                error: `File type must be one of: ${allowedTypes.join(', ')}`
-            };
-        }
-        
-        return { valid: true };
-    },
-
-    // Format API response for display
-    formatPost: (post) => {
-        return {
-            ...post,
-            created_at: Utils.formatDate(post.created_at),
-            updated_at: Utils.formatDate(post.updated_at),
-            avatar_url: Utils.getAvatarUrl(post.avatar_url),
-            image_url: post.image_url && post.image_url.trim() !== '' ? Utils.getImageUrl(post.image_url) : null,
-            content_preview: Utils.truncateText(post.content, 200)
-        };
-    },
-
-    formatComment: (comment) => {
-        return {
-            ...comment,
-            created_at: Utils.formatDateTime(comment.created_at),
-            avatar_url: Utils.getAvatarUrl(comment.avatar_url)
-        };
-    },
-
-    // Pagination helpers
-    getPaginationParams: (page = 1, limit = 10) => {
-        return { page, limit };
-    }
-};
