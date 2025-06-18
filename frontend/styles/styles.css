@@ -924,13 +924,16 @@ img {
 
 /* ========== Threaded Comments Styles =========== */
 
-/* Reply comment styling - clean thread line approach */
+/* Reply comment styling - clean thread approach */
 .comment.reply-comment {
-    margin-left: 32px;
-    margin-top: 6px;
-    padding-left: 12px;
-    border-left: 1px solid #e8e8e8;
-    background: transparent;
+    margin-left: 2.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0 0.5rem 1rem;
+    background: none !important;
+    border: none !important;
+    border-left: 2px solid var(--border-color);
+    border-radius: 0 !important;
     position: relative;
 }
 
@@ -939,11 +942,11 @@ img {
     content: '';
     position: absolute;
     left: -2px;
-    top: -8px;
-    width: 14px;
-    height: 16px;
-    border-left: 1px solid #d0d0d0;
-    border-bottom: 1px solid #d0d0d0;
+    top: -0.5rem;
+    width: 1rem;
+    height: 0.5rem;
+    border-left: 2px solid var(--border-color);
+    border-bottom: 2px solid var(--border-color);
     border-bottom-left-radius: 6px;
 }
 
@@ -953,24 +956,25 @@ img {
     height: 32px;
 }
 
-/* Replies container - minimal spacing */
+/* Replies container - positioned directly under parent comment */
 .replies-container {
-    margin-top: 8px;
+    margin-top: 0.5rem;
     margin-bottom: 0;
 }
 
 /* Compact comment structure for replies */
 .comment.reply-comment .comment-content {
-    margin-bottom: 4px;
+    margin-bottom: 0.25rem;
+    font-size: 0.9rem;
 }
 
 .comment.reply-comment .comment-footer {
-    margin-top: 4px;
+    margin-top: 0.25rem;
 }
 
-.comment.reply-comment .comment-actions .reaction-btn {
-    padding: 2px 6px;
-    font-size: 11px;
+/* No reactions for reply comments - they should not have comment-actions */
+.comment.reply-comment .comment-actions {
+    display: none;
 }
 
 /* Reply form styling - cleaner approach */
@@ -2273,7 +2277,7 @@ body.modal-open {
 
 .trending-header {
     padding: 2rem;
-    background: linear-gradient(135deg, var(--accent-color), #ff6b35);
+    background: #1d5c7e;
     color: white;
     text-align: center;
 }
@@ -2879,18 +2883,45 @@ body.modal-open {
     font-size: 1.2rem;
 }
 
+/* Top-level comments */
 .comments-list .comment {
     margin-bottom: 1rem;
     padding: 1rem;
     background: var(--card-color);
     border-radius: var(--radius);
     border: 1px solid var(--border-color);
+    display: flex;
+    gap: 0.75rem;
 }
 
+/* Reply comments - no background, indented */
 .comments-list .reply-comment {
-    margin-left: 2rem;
+    margin-left: 2.5rem;
+    margin-top: 0.75rem;
+    margin-bottom: 0.5rem;
+    padding: 0.5rem 0;
+    background: none;
+    border: none;
+    border-left: 2px solid var(--border-color);
+    padding-left: 1rem;
+    border-radius: 0;
+}
+
+/* Comment Thread Container - each comment and its replies */
+.comment-thread {
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 1rem;
+}
+
+.comment-thread:last-child {
+    border-bottom: none;
+    margin-bottom: 0;
+}
+
+/* Replies container */
+.replies-container {
     margin-top: 0.5rem;
-    background: var(--primary-color);
 }
 
 .comments-list .comment-avatar img {
@@ -2977,7 +3008,7 @@ body.modal-open {
     align-items: center;
     justify-content: space-between;
     padding: 2rem;
-    background: linear-gradient(135deg, var(--nav-bar-color), var(--bg-color));
+    background:#1d5c7e;
     color: white;
 }
 
@@ -3032,7 +3063,7 @@ body.modal-open {
 
 .saved-header {
     padding: 2rem;
-    background: linear-gradient(135deg, var(--accent-color), #6c5ce7);
+    background: #1d5c7e;
     color: white;
     text-align: center;
 }
