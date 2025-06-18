@@ -507,11 +507,55 @@ func GetCategories(db *sql.DB) ([]models.Category, error) {
 // UpdatePost updates an existing post's title and content
 func UpdatePost(db *sql.DB, postID int, title, content string) error {
 	_, err := db.Exec(`
-		UPDATE posts 
+		UPDATE posts
 		SET title = ?, content = ?
 		WHERE id = ?
 	`, title, content, postID)
 	return err
+}
+
+// UpdatePostWithCategories updates a post with title, content, image, and categories
+func UpdatePostWithCategories(db *sql.DB, postID int, title, content, imageURL string, categoryIDs []int) error {
+	// Start transaction
+	tx, err := db.Begin()
+	if err != nil {
+		return err
+	}
+	defer tx.Rollback()
+
+	// Update post basic info
+	var imageURLPtr *string
+	if imageURL != "" {
+		imageURLPtr = &imageURL
+	}
+
+	_, err = tx.Exec(`
+		UPDATE posts
+		SET title = ?, content = ?, image_url = ?, updated_at = CURRENT_TIMESTAMP
+		WHERE id = ?
+	`, title, content, imageURLPtr, postID)
+	if err != nil {
+		return err
+	}
+
+	// Delete existing post-category associations
+	_, err = tx.Exec(`DELETE FROM post_categories WHERE post_id = ?`, postID)
+	if err != nil {
+		return err
+	}
+
+	// Insert new post-category associations
+	for _, categoryID := range categoryIDs {
+		_, err = tx.Exec(`
+			INSERT INTO post_categories (post_id, category_id)
+			VALUES (?, ?)
+		`, postID, categoryID)
+		if err != nil {
+			return err
+		}
+	}
+
+	return tx.Commit()
 }
 
 // DeleteComment removes a comment from the database by its ID

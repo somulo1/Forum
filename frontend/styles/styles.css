@@ -614,6 +614,33 @@ body {
     font-style: italic;
 }
 
+/* Edit Post Modal */
+.current-image-preview {
+    margin-top: var(--spacing-sm);
+}
+
+.current-image-preview img {
+    max-width: 200px;
+    max-height: 150px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-light);
+}
+
+.current-image-preview .image-info {
+    margin-top: var(--spacing-xs);
+    font-size: var(--font-size-sm);
+    color: var(--text-muted);
+}
+
+.current-image-preview .remove-image {
+    margin-top: var(--spacing-xs);
+}
+
+.current-image-preview .remove-image button {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-xs) var(--spacing-sm);
+}
+
 .selected-categories {
     display: flex;
     flex-wrap: wrap;

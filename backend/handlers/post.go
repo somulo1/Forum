@@ -142,22 +142,40 @@ func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var post models.Post
-	err := json.NewDecoder(r.Body).Decode(&post)
+	// Parse multipart form
+	err := r.ParseMultipartForm(10 << 20) // 10 MB limit
 	if err != nil {
-		http.Error(w, "Invalid post data", http.StatusBadRequest)
+		http.Error(w, "Could not parse form data", http.StatusBadRequest)
 		return
 	}
 
+	postIDStr := r.FormValue("post_id")
+	if postIDStr == "" {
+		http.Error(w, "Missing post_id", http.StatusBadRequest)
+		return
+	}
+
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post_id", http.StatusBadRequest)
+		return
+	}
+
+	title := r.FormValue("title")
+	content := r.FormValue("content")
+
+	// Get category IDs from the form
+	categoryIDStrings := r.Form["category_ids[]"]
+
 	// Validate user session
-	userID, err := utils.GetUserIDFromSession(db, r)
-	if err != nil || userID == "" {
+	userID, ok := RequireAuth(db, w, r)
+	if !ok || userID == "" {
 		http.Error(w, "Unauthorized", http.StatusUnauthorized)
 		return
 	}
 
 	// Ensure the post belongs to the user
-	existingPostData, err := sqlite.GetPost(db, post.ID)
+	existingPostData, err := sqlite.GetPost(db, postID)
 	if err != nil {
 		utils.SendJSONError(w, "Failed to read post data", http.StatusInternalServerError)
 		return
@@ -168,13 +186,76 @@ func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = sqlite.UpdatePost(db, post.ID, post.Title, post.Content)
+	// Handle image update/removal
+	var imageURL string
+	if existingPostData.ImageURL != nil {
+		imageURL = *existingPostData.ImageURL
+	}
+
+	// Check if image should be removed
+	if r.FormValue("remove_image") == "true" {
+		// Remove the old image file if it exists
+		if existingPostData.ImageURL != nil && *existingPostData.ImageURL != "" {
+			oldImagePath := "." + *existingPostData.ImageURL
+			os.Remove(oldImagePath) // Ignore error if file doesn't exist
+		}
+		imageURL = ""
+	} else {
+		// Check for new image upload
+		file, header, err := r.FormFile("image")
+		if err == nil {
+			defer file.Close()
+
+			// Remove old image if new one is uploaded
+			if existingPostData.ImageURL != nil && *existingPostData.ImageURL != "" {
+				oldImagePath := "." + *existingPostData.ImageURL
+				os.Remove(oldImagePath) // Ignore error if file doesn't exist
+			}
+
+			ext := filepath.Ext(header.Filename)
+			filename := fmt.Sprintf("post_%s_%d%s", userID, time.Now().UnixNano(), ext)
+			dstPath := filepath.Join("static/pictures", filename)
+
+			dst, err := os.Create(dstPath)
+			if err != nil {
+				http.Error(w, "Unable to save image", http.StatusInternalServerError)
+				return
+			}
+			defer dst.Close()
+
+			if _, err := io.Copy(dst, file); err != nil {
+				http.Error(w, "Failed to write image", http.StatusInternalServerError)
+				return
+			}
+
+			imageURL = "/" + dstPath
+		}
+	}
+
+	// Convert category ID strings to integers
+	var categoryIDs []int
+	for _, idStr := range categoryIDStrings {
+		if id, err := strconv.Atoi(idStr); err == nil {
+			categoryIDs = append(categoryIDs, id)
+		}
+	}
+
+	// Update the post
+	err = sqlite.UpdatePostWithCategories(db, postID, title, content, imageURL, categoryIDs)
 	if err != nil {
+		log.Println("Error updating post:", err)
 		utils.SendJSONError(w, "Failed to update post", http.StatusInternalServerError)
 		return
 	}
 
-	utils.SendJSONResponse(w, post, http.StatusOK)
+	// Get the updated post to return
+	updatedPost, err := sqlite.GetPost(db, postID)
+	if err != nil {
+		utils.SendJSONError(w, "Failed to fetch updated post", http.StatusInternalServerError)
+		return
+	}
+
+	utils.SendJSONResponse(w, updatedPost, http.StatusOK)
 }
 
 func DeletePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {

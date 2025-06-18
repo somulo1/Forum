@@ -7,6 +7,7 @@ class ForumApp {
         this.postsPerPage = 10;
         this.currentFilter = 'all';
         this.selectedCategories = [];
+        this.editSelectedCategories = [];
         this.allCategories = [];
         this.posts = [];
         
@@ -48,6 +49,7 @@ class ForumApp {
         document.getElementById('login-form').addEventListener('submit', (e) => this.handleLogin(e));
         document.getElementById('register-form').addEventListener('submit', (e) => this.handleRegister(e));
         document.getElementById('create-post-form').addEventListener('submit', (e) => this.handleCreatePost(e));
+        document.getElementById('edit-post-form').addEventListener('submit', (e) => this.handleEditPost(e));
         
         // Navigation
         document.querySelectorAll('.nav-btn').forEach(btn => {
@@ -58,6 +60,14 @@ class ForumApp {
         document.getElementById('category-dropdown').addEventListener('change', (e) => {
             if (e.target.value) {
                 this.addCategoryFromDropdown(e.target.value);
+                e.target.value = ''; // Reset dropdown
+            }
+        });
+
+        // Edit category dropdown
+        document.getElementById('edit-category-dropdown').addEventListener('change', (e) => {
+            if (e.target.value) {
+                this.addEditCategoryFromDropdown(e.target.value);
                 e.target.value = ''; // Reset dropdown
             }
         });
@@ -1190,11 +1200,155 @@ class ForumApp {
         }
     }
 
-    // Missing methods implementation
-    editPost(postId) {
-        // For now, just show a notification that this feature is coming soon
-        console.log('Edit post requested for ID:', postId);
-        this.showNotification('Post editing feature coming soon!', 'warning');
+    // Edit Post Methods
+    async editPost(postId) {
+        try {
+            // Find the post in the current posts array
+            const post = this.posts.find(p => p.id === postId);
+            if (!post) {
+                this.showNotification('Post not found', 'error');
+                return;
+            }
+
+            // Check if user owns this post
+            if (!this.currentUser || this.currentUser.id !== post.user_id) {
+                this.showNotification('You can only edit your own posts', 'error');
+                return;
+            }
+
+            // Populate the edit form
+            this.populateEditForm(post);
+
+            // Show the edit modal
+            this.showModal('edit-post-modal');
+        } catch (error) {
+            console.error('Edit post error:', error);
+            this.showNotification('Failed to load post for editing', 'error');
+        }
+    }
+
+    populateEditForm(post) {
+        // Set form values
+        document.getElementById('edit-post-id').value = post.id;
+        document.getElementById('edit-post-title').value = post.title;
+        document.getElementById('edit-post-content').value = post.content;
+
+        // Reset selected categories for editing
+        this.editSelectedCategories = [];
+
+        // Populate selected categories if post has categories
+        if (post.category_ids && post.category_ids.length > 0) {
+            post.category_ids.forEach(catId => {
+                const category = this.allCategories.find(cat => cat.id === catId);
+                if (category) {
+                    this.editSelectedCategories.push({
+                        id: category.id,
+                        name: category.name
+                    });
+                }
+            });
+        }
+
+        // Render selected categories
+        this.renderEditSelectedCategories();
+
+        // Populate category dropdown
+        this.populateEditCategoryDropdown();
+
+        // Show current image if exists
+        this.showCurrentImagePreview(post.image_url);
+    }
+
+    populateEditCategoryDropdown() {
+        const dropdown = document.getElementById('edit-category-dropdown');
+        if (!dropdown) return;
+
+        // Clear existing options except the first one
+        dropdown.innerHTML = '<option value="">Select a category to add...</option>';
+
+        // Add categories as options, disable already selected ones
+        this.allCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+
+            // Disable if already selected
+            const isSelected = this.editSelectedCategories.some(selected => selected.id == category.id);
+            if (isSelected) {
+                option.disabled = true;
+                option.textContent += ' (already selected)';
+            }
+
+            dropdown.appendChild(option);
+        });
+    }
+
+    renderEditSelectedCategories() {
+        const container = document.getElementById('edit-selected-categories');
+        container.innerHTML = '';
+
+        this.editSelectedCategories.forEach(category => {
+            const tag = document.createElement('div');
+            tag.className = 'category-tag';
+            tag.innerHTML = `
+                ${category.name}
+                <span class="remove" onclick="app.removeEditCategory(${category.id})">&times;</span>
+            `;
+            container.appendChild(tag);
+        });
+
+        // Refresh dropdown to update disabled states
+        this.populateEditCategoryDropdown();
+    }
+
+    addEditCategoryFromDropdown(categoryId) {
+        const category = this.allCategories.find(cat => cat.id == categoryId);
+        if (!category) return;
+
+        // Check if category is already selected
+        if (!this.editSelectedCategories.some(selected => selected.id == categoryId)) {
+            this.editSelectedCategories.push({
+                id: category.id,
+                name: category.name
+            });
+            this.renderEditSelectedCategories();
+        }
+    }
+
+    removeEditCategory(categoryId) {
+        this.editSelectedCategories = this.editSelectedCategories.filter(cat => cat.id != categoryId);
+        this.renderEditSelectedCategories();
+    }
+
+    showCurrentImagePreview(imageUrl) {
+        const container = document.getElementById('current-image-preview');
+        container.innerHTML = '';
+
+        if (imageUrl) {
+            container.innerHTML = `
+                <div class="image-info">Current image:</div>
+                <img src="${imageUrl}" alt="Current post image">
+                <div class="remove-image">
+                    <button type="button" class="btn btn-sm btn-danger" onclick="app.removeCurrentImage()">
+                        Remove Current Image
+                    </button>
+                </div>
+            `;
+        }
+    }
+
+    removeCurrentImage() {
+        document.getElementById('current-image-preview').innerHTML = '';
+        // Add a hidden input to indicate image should be removed
+        const form = document.getElementById('edit-post-form');
+        let removeInput = form.querySelector('input[name="remove_image"]');
+        if (!removeInput) {
+            removeInput = document.createElement('input');
+            removeInput.type = 'hidden';
+            removeInput.name = 'remove_image';
+            removeInput.value = 'true';
+            form.appendChild(removeInput);
+        }
     }
 
     showCategoriesView() {
@@ -1291,6 +1445,48 @@ class ForumApp {
         } else {
             button.disabled = false;
             button.textContent = button.dataset.originalText || button.textContent;
+        }
+    }
+
+    async handleEditPost(e) {
+        e.preventDefault();
+
+        // Validate that at least one category is selected
+        if (this.editSelectedCategories.length === 0) {
+            this.showNotification('Please select at least one category', 'warning');
+            return;
+        }
+
+        this.showLoading();
+
+        const formData = new FormData(e.target);
+
+        // Add selected categories
+        this.editSelectedCategories.forEach(category => {
+            formData.append('category_ids[]', category.id);
+        });
+
+        try {
+            const response = await fetch('/api/posts/update', {
+                method: 'PUT',
+                credentials: 'include',
+                body: formData
+            });
+
+            if (response.ok) {
+                this.showNotification('Post updated successfully!', 'success');
+                this.hideModal('edit-post-modal');
+                this.editSelectedCategories = [];
+                await this.loadPosts();
+            } else {
+                const error = await response.text();
+                this.showNotification(error || 'Failed to update post', 'error');
+            }
+        } catch (error) {
+            console.error('Update post error:', error);
+            this.showNotification('Failed to update post', 'error');
+        } finally {
+            this.hideLoading();
         }
     }
 
