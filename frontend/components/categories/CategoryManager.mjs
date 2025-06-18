@@ -2,7 +2,7 @@
  * Category Manager - Handles category fetching, rendering, and filtering
  */
 
-import { ApiUtils } from '../utils/ApiUtils.js';
+import { ApiUtils } from '../utils/ApiUtils.mjs';
 
 export class CategoryManager {
     constructor(onCategoryFilter) {

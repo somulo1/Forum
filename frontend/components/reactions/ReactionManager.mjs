@@ -2,7 +2,7 @@
  * Reaction Manager - Handles likes and dislikes for posts and comments
  */
 
-import { ApiUtils } from '../utils/ApiUtils.js';
+import { ApiUtils } from '../utils/ApiUtils.mjs';
 
 export class ReactionManager {
     constructor(authModal) {

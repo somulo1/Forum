@@ -2,14 +2,14 @@
  * Main Application Controller - Orchestrates all components
  */
 
-import { AuthManager } from '../auth/AuthManager.js';
-import { AuthModal } from '../auth/AuthModal.js';
-import { NavManager } from '../navigation/NavManager.js';
-import { CategoryManager } from '../categories/CategoryManager.js';
-import { ReactionManager } from '../reactions/ReactionManager.js';
-import { PostManager } from '../posts/PostManager.js';
-import { PostForm } from '../posts/PostForm.js';
-import { CommentManager } from '../comments/CommentManager.js';
+import { AuthManager } from '../auth/AuthManager.mjs';
+import { AuthModal } from '../auth/AuthModal.mjs';
+import { NavManager } from '../navigation/NavManager.mjs';
+import { CategoryManager } from '../categories/CategoryManager.mjs';
+import { ReactionManager } from '../reactions/ReactionManager.mjs';
+import { PostManager } from '../posts/PostManager.mjs';
+import { PostForm } from '../posts/PostForm.mjs';
+import { CommentManager } from '../comments/CommentManager.mjs';
 
 export class App {
     constructor() {

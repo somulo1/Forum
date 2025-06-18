@@ -2,8 +2,8 @@
  * Post Manager - Handles post fetching, rendering, and management
  */
 
-import { ApiUtils } from '../utils/ApiUtils.js';
-import { PostCard } from './PostCard.js';
+import { ApiUtils } from '../utils/ApiUtils.mjs';
+import { PostCard } from './PostCard.mjs';
 
 export class PostManager {
     constructor(reactionManager, commentManager) {

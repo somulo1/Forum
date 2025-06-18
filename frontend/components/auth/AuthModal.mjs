@@ -2,7 +2,7 @@
  * Authentication Modal - Handles the login/signup modal UI and interactions
  */
 
-import { AuthManager } from './AuthManager.js';
+import { AuthManager } from './AuthManager.mjs';
 
 export class AuthModal {
     constructor(authManager, onAuthSuccess) {

@@ -2,7 +2,7 @@
  * Post Card - Handles rendering of individual post cards
  */
 
-import { TimeUtils } from '../utils/TimeUtils.js';
+import { TimeUtils } from '../utils/TimeUtils.mjs';
 
 export class PostCard {
     /**

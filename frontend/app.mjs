@@ -3,7 +3,7 @@
  * This file now imports and orchestrates modular components
  */
 
-import { App } from './components/core/App.js';
+import { App } from './components/core/App.mjs';
 
 // Global app instance
 let forumApp = null;
