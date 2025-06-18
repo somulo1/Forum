@@ -112,10 +112,25 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	// Extract pagination parameters from the URL query
 	page, limit := utils.GetPaginationParams(r)
 
-	// Fetch posts with pagination
-	posts, err := sqlite.GetPosts(db, page, limit)
+	// Extract filter parameters
+	categoryID := r.URL.Query().Get("category")
+	searchQuery := r.URL.Query().Get("search")
+	sortBy := r.URL.Query().Get("sort")
+	filterType := r.URL.Query().Get("filter")
+
+	// Get current user ID for user-specific filters
+	var currentUserID string
+	if filterType == "my-posts" || filterType == "liked-posts" {
+		userID, err := utils.GetUserIDFromSession(db, r)
+		if err == nil {
+			currentUserID = userID
+		}
+	}
+
+	// Fetch posts with filters
+	posts, err := sqlite.GetPostsWithFilters(db, page, limit, categoryID, searchQuery, sortBy, filterType, currentUserID)
 	if err != nil {
-		fmt.Println("THE ERROR IS HERE")
+		log.Printf("Error fetching posts: %v", err)
 		utils.SendJSONError(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
 	}
