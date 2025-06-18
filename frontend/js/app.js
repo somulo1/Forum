@@ -563,9 +563,11 @@ class ForumApp {
             }
         });
 
-        // Load reaction counts and comment counts
-        this.loadReactionCounts(post.id, 'post');
-        this.loadCommentCounts(post.id);
+        // Load reaction counts and comment counts after a small delay to ensure DOM is ready
+        setTimeout(() => {
+            this.loadReactionCounts(post.id, 'post');
+            this.loadCommentCounts(post.id);
+        }, 100);
 
         return postDiv;
     }
@@ -847,6 +849,9 @@ class ForumApp {
 
     // Reaction Methods
     async toggleReaction(id, type, target) {
+        console.log(`toggleReaction called: id=${id}, type=${type}, target=${target}`);
+        console.log('Current user:', this.currentUser);
+
         if (!this.currentUser) {
             this.showNotification('Please log in to react to posts', 'warning');
             return;
@@ -859,6 +864,8 @@ class ForumApp {
             payload.comment_id = id;
         }
 
+        console.log('Sending payload:', payload);
+
         try {
             const response = await fetch('/api/likes/toggle', {
                 method: 'POST',
@@ -869,11 +876,17 @@ class ForumApp {
                 body: JSON.stringify(payload)
             });
 
+            console.log('Response status:', response.status);
+
             if (response.ok) {
+                const result = await response.json();
+                console.log('Toggle response:', result);
                 // Reload reaction counts
                 await this.loadReactionCounts(id, target);
+                this.showNotification('Reaction updated!', 'success');
             } else {
                 const error = await response.text();
+                console.error('Toggle error:', error);
                 this.showNotification(error || 'Failed to update reaction', 'error');
             }
         } catch (error) {
@@ -885,12 +898,30 @@ class ForumApp {
     async loadReactionCounts(id, target) {
         try {
             const param = target === 'post' ? `post_id=${id}` : `comment_id=${id}`;
+            console.log(`Loading reaction counts for ${target} ${id}`);
             const response = await fetch(`/api/likes/reactions?${param}`);
 
             if (response.ok) {
                 const data = await response.json();
-                document.getElementById(`likes-count-${id}`).textContent = data.likes || 0;
-                document.getElementById(`dislikes-count-${id}`).textContent = data.dislikes || 0;
+                console.log(`Reaction data for ${target} ${id}:`, data);
+                const likesElement = document.getElementById(`likes-count-${id}`);
+                const dislikesElement = document.getElementById(`dislikes-count-${id}`);
+
+                if (likesElement) {
+                    likesElement.textContent = data.likes || 0;
+                    console.log(`Updated likes count for ${target} ${id}: ${data.likes || 0}`);
+                } else {
+                    console.warn(`Likes element not found for ${target} ${id}`);
+                }
+
+                if (dislikesElement) {
+                    dislikesElement.textContent = data.dislikes || 0;
+                    console.log(`Updated dislikes count for ${target} ${id}: ${data.dislikes || 0}`);
+                } else {
+                    console.warn(`Dislikes element not found for ${target} ${id}`);
+                }
+            } else {
+                console.error(`Failed to load reaction counts: ${response.status}`);
             }
         } catch (error) {
             console.error('Failed to load reaction counts:', error);
@@ -1032,24 +1063,26 @@ class ForumApp {
             </div>
         `;
 
-        // Load reaction counts
-        this.loadReactionCounts(post.id, 'post');
+        // Load reaction counts after a small delay to ensure DOM is ready
+        setTimeout(() => {
+            this.loadReactionCounts(post.id, 'post');
 
-        // Load reaction counts for comments
-        if (Array.isArray(comments)) {
-            comments.forEach(comment => {
-                if (comment && comment.id) {
-                    this.loadReactionCounts(comment.id, 'comment');
-                    if (comment.replies && Array.isArray(comment.replies)) {
-                        comment.replies.forEach(reply => {
-                            if (reply && reply.id) {
-                                this.loadReactionCounts(reply.id, 'comment');
-                            }
-                        });
+            // Load reaction counts for comments
+            if (Array.isArray(comments)) {
+                comments.forEach(comment => {
+                    if (comment && comment.id) {
+                        this.loadReactionCounts(comment.id, 'comment');
+                        if (comment.replies && Array.isArray(comment.replies)) {
+                            comment.replies.forEach(reply => {
+                                if (reply && reply.id) {
+                                    this.loadReactionCounts(reply.id, 'comment');
+                                }
+                            });
+                        }
                     }
-                }
-            });
-        }
+                });
+            }
+        }, 100);
     }
 
     createCommentElement(comment) {
