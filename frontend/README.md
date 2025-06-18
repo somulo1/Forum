@@ -1,217 +1,212 @@
-# Forum Frontend Documentation
+# Forum Frontend
 
-## Table of Contents
-1. [Project Overview](#project-overview)
-2. [Project Structure](#project-structure)
-3. [Components](#components)
-4. [Configuration](#configuration)
-5. [Authentication Flow](#authentication-flow)
-6. [State Management](#state-management)
-7. [API Interactions](#api-interactions)
-8. [Running the Frontend](#running-the-frontend)
-9. [Deployment](#deployment)
+A modern, responsive web forum frontend built with vanilla HTML, CSS, and JavaScript. This frontend integrates seamlessly with the Go backend API to provide a complete forum experience.
 
-## Project Overview
+## Features
 
-This is a modern, single-page web application for a forum platform. The frontend is built using vanilla JavaScript and provides a responsive, interactive user experience for forum interactions.
+### 🔐 Authentication
+- User registration with validation
+- Secure login/logout
+- Session management with cookies
+- User profile display
 
-## Project Structure
+### 📝 Posts
+- Create posts with title, content, and optional images
+- Category assignment to posts
+- View all posts with pagination
+- Edit and delete own posts
+- Rich post display with user avatars
 
+### 💬 Comments
+- Comment on posts
+- Reply to comments (threaded discussions)
+- Delete own comments
+- Real-time comment display
 
-## Components
+### 👍 Reactions
+- Like and dislike posts and comments
+- Real-time reaction counts
+- Visual feedback for user interactions
 
-### Authentication Manager ([auth.js](./components/auth.js))
-- Handles user authentication processes.
-- Methods:
-  - **[checkAuth()](./components/auth.js#L15)**: Verifies user authentication status by checking if a valid JWT token is stored in `localStorage`. If the token is present, it sends a request to the server to verify the token's validity and retrieves the current user's information.
-  - **[handleLogin()](./components/auth.js#L36)**: Processes user login by sending the email and password to the server. If the login is successful, it stores the returned JWT token in `localStorage`, updates the current user state, and renders the authenticated UI. If it fails, it alerts the user with an error message.
-  - **[handleRegister()](./components/auth.js#L63)**: Processes user registration by collecting user data (username, email, password, avatar) and sending it to the server. Upon successful registration, it stores the JWT token and user information, updates the UI, and reloads the page. If registration fails, it alerts the user.
-  - **[logout()](./components/auth.js#L94)**: Logs out the current user by clearing the user state, removing the JWT token from `localStorage`, and deleting the user cookie. It then renders the authentication buttons for unauthenticated users and reloads the page.
-  - **[renderAuthButtons()](./components/auth.js#L107)**: Dynamically renders the authentication buttons based on the current user's authentication state. If the user is logged in, it displays a welcome message and a logout button. If not, it shows the login and register buttons.
-  - **[showLoginForm()](./components/auth.js#L124)**: Displays the login form in a modal.
-  - **[showRegisterForm()](./components/auth.js#L136)**: Displays the registration form in a modal.
+### 🏷️ Categories
+- Browse posts by category
+- Category filtering
+- Dynamic category management
 
-### Post Manager ([post.js](./components/post.js))
-- Manages post-related operations.
-- Key Functionalities:
-  - **[fetchPosts()](./components/post.js#L10)**: Retrieves posts from the server.
-  - **[createPost()](./components/post.js#L30)**: Sends a new post to the server for creation.
-  - **[filterBySearch()](./components/post.js#L50)**: Filters posts based on a search query.
-  - **[resetFilter()](./components/post.js#L70)**: Resets the post filter to show all posts.
-  - **[handlePostInteraction()](./components/post.js#L90)**: Manages interactions such as liking or commenting on posts.
+### 🔍 Filtering & Search
+- Filter posts by categories
+- View user's own posts
+- View user's liked posts
+- Search functionality (coming soon)
 
-### Category Manager ([category.js](./components/category.js))
-- Handles category-related operations.
-- Responsibilities:
-  - **[fetchCategories()](./components/category.js#L10)**: Retrieves categories from the server.
-  - **[filterPostsByCategory()](./components/category.js#L30)**: Filters posts based on the selected category.
+### 📱 Responsive Design
+- Mobile-first design approach
+- Tablet and desktop optimized
+- Touch-friendly interface
+- Accessible design patterns
 
-### Profile Manager ([profile.js](./components/profile.js))
-- Manages user profile interactions.
-- Features:
-  - **[fetchUserProfile()](./components/profile.js#L10)**: Retrieves the current user's profile information.
-  - **[updateProfile()](./components/profile.js#L30)**: Sends updated profile information to the server.
-  - **[displayProfile()](./components/profile.js#L50)**: Renders the user's profile information in the UI.
+## Technology Stack
 
-### Trending Manager ([trending.js](./components/trending.js))
-- Manages trending content.
-- Responsibilities:
-  - **[fetchTrendingPosts()](./components/trending.js#L10)**: Retrieves trending posts from the server.
-  - **[displayTrendingPosts()](./components/trending.js#L30)**: Renders trending posts in the UI.
+- **HTML5**: Semantic markup
+- **CSS3**: Modern styling with CSS Grid and Flexbox
+- **Vanilla JavaScript**: No frameworks, pure ES6+
+- **CSS Custom Properties**: Consistent theming
+- **Responsive Design**: Mobile-first approach
 
-### Story Manager ([story.js](./components/story.js))
-- Manages story-related features.
-- Responsibilities:
-  - **[fetchStories()](./components/story.js#L10)**: Retrieves stories from the server.
-  - **[createStory()](./components/story.js#L30)**: Sends a new story to the server for creation.
-  - **[displayStories()](./components/story.js#L50)**: Renders stories in the UI.
+## File Structure
 
-### Navigation Manager ([navigation.js](./components/navigation.js))
-- Manages navigation and routing within the application.
-- Responsibilities:
-  - **[init()](./components/navigation.js#L10)**: Initializes navigation settings and event listeners.
-  - **[loadPage()](./components/navigation.js#L30)**: Loads the appropriate page based on user interaction.
+```
+frontend/
+├── index.html          # Main HTML file
+├── styles/
+│   └── styles.css      # All CSS styles
+├── js/
+│   └── app.js          # Main JavaScript application
+└── README.md           # This file
+```
 
-## Configuration
+## Design System
 
-### API Configuration ([config.mjs](./config.mjs))
-```javascript
-export const API_BASE_URL = 'http://localhost:8080/api';
-export const APP_CONFIG = {
-    MAX_POST_LENGTH: 500,
-    DEFAULT_AVATAR: '/assets/default-avatar.png',
-    PAGINATION_LIMIT: 10
-};
+### Color Palette
+- **Primary**: Blue (#3b82f6)
+- **Success**: Green (#10b981)
+- **Error**: Red (#ef4444)
+- **Warning**: Orange (#f59e0b)
+- **Backgrounds**: Various shades of gray/white
+- **Text**: Dark gray hierarchy
 
-  ```
+### Typography
+- **Font**: Inter (Google Fonts)
+- **Sizes**: Responsive scale from 0.75rem to 1.875rem
+- **Weights**: 300, 400, 500, 600, 700
 
-## Authentication Flow
+### Spacing
+- **System**: 0.25rem base unit
+- **Scale**: xs(0.25), sm(0.5), md(1), lg(1.5), xl(2), 2xl(3)
 
-The authentication flow is a critical part of the application, allowing users to securely log in, register, and manage their sessions. The flow involves the following steps:
+### Components
+- **Buttons**: Primary, secondary, danger variants
+- **Forms**: Consistent input styling with validation
+- **Cards**: Post cards, comment cards, category cards
+- **Modals**: Login, register, post details
+- **Notifications**: Success, error, warning toasts
 
-1. **User Interaction**:
-   - Users can click on the "Login" or "Register" buttons in the navigation bar. This triggers the display of the authentication modal.
+## API Integration
 
-2. **Form Submission**:
-   - When a user submits the login or registration form, the corresponding handler method (`handleLogin` or `handleRegister`) is invoked.
+The frontend communicates with the backend through RESTful API endpoints:
 
-3. **Server Communication**:
-   - The application sends a request to the backend API:
-     - **Login**: Sends the user's email and password to the `/auth/login` endpoint.
-     - **Register**: Sends the user's details to the `/auth/register` endpoint.
+### Authentication Endpoints
+- `POST /api/register` - User registration
+- `POST /api/login` - User login
+- `POST /api/logout` - User logout
+- `GET /api/user` - Get current user info
 
-4. **Response Handling**:
-   - If the server responds with a successful authentication (HTTP 200), the application:
-     - Stores the JWT token in `localStorage`.
-     - Updates the current user state.
-     - Renders the authenticated UI.
-   - If authentication fails, an error message is displayed to the user.
+### Post Endpoints
+- `GET /api/posts` - Get all posts (with pagination)
+- `POST /api/posts/create` - Create new post
+- `PUT /api/posts/update` - Update existing post
+- `DELETE /api/posts/delete` - Delete post
 
-5. **Session Management**:
-   - The application checks the user's authentication status on page load using the `checkAuth` method, which verifies the token's validity by calling the `/auth/verify` endpoint.
+### Comment Endpoints
+- `GET /api/comments/get` - Get post comments
+- `POST /api/comments/create` - Create comment
+- `POST /api/comment/reply/create` - Create reply
+- `DELETE /api/comments/delete` - Delete comment
 
-## State Management
+### Reaction Endpoints
+- `POST /api/likes/toggle` - Toggle like/dislike
+- `GET /api/likes/reactions` - Get reaction counts
 
-State management is essential for maintaining the application's responsiveness and user experience. The frontend uses the following strategies for state management:
+### Category Endpoints
+- `GET /api/categories` - Get all categories
+- `POST /api/categories/create` - Create category
 
-- **Local Storage**:
-  - The application stores the JWT token in `localStorage` to persist the user's authentication state across page reloads. This allows the user to remain logged in until they explicitly log out.
+## Key Features Implementation
 
-- **Cookies**:
-  - User data (such as profile information) is stored in cookies with an expiration date, allowing for easy access and management of user sessions.
+### State Management
+The `ForumApp` class manages application state including:
+- Current user session
+- Posts data
+- Categories
+- UI state (modals, loading, etc.)
 
-- **In-Memory State**:
-  - The application maintains an in-memory state for the current user and other dynamic data (like posts and categories) to provide a seamless user experience without constant server requests.
+### Error Handling
+- Network error detection
+- User-friendly error messages
+- Graceful fallbacks
+- Loading states
 
-## API Interactions
+### Form Validation
+- Client-side validation for registration
+- Real-time feedback
+- Accessibility considerations
 
-The frontend interacts with the backend API to perform various operations. Here are the key API interactions:
+### Responsive Design
+- Mobile-first CSS
+- Flexible grid layouts
+- Touch-friendly interactions
+- Optimized for all screen sizes
 
-- **Authentication Endpoints**:
-  - **POST `/auth/login`**: Authenticates the user and returns a JWT token.
-  - **POST `/auth/register`**: Registers a new user and returns a JWT token.
-  - **GET `/auth/verify`**: Verifies the JWT token's validity.
+## Browser Support
 
-- **Post Management Endpoints**:
-  - **GET `/posts`**: Retrieves a list of posts.
-  - **POST `/posts/create`**: Creates a new post.
-  - **GET `/posts/search`**: Searches for posts based on a query.
+- Chrome 90+
+- Firefox 88+
+- Safari 14+
+- Edge 90+
 
-- **Category Management Endpoints**:
-  - **GET `/categories`**: Retrieves a list of categories.
-  - **GET `/categories/{id}`**: Fetches posts associated with a specific category.
+## Performance Features
 
-- **Profile Management Endpoints**:
-  - **GET `/profile`**: Retrieves the current user's profile information.
-  - **PUT `/profile`**: Updates the user's profile information.
+- Efficient DOM manipulation
+- Debounced search input
+- Lazy loading of images
+- Minimal JavaScript bundle
+- CSS optimizations
 
-## Running the Frontend
+## Accessibility
 
-To run the frontend of the forum application, ensure you are in the `frontend` directory. You can use one of the following methods:
+- Semantic HTML structure
+- ARIA labels where needed
+- Keyboard navigation support
+- High contrast mode support
+- Reduced motion support
+- Screen reader friendly
 
-1. **Using npm with a Development Script**:
-   - First, ensure you have Node.js and npm installed on your machine.
-   - Navigate to the `frontend` directory:
-     ```bash
-     cd /path/to/your/forum/frontend
-     ```
-   - Install the necessary npm packages defined in your `package.json`:
-     ```bash
-     npm install
-     ```
-   - If you have a development script defined in your `package.json`, you can start the development server by running:
-     ```bash
-     npm run dev
-     ```
-   - **Access the Application**: Open your web browser and go to the URL specified in your script (usually `http://localhost:5173` or similar).
+## Development
 
+### Local Development
+1. Ensure the backend server is running on port 8080
+2. Open `http://localhost:8080` in your browser
+3. The frontend is served directly by the Go backend
 
-2. **Using Python's HTTP Server**:
-   - Start a simple HTTP server to serve your static files. You can specify a port number (e.g., 8000) as follows:
-     ```bash
-     python3 -m http.server 8000
-     ```
-   - **Access the Application**: Open your web browser and go to `http://localhost:8000`.
+### Code Style
+- ES6+ JavaScript features
+- Consistent indentation (4 spaces)
+- Descriptive variable names
+- Modular function organization
+- Comprehensive error handling
 
+## Future Enhancements
 
-## Deployment
+- [ ] Real-time notifications
+- [ ] Advanced search functionality
+- [ ] Post editing interface
+- [ ] User profile pages
+- [ ] Dark mode toggle
+- [ ] Emoji reactions
+- [ ] File upload progress
+- [ ] Infinite scroll
+- [ ] PWA capabilities
 
-Deployment involves making your application available to users on the internet. Here are the recommended steps:
+## Contributing
 
-1. **Build the Application**:
-   - Ensure all assets are optimized for production. Use tools like Webpack or Parcel to bundle your JavaScript files, minify CSS, and optimize images. This reduces load times and improves performance.
-   - Example command to build with Webpack:
-     ```bash
-     npx webpack --mode production
-     ```
+When contributing to the frontend:
 
-2. **Choose a Hosting Platform**:
-   - Select a platform that suits your needs:
-     - **Netlify**: Ideal for static sites with continuous deployment from Git repositories.
-     - **Vercel**: Great for serverless applications and frontend frameworks.
-     - **GitHub Pages**: Simple hosting for static sites directly from a GitHub repository.
-     - **Firebase Hosting**: Fast and secure hosting for web apps with a simple deployment process.
+1. Follow the existing code style
+2. Test on multiple browsers
+3. Ensure responsive design works
+4. Add appropriate error handling
+5. Update this README if needed
 
-3. **Configure Environment Variables**:
-   - Set up any necessary environment variables for API endpoints or other configurations. This is especially important for sensitive information like API keys. Most hosting platforms provide a way to set environment variables through their dashboard or CLI.
+## License
 
-4. **Deploy**:
-   - Follow the hosting platform's instructions to deploy your application. This often involves pushing your code to a Git repository or using CLI tools provided by the platform.
-   - Example commands for deploying to Netlify and Vercel:
-     - **Netlify**:
-       ```bash
-       netlify deploy --prod
-       ```
-     - **Vercel**:
-       ```bash
-       vercel --prod
-       ```
-
-5. **Monitor and Maintain**:
-   - After deployment, monitor the application for performance and errors. Use tools like Google Analytics for tracking user interactions and performance metrics.
-   - Set up error logging to catch any issues that users may encounter. Services like Sentry or LogRocket can help with this.
-   - Be prepared to make updates as needed, whether for bug fixes, performance improvements, or new features.
-
-6. **Documentation and Support**:
-   - Ensure that your application is well-documented, both for users and for future developers. This includes a clear README, inline code comments, and any necessary user guides.
-   - Consider setting up a support channel (like a Discord server or a dedicated email) for users to report issues or ask questions.
+This project is part of the Forum application and follows the same license terms.
