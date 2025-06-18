@@ -54,11 +54,11 @@ class ForumApp {
             btn.addEventListener('click', (e) => this.handleNavigation(e));
         });
         
-        // Category input
-        document.getElementById('category-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                this.addCategory();
+        // Category dropdown
+        document.getElementById('category-dropdown').addEventListener('change', (e) => {
+            if (e.target.value) {
+                this.addCategoryFromDropdown(e.target.value);
+                e.target.value = ''; // Reset dropdown
             }
         });
         
@@ -255,6 +255,7 @@ class ForumApp {
             if (response.ok) {
                 this.allCategories = await response.json();
                 this.renderCategoryFilters();
+                this.populateCategoryDropdown();
             }
         } catch (error) {
             console.error('Failed to load categories:', error);
@@ -325,34 +326,64 @@ class ForumApp {
         }
     }
 
-    addCategory() {
-        const input = document.getElementById('category-input');
-        const categoryName = input.value.trim();
-        
-        if (categoryName && !this.selectedCategories.includes(categoryName)) {
-            this.selectedCategories.push(categoryName);
+    populateCategoryDropdown() {
+        const dropdown = document.getElementById('category-dropdown');
+        if (!dropdown) return;
+
+        // Clear existing options except the first one
+        dropdown.innerHTML = '<option value="">Select a category to add...</option>';
+
+        // Add categories as options, disable already selected ones
+        this.allCategories.forEach(category => {
+            const option = document.createElement('option');
+            option.value = category.id;
+            option.textContent = category.name;
+
+            // Disable if already selected
+            const isSelected = this.selectedCategories.some(selected => selected.id == category.id);
+            if (isSelected) {
+                option.disabled = true;
+                option.textContent += ' (already selected)';
+            }
+
+            dropdown.appendChild(option);
+        });
+    }
+
+    addCategoryFromDropdown(categoryId) {
+        const category = this.allCategories.find(cat => cat.id == categoryId);
+        if (!category) return;
+
+        // Check if category is already selected
+        if (!this.selectedCategories.some(selected => selected.id == categoryId)) {
+            this.selectedCategories.push({
+                id: category.id,
+                name: category.name
+            });
             this.renderSelectedCategories();
-            input.value = '';
         }
     }
 
     renderSelectedCategories() {
         const container = document.getElementById('selected-categories');
         container.innerHTML = '';
-        
+
         this.selectedCategories.forEach(category => {
             const tag = document.createElement('div');
             tag.className = 'category-tag';
             tag.innerHTML = `
-                ${category}
-                <span class="remove" onclick="app.removeCategory('${category}')">&times;</span>
+                ${category.name}
+                <span class="remove" onclick="app.removeCategory(${category.id})">&times;</span>
             `;
             container.appendChild(tag);
         });
+
+        // Refresh dropdown to update disabled states
+        this.populateCategoryDropdown();
     }
 
-    removeCategory(categoryName) {
-        this.selectedCategories = this.selectedCategories.filter(cat => cat !== categoryName);
+    removeCategory(categoryId) {
+        this.selectedCategories = this.selectedCategories.filter(cat => cat.id != categoryId);
         this.renderSelectedCategories();
     }
 
@@ -469,13 +500,20 @@ class ForumApp {
 
     async handleCreatePost(e) {
         e.preventDefault();
+
+        // Validate that at least one category is selected
+        if (this.selectedCategories.length === 0) {
+            this.showNotification('Please select at least one category', 'warning');
+            return;
+        }
+
         this.showLoading();
 
         const formData = new FormData(e.target);
 
         // Add selected categories
         this.selectedCategories.forEach(category => {
-            formData.append('category_names[]', category);
+            formData.append('category_ids[]', category.id);
         });
 
         try {
