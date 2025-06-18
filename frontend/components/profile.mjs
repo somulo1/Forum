@@ -1,5 +1,4 @@
 import { ApiService } from './api.mjs';
-import { AppState } from './state.mjs';
 import { renderPostFeed } from './post.mjs';
 
 /**
@@ -22,7 +21,7 @@ export async function renderProfileView() {
                     const likeData = await response.json();
                     totalLikes += likeData.likes || 0;
                 }
-            } catch (error) {
+            } catch {
                 // Ignore errors for individual posts
             }
         }));
@@ -58,7 +57,7 @@ export async function renderProfileView() {
         `;
         postFeed.appendChild(profileHeader);
         await renderPostFeed(userPosts);
-    } catch (error) {
+    } catch {
         postFeed.innerHTML = `<div class="error-message">Please log in to view your profile.</div>`;
     }
 }
