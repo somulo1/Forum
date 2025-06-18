@@ -58,5 +58,19 @@ func SetupRoutes(db *sql.DB) http.Handler {
 		}
 		fs.ServeHTTP(w, r)
 	})))
+
+	// Serve frontend files
+	frontendFS := http.FileServer(http.Dir("../frontend"))
+	mux.Handle("/frontend/", http.StripPrefix("/frontend/", frontendFS))
+
+	// Serve index.html at root
+	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/" {
+			http.ServeFile(w, r, "../frontend/index.html")
+		} else {
+			http.NotFound(w, r)
+		}
+	})
+
 	return mux
 }
