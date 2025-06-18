@@ -129,7 +129,7 @@ class ForumApp {
             userOnlyElements.forEach(el => el.classList.remove('hidden'));
             
             // Update user info
-            document.querySelector('.user-avatar').src = this.currentUser.avatar_url;
+            document.querySelector('.user-avatar').src = this.getAvatarUrl(this.currentUser.avatar_url, this.currentUser.username);
             document.querySelector('.username').textContent = this.currentUser.username;
         } else {
             userInfo.classList.add('hidden');
@@ -444,7 +444,7 @@ class ForumApp {
 
         postDiv.innerHTML = `
             <div class="post-header">
-                <img class="post-avatar" src="${post.avatar_url}" alt="${post.username}">
+                <img class="post-avatar" src="${this.getAvatarUrl(post.avatar_url, post.username)}" alt="${post.username}">
                 <div class="post-meta">
                     <div class="post-author">${post.username}</div>
                     <div class="post-date">${this.formatDate(post.created_at)}</div>
@@ -722,6 +722,33 @@ class ForumApp {
         return div.innerHTML;
     }
 
+    getAvatarUrl(avatarUrl, username) {
+        // Return a data URL for a simple avatar with the user's initials if avatar is missing
+        if (!avatarUrl || avatarUrl === '/static/default.png') {
+            const initials = username ? username.substring(0, 2).toUpperCase() : 'U';
+            const canvas = document.createElement('canvas');
+            canvas.width = 40;
+            canvas.height = 40;
+            const ctx = canvas.getContext('2d');
+
+            // Create a simple colored background
+            const colors = ['#3B82F6', '#EF4444', '#10B981', '#F59E0B', '#8B5CF6', '#EC4899'];
+            const colorIndex = username ? username.charCodeAt(0) % colors.length : 0;
+            ctx.fillStyle = colors[colorIndex];
+            ctx.fillRect(0, 0, 40, 40);
+
+            // Add initials
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 16px Arial';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(initials, 20, 20);
+
+            return canvas.toDataURL();
+        }
+        return avatarUrl;
+    }
+
     // Reaction Methods
     async toggleReaction(id, type, target) {
         if (!this.currentUser) {
@@ -861,7 +888,7 @@ class ForumApp {
         modalBody.innerHTML = `
             <div class="post-detail" data-post-id="${post.id}">
                 <div class="post-header">
-                    <img class="post-avatar" src="${post.avatar_url}" alt="${post.username}">
+                    <img class="post-avatar" src="${this.getAvatarUrl(post.avatar_url, post.username)}" alt="${post.username}">
                     <div class="post-meta">
                         <div class="post-author">${post.username}</div>
                         <div class="post-date">${this.formatDate(post.created_at)}</div>
