@@ -6,6 +6,9 @@ class ForumApp {
         this.currentPage = 1;
         this.postsPerPage = 10;
         this.currentFilter = 'all';
+        this.currentCategoryFilter = null;
+        this.currentSearchQuery = '';
+        this.currentSort = 'newest';
         this.selectedCategories = [];
         this.editSelectedCategories = [];
         this.allCategories = [];
@@ -406,12 +409,39 @@ class ForumApp {
         this.showLoading();
 
         try {
-            const response = await fetch(`/api/posts?page=${this.currentPage}&limit=${this.postsPerPage}`, {
+            // Build query parameters
+            const params = new URLSearchParams({
+                page: this.currentPage,
+                limit: this.postsPerPage
+            });
+
+            // Add category filter
+            if (this.currentCategoryFilter) {
+                params.append('category', this.currentCategoryFilter);
+            }
+
+            // Add search query
+            if (this.currentSearchQuery) {
+                params.append('search', this.currentSearchQuery);
+            }
+
+            // Add sort parameter
+            if (this.currentSort) {
+                params.append('sort', this.currentSort);
+            }
+
+            // Add filter type (my-posts, liked-posts, etc.)
+            if (this.currentFilter && this.currentFilter !== 'all') {
+                params.append('filter', this.currentFilter);
+            }
+
+            const response = await fetch(`/api/posts?${params.toString()}`, {
                 credentials: 'include'
             });
 
             if (response.ok) {
                 this.posts = await response.json();
+                this.filterPostsClientSide(); // Apply client-side filtering as fallback
                 this.renderPosts();
             } else {
                 this.showNotification('Failed to load posts', 'error');
@@ -422,6 +452,34 @@ class ForumApp {
         } finally {
             this.hideLoading();
         }
+    }
+
+    filterPostsClientSide() {
+        // Apply client-side filtering as fallback if backend doesn't support all filters
+        let filteredPosts = [...this.posts];
+
+        // Category filter
+        if (this.currentCategoryFilter) {
+            filteredPosts = filteredPosts.filter(post =>
+                post.category_ids && post.category_ids.includes(parseInt(this.currentCategoryFilter))
+            );
+        }
+
+        // Filter by type
+        if (this.currentFilter === 'my-posts' && this.currentUser) {
+            filteredPosts = filteredPosts.filter(post => post.user_id === this.currentUser.id);
+        }
+
+        // Search filter
+        if (this.currentSearchQuery) {
+            const query = this.currentSearchQuery.toLowerCase();
+            filteredPosts = filteredPosts.filter(post =>
+                post.title.toLowerCase().includes(query) ||
+                post.content.toLowerCase().includes(query)
+            );
+        }
+
+        this.posts = filteredPosts;
     }
 
     renderPosts() {
@@ -595,8 +653,23 @@ class ForumApp {
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
         e.target.classList.add('active');
 
+        // Reset other filters when changing navigation
         this.currentFilter = filter;
+        this.currentCategoryFilter = null;
+        this.currentSearchQuery = '';
         this.currentPage = 1;
+
+        // Update category items (remove active state)
+        document.querySelectorAll('.category-item').forEach(item => item.classList.remove('active'));
+        if (filter === 'all') {
+            document.querySelector('.category-item[data-category-id="all"]')?.classList.add('active');
+        }
+
+        // Clear search input
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.value = '';
+        }
 
         // Update posts title
         const titles = {
@@ -622,8 +695,21 @@ class ForumApp {
             itemElement.classList.add('active');
         }
 
+        // Reset other filters when filtering by category
         this.currentCategoryFilter = categoryId;
+        this.currentFilter = 'all';
+        this.currentSearchQuery = '';
         this.currentPage = 1;
+
+        // Update navigation buttons
+        document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
+        document.querySelector('.nav-btn[data-filter="all"]')?.classList.add('active');
+
+        // Clear search input
+        const searchInput = document.getElementById('search-input');
+        if (searchInput) {
+            searchInput.value = '';
+        }
 
         // Update posts title
         const categoryName = categoryId ?
