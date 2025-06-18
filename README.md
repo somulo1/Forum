@@ -147,7 +147,7 @@ forum/
 2. Build and run the application using Docker:
 
    ```bash
-   docker-compose up --build
+   docker-compose up --build 
    ```
 
 3. Access the application:
