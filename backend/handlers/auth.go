@@ -43,7 +43,7 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	file, handler, err := r.FormFile("avatar")
 	if err != nil {
 		log.Printf("No avatar uploaded or failed to read: %v\n", err)
-		avatarURL = "/static/default.png"
+		avatarURL = "/static/profiles/default.png"
 	} else {
 		defer file.Close()
 
