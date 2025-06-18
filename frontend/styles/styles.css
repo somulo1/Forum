@@ -704,6 +704,22 @@ img {
     text-align: right;
 }
 
+/* Compact styling for reply comments */
+.comment.reply-comment .comment-time {
+    font-size: 0.7rem;
+    margin-top: 0.2rem;
+}
+
+.comment.reply-comment .comment-username {
+    font-size: 0.85rem;
+    font-weight: 600;
+}
+
+.comment.reply-comment .comment-text {
+    font-size: 0.9rem;
+    line-height: 1.3;
+}
+
 .comment-actions {
     display: flex;
     gap: 4rem;
@@ -825,6 +841,124 @@ img {
     overflow: scroll;
  }
 
+/* ========== Threaded Comments Styles =========== */
+
+/* Reply comment styling - clean thread line approach */
+.comment.reply-comment {
+    margin-left: 32px;
+    margin-top: 6px;
+    padding-left: 12px;
+    border-left: 1px solid #e8e8e8;
+    background: transparent;
+    position: relative;
+}
+
+/* Thread line connector */
+.comment.reply-comment::before {
+    content: '';
+    position: absolute;
+    left: -2px;
+    top: -8px;
+    width: 14px;
+    height: 16px;
+    border-left: 1px solid #d0d0d0;
+    border-bottom: 1px solid #d0d0d0;
+    border-bottom-left-radius: 6px;
+}
+
+/* Smaller avatar for replies */
+.comment.reply-comment .comment-avatar img {
+    width: 32px;
+    height: 32px;
+}
+
+/* Replies container - minimal spacing */
+.replies-container {
+    margin-top: 8px;
+    margin-bottom: 0;
+}
+
+/* Compact comment structure for replies */
+.comment.reply-comment .comment-content {
+    margin-bottom: 4px;
+}
+
+.comment.reply-comment .comment-footer {
+    margin-top: 4px;
+}
+
+.comment.reply-comment .comment-actions .reaction-btn {
+    padding: 2px 6px;
+    font-size: 11px;
+}
+
+/* Reply form styling - cleaner approach */
+.reply-comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    padding: 6px 12px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #007bff;
+}
+
+.reply-comment-header p {
+    margin: 0;
+    font-style: italic;
+    color: #495057;
+    font-size: 13px;
+}
+
+.close-reply {
+    background: #dc3545;
+    color: white;
+    border: none;
+    padding: 3px 8px;
+    border-radius: 3px;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+.close-reply:hover {
+    background: #c82333;
+}
+
+/* Original comment in reply form - minimal styling */
+.original-comment {
+    background-color: #f8f9fa;
+    border: 1px solid #e9ecef;
+    border-radius: 4px;
+    margin-bottom: 8px;
+    padding: 8px;
+}
+
+.original-comment .comment-actions {
+    display: none;
+}
+
+.original-comment .comment-footer {
+    margin-top: 4px;
+}
+
+/* Reduce overall comment spacing for better density */
+.comment {
+    margin-bottom: 12px;
+    padding: 8px;
+}
+
+/* Make thread lines more subtle on hover */
+.comment.reply-comment:hover {
+    border-left-color: #007bff;
+    background-color: #f8f9fa;
+}
+
+.comment.reply-comment:hover::before {
+    border-color: #007bff;
+}
+
  .reply-comments-container {
     margin-left: 1rem;
  }
@@ -852,24 +986,39 @@ img {
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
-    z-index: 1000;
+    background-color: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 9999;
     display: flex;
     justify-content: center;
     align-items: center;
     opacity: 0;
     visibility: hidden;
-    transition: opacity 0.3s ease, visibility 0.3s ease;
+    transition: all 0.3s ease;
 }
 
 .modal.hidden {
     opacity: 0;
     visibility: hidden;
+    pointer-events: none;
 }
 
 .modal:not(.hidden) {
     opacity: 1;
     visibility: visible;
+    pointer-events: all;
+}
+
+/* Blur effect for main content when modal is open */
+.main-container.blur {
+    filter: blur(5px);
+    transition: filter 0.3s ease;
+    pointer-events: none;
+}
+
+.main-container {
+    transition: filter 0.3s ease;
 }
 
 .modal-content {
@@ -892,218 +1041,261 @@ img {
     z-index: 1001;
 }
 
-/* Auth Container */
-.cont {
-    background: #fff;
-    border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-    width: 900px;
-    height: 550px;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-}
-
-/* Sliding overlay */
-.sub-cont {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 50%;
-    height: 100%;
-    overflow: hidden;
-    transition: transform 0.6s ease-in-out;
-    z-index: 200;
-}
-
-.cont.s-signup .sub-cont {
-    transform: translate3d(-100%, 0, 0);
-}
-
-/* Image overlay */
-.img {
-    position: absolute;
-    left: -100%;
-    width: 200%;
-    height: 100%;
-    background: linear-gradient(to right, var(--bg-color), var(--hover-color));
-    transform: translate3d(0, 0, 0);
-    transition: transform 0.6s ease-in-out;
-}
-
-.cont.s-signup .img {
-    transform: translate3d(50%, 0, 0);
-}
-
-/* Text containers */
-.img-text {
-    position: absolute;
-    width: 50%;
-    top: 50%;
-    padding: 0 30px;
-    color: #fff;
-    text-align: center;
-    transition: all 0.6s ease-in-out;
-    transform: translateY(-50%);
-    opacity: 0;
-    visibility: hidden;
-}
-
-/* Sign In text (initial state) */
-.img-text.m-in {
-    right: 0;
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(-50%);
-}
-
-.cont.s-signup .img-text.m-in {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-50%) translateX(100%);
-}
-
-/* Sign Up text */
-.img-text.m-up {
-    left: 0;
-    opacity: 0;
-    visibility: hidden;
-    transform: translateY(-50%) translateX(-100%);
-}
-
-.cont.s-signup .img-text.m-up {
-    opacity: 1;
-    visibility: visible;
-    transform: translateY(-50%) translateX(0);
-}
-
-/* Text styling */
-.img-text h2 {
-    font-size: 32px;
-    margin-bottom: 15px;
-    font-weight: 500;
-    opacity: 1;
-}
-
-.img-text p {
-    font-size: 16px;
-    line-height: 1.5;
-    opacity: 1;
-}
-
-/* Toggle button */
-.img-btn {
-    position: absolute;
-    left: 50%;
-    top: 65%;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-    color: #fff;
-    text-align: center;
-    z-index: 10;
+/* ===== Auth Modal Styles ===== */
+.auth-modal-overlay {
     width: 100%;
-}
-
-.img-btn span {
-    font-weight: 500;
-    padding: 12px 30px;
-    border: 2px solid #fff;
-    border-radius: 30px;
-    display: inline-block;
-    margin: 0 10px;
-    transition: all 0.3s ease;
-    font-size: 16px;
-}
-
-/* Button visibility */
-.img-btn span.m-up {
-    opacity: 0;
-    visibility: hidden;
-}
-
-.img-btn span.m-in {
-    opacity: 1;
-    visibility: visible;
-}
-
-.cont.s-signup .img-btn span.m-up {
-    opacity: 1;
-    visibility: visible;
-}
-
-.cont.s-signup .img-btn span.m-in {
-    opacity: 0;
-    visibility: hidden;
-}
-
-/* Forms */
-.form {
-    position: relative;
-    width: 50%;
     height: 100%;
-    padding: 50px 30px;
-    transition: all 0.6s ease-in-out;
-    opacity: 0;
-    visibility: hidden;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    padding: 20px;
+    box-sizing: border-box;
 }
 
-.form.sign-in {
-    opacity: 1;
-    visibility: visible;
-    z-index: 2;
+.auth-modal-container {
+    background: white;
+    border-radius: 16px;
+    box-shadow: 0 25px 50px rgba(0, 0, 0, 0.25);
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    position: relative;
+    z-index: 10000;
+    animation: modalSlideIn 0.3s ease-out;
 }
 
-.cont.s-signup .form.sign-in {
-    opacity: 0;
-    visibility: hidden;
-    transform: translateX(-100%);
-}
-
-.form.sign-up {
-    position: absolute;
-    top: 0;
-    left: 50%;
-    transform: translateX(100%);
-    z-index: 1;
-}
-
-.cont.s-signup .form.sign-up {
-    transform: translateX(-100%);
-    opacity: 1;
-    visibility: visible;
-    z-index: 2;
-}
-
-/* Responsive Design */
-@media (max-width: 768px) {
-    .cont {
-        width: 90%;
-        height: auto;
-        min-height: 500px;
+@keyframes modalSlideIn {
+    from {
+        opacity: 0;
+        transform: translateY(-30px) scale(0.9);
     }
-
-    .form {
-        width: 100%;
-        padding: 30px 20px;
-    }
-
-    .sub-cont {
-        display: none;
-    }
-
-    .sign-up {
-        position: relative;
-        transform: none;
+    to {
         opacity: 1;
-        display: none;
+        transform: translateY(0) scale(1);
     }
+}
 
-    .cont.s-signup .sign-in {
-        display: none;
-    }
+/* Ensure modal appears above everything */
+.modal * {
+    box-sizing: border-box;
+}
 
-    .cont.s-signup .sign-up {
-        display: block;
-    }
+/* Prevent body scroll when modal is open */
+body.modal-open {
+    overflow: hidden;
+}
+
+.close-btn {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    background: none;
+    border: none;
+    font-size: 24px;
+    color: #666;
+    cursor: pointer;
+    z-index: 10001;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: all 0.2s ease;
+}
+
+.close-btn:hover {
+    background: #f5f5f5;
+    color: #333;
+}
+
+/* Auth Tabs */
+.auth-tabs {
+    display: flex;
+    border-bottom: 1px solid #e5e5e5;
+}
+
+.auth-tab {
+    flex: 1;
+    padding: 16px 24px;
+    background: none;
+    border: none;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    border-bottom: 2px solid transparent;
+}
+
+.auth-tab.active {
+    color: var(--bg-color);
+    border-bottom-color: var(--bg-color);
+}
+
+.auth-tab:hover {
+    color: var(--bg-color);
+    background: #f8f9fa;
+}
+
+/* Form Containers */
+.auth-form-container {
+    display: none;
+    padding: 32px;
+    max-height: 70vh;
+    overflow-y: auto;
+}
+
+.auth-form-container.active {
+    display: block;
+}
+
+.auth-form {
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Form Header */
+.form-header {
+    text-align: center;
+    margin-bottom: 32px;
+}
+
+.form-header h2 {
+    font-size: 28px;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 8px;
+}
+
+.form-header p {
+    color: #666;
+    font-size: 16px;
+    margin: 0;
+}
+
+/* Form Content */
+.form-content {
+    margin-bottom: 24px;
+}
+
+.form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-bottom: 16px;
+}
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 8px;
+    font-size: 14px;
+}
+
+.form-group input {
+    width: 100%;
+    padding: 12px 16px;
+    border: 2px solid #e5e5e5;
+    border-radius: 8px;
+    font-size: 16px;
+    transition: border-color 0.2s ease;
+    background: #fff;
+}
+
+.form-group input:focus {
+    outline: none;
+    border-color: var(--bg-color);
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.form-group input:invalid {
+    border-color: #ef4444;
+}
+
+/* File Input Styling */
+.file-input-wrapper {
+    position: relative;
+    border: 2px dashed #e5e5e5;
+    border-radius: 8px;
+    padding: 24px;
+    text-align: center;
+    transition: border-color 0.2s ease;
+    cursor: pointer;
+}
+
+.file-input-wrapper:hover {
+    border-color: var(--bg-color);
+}
+
+.file-input-wrapper input[type="file"] {
+    position: absolute;
+    opacity: 0;
+    width: 100%;
+    height: 100%;
+    cursor: pointer;
+    border: none;
+    padding: 0;
+}
+
+.file-input-text {
+    color: #666;
+    font-size: 14px;
+}
+
+/* Submit Button */
+.submit-btn {
+    width: 100%;
+    padding: 14px 24px;
+    background: var(--bg-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.submit-btn:hover {
+    background: var(--hover-color);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+/* Form Footer */
+.form-footer {
+    text-align: center;
+    margin-top: 24px;
+}
+
+.form-footer p {
+    color: #666;
+    font-size: 14px;
+    margin: 0;
+}
+
+.toggle-signup,
+.toggle-signin {
+    color: var(--bg-color);
+    cursor: pointer;
+    font-weight: 500;
+    text-decoration: underline;
+}
+
+.toggle-signup:hover,
+.toggle-signin:hover {
+    color: var(--hover-color);
 }
 
 /* ===== Responsive ===== */
@@ -1142,559 +1334,49 @@ img {
     }
 }
 
-/* Auth Modal Styles */
-.auth-modal-content {
-    background: none;
-    box-shadow: none;
-    width: 90%;
-    max-width: 900px;
-    padding: 0;
-    margin: 20px;
-}
-
-.auth-modal-content .cont {
-    background: #fff;
-    border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    min-height: 550px;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-    transition: transform 0.6s ease-in-out;
-}
-
-.auth-modal-content .close-btn {
-    position: absolute;
-    right: 10px;
-    top: 10px;
-    font-size: 24px;
-    background: none;
-    border: none;
-    color: #333;
-    cursor: pointer;
-    z-index: 1000;
-}
-
-.auth-modal-content .form {
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-    padding: 0 50px;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-    transition: all 0.6s ease-in-out;
-}
-
-.auth-modal-content .form.sign-in {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50%;
-    height: 100%;
-    transition: all 0.6s ease-in-out;
-    z-index: 2;
-}
-
-.auth-modal-content .form.sign-up {
-    position: absolute;
-    top: 0;
-    left: 0;
-    width: 50%;
-    height: 100%;
-    opacity: 0;
-    z-index: 1;
-    transition: all 0.6s ease-in-out;
-}
-
-.auth-modal-content .cont.s-signup .form.sign-in {
-    transform: translateX(100%);
-}
-
-.auth-modal-content .cont.s-signup .form.sign-up {
-    transform: translateX(100%);
-    opacity: 1;
-    z-index: 5;
-}
-
-.auth-modal-content .sub-cont {
-    position: absolute;
-    left: 50%;
-    top: 0;
-    width: 50%;
-    height: 100%;
-    overflow: hidden;
-    transition: transform 0.6s ease-in-out;
-    z-index: 100;
-}
-
-.auth-modal-content .cont.s-signup .sub-cont {
-    transform: translateX(-100%);
-}
-
-.auth-modal-content .img {
-    position: absolute;
-    left: -100%;
-    width: 200%;
-    height: 100%;
-    background: linear-gradient(to right, var(--bg-color), var(--hover-color));
-    transform: translateX(0);
-    transition: transform 0.6s ease-in-out;
-}
-
-.auth-modal-content .cont.s-signup .img {
-    transform: translateX(50%);
-}
-
-.auth-modal-content .img-text {
-    position: absolute;
-    width: 50%;
-    top: 50%;
-    transform: translateY(-50%);
-    padding: 0 20px;
-    color: #fff;
-    transition: transform 0.6s ease-in-out;
-}
-
-.auth-modal-content .img-text h2 {
-    margin-bottom: 10px;
-    font-weight: normal;
-}
-
-.auth-modal-content .img-text p {
-    font-size: 14px;
-    line-height: 1.4;
-}
-
-.auth-modal-content .img-text.m-up {
-    transform: translateX(-50%) translateY(100%);
-}
-
-.auth-modal-content .cont.s-signup .img-text.m-up {
-    transform: translateX(100%) translateY(-50%);
-}
-
-.auth-modal-content .img-text.m-in {
-    transform: translateX(50%) translateY(-50%);
-}
-
-.auth-modal-content .cont.s-signup .img-text.m-in {
-    transform: translateX(100%) translateY(-50%);
-}
-
-.auth-modal-content .img-btn {
-    position: absolute;
-    left: 50%;
-    top: 50%;
-    transform: translate(-50%, -50%);
-    cursor: pointer;
-    color: #fff;
-    text-align: center;
-}
-
-.auth-modal-content .img-btn span {
-    font-weight: bold;
-    padding: 10px 30px;
-    border: 2px solid #fff;
-    border-radius: 30px;
-}
-
-.auth-modal-content .img-btn span.m-up {
-    display: none;
-}
-
-.auth-modal-content .cont.s-signup .img-btn span.m-up {
-    display: inline-block;
-}
-
-.auth-modal-content .cont.s-signup .img-btn span.m-in {
-    display: none;
-}
-
-.auth-modal-content label {
-    display: block;
-    width: 100%;
-    max-width: 260px;
-    margin: 25px auto 0;
-    text-align: center;
-}
-
-.auth-modal-content label span {
-    font-size: 14px;
-    font-weight: 600;
-    color: #505f75;
-    text-transform: uppercase;
-}
-
-.auth-modal-content input {
-    display: block;
-    width: 100%;
-    margin-top: 5px;
-    font-size: 16px;
-    padding: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-}
-
-.auth-modal-content button.submit {
-    display: block;
-    margin: 40px auto 0;
-    width: 100%;
-    max-width: 260px;
-    height: 36px;
-    border-radius: 30px;
-    color: #fff;
-    font-size: 15px;
-    cursor: pointer;
-    background: var(--bg-color);
-    border: 0;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.auth-modal-content button.submit:hover {
-    background: var(--hover-color);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* Auth Modal Responsive Styles */
-.auth-modal-content {
-    background: none;
-    box-shadow: none;
-    width: 90%;
-    max-width: 900px;
-    padding: 0;
-    margin: 20px;
-}
-
-.auth-modal-content .cont {
-    background: #fff;
-    border-radius: 10px;
-    position: relative;
-    overflow: hidden;
-    width: 100%;
-    min-height: 550px;
-    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
-}
-
-/* Responsive adjustments */
+/* Auth Modal Responsive Design */
 @media (max-width: 768px) {
-    .auth-modal-content .cont {
-        min-height: 500px;
+    .auth-modal-container {
+        max-width: 95%;
+        margin: 10px;
     }
 
-    .auth-modal-content .form {
-        width: 100% !important;
-        transform: translateX(0) !important;
+    .auth-form-container {
+        padding: 24px 20px;
     }
 
-    .auth-modal-content .sub-cont {
-        position: relative;
-        left: 0;
-        width: 100%;
-        height: auto;
-        padding: 0;
-        transform: translateX(0) !important;
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0;
     }
 
-    .auth-modal-content .img {
-        display: none;
+    .form-header h2 {
+        font-size: 24px;
     }
 
-    .auth-modal-content .form.sign-up {
-        display: none;
-        opacity: 0;
-    }
-
-    .auth-modal-content .cont.s-signup .form.sign-in {
-        display: none;
-    }
-
-    .auth-modal-content .cont.s-signup .form.sign-up {
-        display: flex;
-        opacity: 1;
-        transform: translateX(0);
-    }
-
-    /* Mobile toggle button */
-    .mobile-toggle {
-        display: block;
-        text-align: center;
-        margin-top: 20px;
-    }
-
-    .mobile-toggle button {
-        background: none;
-        border: 2px solid var(--bg-color);
-        color: var(--bg-color);
-        padding: 8px 20px;
-        border-radius: 20px;
+    .auth-tab {
+        padding: 12px 16px;
         font-size: 14px;
-        cursor: pointer;
-        transition: all 0.3s ease;
-    }
-
-    .mobile-toggle button:hover {
-        background: var(--bg-color);
-        color: white;
     }
 }
 
-/* Desktop styles */
-@media (min-width: 769px) {
-    .auth-modal-content .form.sign-in {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 50%;
-        height: 100%;
-        transition: all 0.6s ease-in-out;
-        z-index: 2;
+@media (max-width: 480px) {
+    .auth-modal-container {
+        max-width: 100%;
+        margin: 0;
+        border-radius: 0;
+        max-height: 100vh;
     }
 
-    .auth-modal-content .cont.s-signup .form.sign-in {
-        transform: translateX(100%);
-    }
-
-    .auth-modal-content .form.sign-up {
-        position: absolute;
-        top: 0;
-        left: 0;
-        width: 50%;
-        height: 100%;
-        opacity: 0;
-        z-index: 1;
-        transition: all 0.6s ease-in-out;
-    }
-
-    .auth-modal-content .cont.s-signup .form.sign-up {
-        transform: translateX(100%);
-        opacity: 1;
-        z-index: 5;
-    }
-
-    .auth-modal-content .sub-cont {
-        position: absolute;
-        left: 50%;
-        top: 0;
-        width: 50%;
-        height: 100%;
-        overflow: hidden;
-        transition: transform 0.6s ease-in-out;
-        z-index: 100;
-    }
-
-    .auth-modal-content .cont.s-signup .sub-cont {
-        transform: translateX(-100%);
-    }
-
-    .mobile-toggle {
-        display: none;
+    .auth-form-container {
+        padding: 20px 16px;
+        max-height: calc(100vh - 60px);
     }
 }
 
-/* Common styles for both mobile and desktop */
-.auth-modal-content .form {
-    background: #fff;
-    display: flex;
-    flex-direction: column;
-    padding: 0 50px;
-    height: 100%;
-    justify-content: center;
-    align-items: center;
-    text-align: center;
-}
 
-.auth-modal-content label {
-    display: block;
-    width: 100%;
-    max-width: 260px;
-    margin: 25px auto 0;
-    text-align: center;
-}
 
-.auth-modal-content label span {
-    font-size: 14px;
-    font-weight: 600;
-    color: #505f75;
-    text-transform: uppercase;
-}
 
-.auth-modal-content input {
-    display: block;
-    width: 100%;
-    margin-top: 5px;
-    font-size: 16px;
-    padding: 10px;
-    border: 1px solid rgba(0, 0, 0, 0.1);
-    border-radius: 5px;
-}
-
-.auth-modal-content button.submit {
-    display: block;
-    margin: 40px auto 0;
-    width: 100%;
-    max-width: 260px;
-    height: 36px;
-    border-radius: 30px;
-    color: #fff;
-    font-size: 15px;
-    cursor: pointer;
-    background: var(--bg-color);
-    border: 0;
-    outline: none;
-    transition: all 0.3s ease;
-}
-
-.auth-modal-content button.submit:hover {
-    background: var(--hover-color);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
-}
-
-/* Form Elements */
-.form h2 {
-    margin-bottom: 40px;
-    font-size: 28px;
-    color: #333;
-    font-weight: 600;
-}
-
-/* Sign Up Text Styling */
-.img-text.m-up {
-    color: #000;
-    margin-top: 40px;
-    z-index: 2;
-    position: absolute;
-    right: 30px;
-    text-align: right;
-    width: 250px;
-}
-
-.img-text.m-up h2,
-.img-text.m-up p {
-    color: #000;
-    text-shadow: 1px 1px 2px rgba(255, 255, 255, 0.5);
-}
-
-.sub-cont .form.sign-up {
-    margin-top: 60px;
-}
-
-.form label {
-    display: block;
-    width: 100%;
-    margin: 30px 0;
-    text-align: left;
-    position: relative;
-}
-
-.form label span {
-    position: absolute;
-    top: 0;
-    left: 5px;
-    font-size: 16px;
-    color: #999;
-    pointer-events: none;
-    transition: all 0.3s ease;
-    background: transparent;
-    padding: 0 5px;
-}
-
-.form input {
-    width: 100%;
-    padding: 12px 5px;
-    font-size: 16px;
-    color: #333;
-    border: none;
-    border-bottom: 2px solid #ddd;
-    background: transparent;
-    transition: all 0.3s ease;
-}
-
-.form input:focus {
-    outline: none;
-    border-bottom-color: var(--bg-color);
-}
-
-/* Floating label effect */
-.form input:focus ~ span,
-.form input:not(:placeholder-shown) ~ span {
-    top: -25px;
-    font-size: 13px;
-    color: var(--bg-color);
-    font-weight: 500;
-    letter-spacing: 0.5px;
-}
-
-/* File input specific styling */
-.form input[type="file"] {
-    padding: 10px 5px;
-    border: 2px dashed #ddd;
-    border-radius: 4px;
-    cursor: pointer;
-}
-
-.form input[type="file"]:hover {
-    border-color: var(--bg-color);
-}
-
-/* Submit button enhancement */
-.form button.submit {
-    width: 100%;
-    padding: 14px;
-    margin-top: 35px;
-    background: var(--bg-color);
-    color: #fff;
-    border: none;
-    border-radius: 4px;
-    font-size: 16px;
-    font-weight: 600;
-    cursor: pointer;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    letter-spacing: 0.5px;
-}
-
-.form button.submit:hover {
-    background: var(--hover-color);
-    transform: translateY(-2px);
-    box-shadow: 0 5px 15px rgba(29, 92, 126, 0.2);
-}
-
-.form button.submit:active {
-    transform: translateY(0);
-}
-
-/* Error state */
-.form input.error {
-    border-bottom-color: #ff3d00;
-}
-
-.form input.error ~ span {
-    color: #ff3d00;
-}
-
-/* Success state */
-.form input.success {
-    border-bottom-color: #28a745;
-}
-
-.form input.success ~ span {
-    color: #28a745;
-}
-
-/* Placeholder styling */
-.form input::placeholder {
-    color: transparent;
-}
-
-/* Focus within effect for the entire label group */
-.form label:focus-within span {
-    color: var(--bg-color);
-}
 
 /* Post Feed Section */
 #postFeed {
