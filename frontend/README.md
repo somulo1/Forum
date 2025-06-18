@@ -1,6 +1,7 @@
 # Forum Frontend Documentation
 
 ## Table of Contents
+
 1. [Project Overview](#project-overview)
 2. [Project Structure](#project-structure)
 3. [Components](#components)
@@ -17,10 +18,10 @@ This is a modern, single-page web application for a forum platform. The frontend
 
 ## Project Structure
 
-
 ## Components
 
 ### Authentication Manager ([auth.js](./components/auth.js))
+
 - Handles user authentication processes.
 - Methods:
   - **[checkAuth()](./components/auth.js#L15)**: Verifies user authentication status by checking if a valid JWT token is stored in `localStorage`. If the token is present, it sends a request to the server to verify the token's validity and retrieves the current user's information.
@@ -32,6 +33,7 @@ This is a modern, single-page web application for a forum platform. The frontend
   - **[showRegisterForm()](./components/auth.js#L136)**: Displays the registration form in a modal.
 
 ### Post Manager ([post.js](./components/post.js))
+
 - Manages post-related operations.
 - Key Functionalities:
   - **[fetchPosts()](./components/post.js#L10)**: Retrieves posts from the server.
@@ -41,12 +43,14 @@ This is a modern, single-page web application for a forum platform. The frontend
   - **[handlePostInteraction()](./components/post.js#L90)**: Manages interactions such as liking or commenting on posts.
 
 ### Category Manager ([category.js](./components/category.js))
+
 - Handles category-related operations.
 - Responsibilities:
   - **[fetchCategories()](./components/category.js#L10)**: Retrieves categories from the server.
   - **[filterPostsByCategory()](./components/category.js#L30)**: Filters posts based on the selected category.
 
 ### Profile Manager ([profile.js](./components/profile.js))
+
 - Manages user profile interactions.
 - Features:
   - **[fetchUserProfile()](./components/profile.js#L10)**: Retrieves the current user's profile information.
@@ -54,12 +58,14 @@ This is a modern, single-page web application for a forum platform. The frontend
   - **[displayProfile()](./components/profile.js#L50)**: Renders the user's profile information in the UI.
 
 ### Trending Manager ([trending.js](./components/trending.js))
+
 - Manages trending content.
 - Responsibilities:
   - **[fetchTrendingPosts()](./components/trending.js#L10)**: Retrieves trending posts from the server.
   - **[displayTrendingPosts()](./components/trending.js#L30)**: Renders trending posts in the UI.
 
 ### Story Manager ([story.js](./components/story.js))
+
 - Manages story-related features.
 - Responsibilities:
   - **[fetchStories()](./components/story.js#L10)**: Retrieves stories from the server.
@@ -67,6 +73,7 @@ This is a modern, single-page web application for a forum platform. The frontend
   - **[displayStories()](./components/story.js#L50)**: Renders stories in the UI.
 
 ### Navigation Manager ([navigation.js](./components/navigation.js))
+
 - Manages navigation and routing within the application.
 - Responsibilities:
   - **[init()](./components/navigation.js#L10)**: Initializes navigation settings and event listeners.
@@ -75,6 +82,7 @@ This is a modern, single-page web application for a forum platform. The frontend
 ## Configuration
 
 ### API Configuration ([config.mjs](./config.mjs))
+
 ```javascript
 export const API_BASE_URL = 'http://localhost:8080/api';
 export const APP_CONFIG = {
@@ -152,27 +160,33 @@ To run the frontend of the forum application, ensure you are in the `frontend` d
 1. **Using npm with a Development Script**:
    - First, ensure you have Node.js and npm installed on your machine.
    - Navigate to the `frontend` directory:
+
      ```bash
      cd /path/to/your/forum/frontend
      ```
+
    - Install the necessary npm packages defined in your `package.json`:
+
      ```bash
      npm install
      ```
+
    - If you have a development script defined in your `package.json`, you can start the development server by running:
+
      ```bash
      npm run dev
      ```
-   - **Access the Application**: Open your web browser and go to the URL specified in your script (usually `http://localhost:5173` or similar).
 
+   - **Access the Application**: Open your web browser and go to the URL specified in your script (usually `http://localhost:5173` or similar).
 
 2. **Using Python's HTTP Server**:
    - Start a simple HTTP server to serve your static files. You can specify a port number (e.g., 8000) as follows:
+
      ```bash
      python3 -m http.server 8000
      ```
-   - **Access the Application**: Open your web browser and go to `http://localhost:8000`.
 
+   - **Access the Application**: Open your web browser and go to `http://localhost:8000`.
 
 ## Deployment
 
@@ -181,6 +195,7 @@ Deployment involves making your application available to users on the internet. 
 1. **Build the Application**:
    - Ensure all assets are optimized for production. Use tools like Webpack or Parcel to bundle your JavaScript files, minify CSS, and optimize images. This reduces load times and improves performance.
    - Example command to build with Webpack:
+
      ```bash
      npx webpack --mode production
      ```
@@ -199,10 +214,13 @@ Deployment involves making your application available to users on the internet. 
    - Follow the hosting platform's instructions to deploy your application. This often involves pushing your code to a Git repository or using CLI tools provided by the platform.
    - Example commands for deploying to Netlify and Vercel:
      - **Netlify**:
+
        ```bash
        netlify deploy --prod
        ```
+
      - **Vercel**:
+
        ```bash
        vercel --prod
        ```
