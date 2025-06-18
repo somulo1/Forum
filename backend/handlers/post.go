@@ -34,7 +34,8 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	title := r.FormValue("title")
 	content := r.FormValue("content")
 
-	// Get category names from the form
+	// Get category IDs or names from the form
+	categoryIDStrings := r.Form["category_ids[]"]
 	categoryNames := r.Form["category_names[]"]
 
 	// Validate user session
@@ -69,11 +70,24 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		imageURL = "/" + dstPath
 	}
 
-	// Get category IDs by resolving category names
-	categoryIDs, err := sqlite.GetOrCreateCategoryIDs(db, categoryNames)
-	if err != nil {
-		http.Error(w, "Failed to resolve categories", http.StatusInternalServerError)
-		return
+	// Get category IDs - either from direct IDs or by resolving names
+	var categoryIDs []int
+
+	if len(categoryIDStrings) > 0 {
+		// Convert string IDs to integers
+		for _, idStr := range categoryIDStrings {
+			if id, err := strconv.Atoi(idStr); err == nil {
+				categoryIDs = append(categoryIDs, id)
+			}
+		}
+	} else if len(categoryNames) > 0 {
+		// Resolve category names to IDs (legacy support)
+		var err error
+		categoryIDs, err = sqlite.GetOrCreateCategoryIDs(db, categoryNames)
+		if err != nil {
+			http.Error(w, "Failed to resolve categories", http.StatusInternalServerError)
+			return
+		}
 	}
 
 	// Create the post with categories
@@ -114,7 +128,7 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 			utils.SendJSONError(w, "Failed to fetch post user information", http.StatusInternalServerError)
 			return
 		}
-		post.ProfileAvatar = userInfo.AvatarURL 
+		post.ProfileAvatar = userInfo.AvatarURL
 		fullPosts = append(fullPosts, post)
 	}
 
@@ -235,7 +249,7 @@ func GetPostComments(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 			utils.SendJSONError(w, "Failed to fetch comment user information", http.StatusInternalServerError)
 			return
 		}
-		comment.UserName =userInfo.Username
+		comment.UserName = userInfo.Username
 		comment.ProfileAvatar = userInfo.AvatarURL
 
 		fullComments = append(fullComments, comment)
