@@ -1,94 +1,62 @@
-// SPA Routing Integration for your existing app.js
-import { renderCreatePostSection, fetchForumPosts, renderPosts, renderCategories } from './app.js';
-import { renderProfile } from './profile.mjs';
+/**
+ * SPA Router module: handles route mapping, navigation, and view rendering.
+ * Import your view functions and export router utilities.
+ */
 
-const routes = {
-    feed: renderPosts,
-    profile: renderProfile,
-    // saved: renderSaved,
-    trending: renderTrending,
+import { renderFeedView } from './post.mjs';
+import { renderProfileView } from './profile.mjs';
+import { renderTrendingView } from './trending.mjs';
+import { renderSavedView } from './saved.mjs';
+
+/**
+ * Route mapping: maps route names to view rendering functions.
+ */
+export const routes = {
+    home: renderFeedView,
+    profile: renderProfileView,
+    trending: renderTrendingView,
+    saved: renderSavedView,
 };
-  
-export function handleRoute(view, pushState = true) {
-    const mainContent = document.getElementById("mainContent");
-    if (!mainContent) return;
-    mainContent.innerHTML = "";
-  
-    const render = routes[view];
-    if (render) {
-      render();
-      setActiveSidebar(view);
-      if (pushState) {
-        const path = view === "feed" ? "/" : `/${view}`;
-        history.pushState({ view }, "", path);
-      }
-    } else {
-      mainContent.innerHTML = "<h2>404 - Page Not Found</h2>";
-    }
+
+/**
+ * Navigates to a view and updates browser history.
+ * @param {Event} e
+ */
+export async function navigate(e) {
+    e.preventDefault();
+    const view = e.currentTarget.dataset.view;
+    window.history.pushState({ view }, "", `/${view}`);
+    await handleRoute();
 }
-  
-function setActiveSidebar(view) {
-    document.querySelectorAll(".menu-item").forEach((item) => {
-      item.classList.toggle("active", item.dataset.view === view);
+
+/**
+ * Handles the current route: renders the correct view.
+ */
+export async function handleRoute() {
+    const path = window.location.pathname.replace("/", "") || "home";
+    const view = routes[path] ? path : "home";
+
+    document.getElementById("createPostSection").innerHTML = '';
+    const postFeed = document.getElementById("postFeed");
+    postFeed.innerHTML = `<div class="loading">Loading...</div>`;
+
+    if (routes[view]) {
+        try {
+            await routes[view]();
+        } catch (error) {
+            console.error(`Error rendering ${view} view:`, error);
+            postFeed.innerHTML = `<div class="error-message">Failed to load view. Please try again later.</div>`;
+        }
+    }
+    setActiveSidebar(view);
+}
+
+/**
+ * Sets the active sidebar/menu item.
+ * @param {string} view
+ */
+export function setActiveSidebar(view) {
+    document.querySelectorAll(".menu-item").forEach(item => {
+        item.classList.toggle("active", item.dataset.view === view);
     });
 }
-  
-document.addEventListener("click", (e) => {
-    const menuItem = e.target.closest(".menu-item");
-    if (menuItem && menuItem.dataset.view) {
-      e.preventDefault();
-      handleRoute(menuItem.dataset.view);
-    }
-});
-  
-window.addEventListener("popstate", (e) => {
-    const view = e.state?.view || "feed";
-    handleRoute(view, false);
-});
-  
-window.addEventListener("DOMContentLoaded", () => {
-    const path = window.location.pathname.replace("/", "") || "feed";
-    handleRoute(path);
-});
-  
-  // View renderers
-function renderFeed() {
-    renderCreatePostSection();
-    fetchForumPosts().then((posts) => {
-      forumPosts = posts;
-      renderPosts(forumPosts);
-      renderCategories();
-    });
-}
-  
-// function renderSaved() {
-//     const main = document.getElementById("mainContent");
-//     main.innerHTML = `<section class="create-post-section"><h2>Saved Posts</h2></section>`;
-//     // TODO: Fetch and render saved posts from backend
-// }
-  
-export async function renderTrending() {
-    const main = document.getElementById("mainContent");
-  main.innerHTML = "<section class='create-post-section'><h2>Loading trending posts...</h2></section>";
-
-  try {
-    const res = await fetch("http://localhost:8080/api/posts/trending");
-    if (!res.ok) throw new Error("Failed to fetch trending posts");
-
-    const posts = await res.json();
-
-    if (posts.length === 0) {
-      main.innerHTML = "<section class='create-post-section'><p>No trending posts available.</p></section>";
-      return;
-    }
-
-    main.innerHTML = "<section class='create-post-section'><h2>Trending Posts</h2><div id='trendingPosts'></div></section>";
-    const trendingContainer = document.getElementById("trendingPosts");
-    await renderPosts(posts);
-  } catch (err) {
-    main.innerHTML = `<section class='create-post-section'><p>Error loading trending posts.</p></section>`;
-    console.error("Trending error:", err);
-  }
-}
-
-  
