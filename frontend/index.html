@@ -1,198 +1,196 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Forum</title>
-    <link rel="icon" href="http://localhost:8080/static/pictures/forum-logo.png" type="image/x-icon"/>
-    <link rel="stylesheet" href="styles/styles.css" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" />
-    <style>
-        /* Add blur effect styles */
-        .main-container {
-            transition: filter 0.3s ease-in-out;
-        }
-        
-        .main-container.blur {
-            filter: blur(5px) brightness(0.7);
-            pointer-events: none;
-        }
-    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forum - Community Discussion</title>
+    <link rel="stylesheet" href="frontend/styles/styles.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-    <div class="main-container">
-        <!-- Navbar -->
-        <nav class="navbar" role="navigation" aria-label="Main navigation">
-            <div id="navLogoContainer"></div>
-            <div class="nav-search" role="search">
-                <i class="fas fa-search search-icon"></i>
-                <input type="text" id="searchInput" placeholder="Search..." aria-label="Search forum" />
-            </div>
-            <div class="nav-auth" id="navAuth" role="group" aria-label="User Authentication">
-                
-                <!-- Avatar, Username & Logout Button will appear here -->
-            </div>
-        </nav>
-        
-        
-
-        <!-- Main Layout -->
+    <!-- Header -->
+    <header class="header">
         <div class="container">
-            <!-- Left Sidebar -->
-            <aside class="sidebar left-sidebar" aria-label="Sidebar navigation">
-                <div class="profile-section" id="userProfile">
-                    <!-- User profile will load dynamically -->
+            <div class="header-content">
+                <div class="logo">
+                    <h1>Forum</h1>
                 </div>
-                <nav class="menu-section" aria-label="Sidebar menu">
-                    <div class="menu-item active" data-view="home"><i class="fas fa-home"></i> Home</div>
-                    <div class="menu-item" data-view="profile"><i class="fas fa-user"></i> Profile</div>
-                    <div class="menu-item" data-view="trending"><i class="fas fa-fire"></i> Trending</div>
-                    <div class="menu-item" data-view="saved"><i class="fas fa-bookmark"></i> Saved</div>
-                </nav>
-            </aside>
-
-            <!-- Main Content -->
-            <main class="main-content" id="mainContent" role="main">
-                <section id="storySection" class="story-section">
-                    <!-- Stories will be rendered dynamically -->
-                </section>
-                <section id="createPostSection" class="create-post-section">
-                </section>
                 
-                <section id="postFeed">
-                    <!-- Posts will be injected here -->
-                </section>
-            </main>
+                <nav class="nav">
+                    <button class="nav-btn active" data-filter="all">All Posts</button>
+                    <button class="nav-btn" data-filter="categories">Categories</button>
+                    <button class="nav-btn user-only hidden" data-filter="my-posts">My Posts</button>
+                    <button class="nav-btn user-only hidden" data-filter="liked-posts">Liked Posts</button>
+                </nav>
 
-            <!-- Right Sidebar -->
-            <aside class="sidebar right-sidebar" aria-label="Right sidebar">
-                <section id="categoryFilter" class="category-section">
-                    <h3>Categories</h3>
-                    <!-- Dynamic category filters -->
-                </section>
-                <section id="trendingSection" class="trending-section">
-                    <h3>Trending</h3>
-                    <!-- Trending topics dynamically -->
-                </section>
-                <section id="suggestedUsers" class="suggested-section">
-                    <h3>Suggested Users</h3>
-                    <!-- Suggested users dynamically -->
-                </section>
-            </aside>
-        </div>
-    </div>
-
-    <!-- Modals -->
-    <!-- Auth Modal -->
-    <div id="authModal" class="modal hidden" role="dialog" aria-modal="true">
-        <div class="auth-modal-overlay">
-            <div class="auth-modal-container">
-                <button class="close-btn" aria-label="Close">&times;</button>
-
-                <!-- Tab Navigation -->
-                <div class="auth-tabs">
-                    <button class="auth-tab active" data-tab="signin">Sign In</button>
-                    <button class="auth-tab" data-tab="signup">Sign Up</button>
-                </div>
-
-                <!-- Sign In Form -->
-                <div class="auth-form-container signin-form active">
-                    <div class="auth-form">
-                        <div class="form-header">
-                            <h2>Welcome Back</h2>
-                            <p>Sign in to your account to continue</p>
-                        </div>
-
-                        <form class="form-content">
-                            <div class="form-group">
-                                <label for="signin-email">Email Address</label>
-                                <input type="email" id="signin-email" name="email" required />
-                            </div>
-
-                            <div class="form-group">
-                                <label for="signin-password">Password</label>
-                                <input type="password" id="signin-password" name="password" required />
-                            </div>
-
-                            <button type="button" class="submit-btn signin-submit">Sign In</button>
-                        </form>
-
-                        <div class="form-footer">
-                            <p>Don't have an account? <span class="toggle-signup">Sign up here</span></p>
-                        </div>
+                <div class="auth-section">
+                    <div class="user-info hidden">
+                        <img class="user-avatar" src="" alt="User Avatar">
+                        <span class="username"></span>
+                        <button class="btn btn-secondary" id="logout-btn">Logout</button>
                     </div>
-                </div>
-
-                <!-- Sign Up Form -->
-                <div class="auth-form-container signup-form">
-                    <div class="auth-form">
-                        <div class="form-header">
-                            <h2>Create Account</h2>
-                            <p>Join our community today</p>
-                        </div>
-
-                        <form class="form-content">
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="signup-username">Username</label>
-                                    <input type="text" id="signup-username" name="username" required />
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="signup-email">Email Address</label>
-                                    <input type="email" id="signup-email" name="email" required />
-                                </div>
-                            </div>
-
-                            <div class="form-group">
-                                <label for="signup-avatar">Profile Picture (Optional)</label>
-                                <div class="file-input-wrapper">
-                                    <input type="file" id="signup-avatar" name="avatar" accept="image/*" />
-                                    <span class="file-input-text">Choose file or drag here</span>
-                                </div>
-                            </div>
-
-                            <div class="form-row">
-                                <div class="form-group">
-                                    <label for="signup-password">Password</label>
-                                    <input type="password" id="signup-password" name="password" required />
-                                </div>
-
-                                <div class="form-group">
-                                    <label for="signup-confirm">Confirm Password</label>
-                                    <input type="password" id="signup-confirm" name="confirmPassword" required />
-                                </div>
-                            </div>
-
-                            <button type="button" class="submit-btn signup-submit">Create Account</button>
-                        </form>
-
-                        <div class="form-footer">
-                            <p>Already have an account? <span class="toggle-signin">Sign in here</span></p>
-                        </div>
+                    <div class="auth-buttons">
+                        <button class="btn btn-secondary" id="login-btn">Login</button>
+                        <button class="btn btn-primary" id="register-btn">Register</button>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
-  
-        <!-- Create Post Modal -->
-        <div id="createPostModal" class="modal hidden" role="dialog" aria-modal="true">
-            <div class="modal-content">
-                <span class="close" role="button" aria-label="Close post modal">&times;</span>
-                <div id="postForm"></div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="main">
+        <div class="container">
+            <!-- Create Post Section -->
+            <section class="create-post-section user-only hidden">
+                <div class="create-post-card">
+                    <h2>Create New Post</h2>
+                    <form id="create-post-form" enctype="multipart/form-data">
+                        <div class="form-group">
+                            <label for="post-title">Title</label>
+                            <input type="text" id="post-title" name="title" required>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="post-content">Content</label>
+                            <textarea id="post-content" name="content" rows="6" required></textarea>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="post-categories">Categories</label>
+                            <div class="categories-input">
+                                <input type="text" id="category-input" placeholder="Add category and press Enter">
+                                <div class="selected-categories" id="selected-categories"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="form-group">
+                            <label for="post-image">Image (optional)</label>
+                            <input type="file" id="post-image" name="image" accept="image/*">
+                        </div>
+                        
+                        <button type="submit" class="btn btn-primary">Create Post</button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Filters Section -->
+            <section class="filters-section">
+                <div class="filters">
+                    <div class="category-filters" id="category-filters">
+                        <!-- Categories will be loaded dynamically -->
+                    </div>
+                    <div class="search-filter">
+                        <input type="text" id="search-input" placeholder="Search posts...">
+                    </div>
+                </div>
+            </section>
+
+            <!-- Posts Section -->
+            <section class="posts-section">
+                <div class="posts-header">
+                    <h2 id="posts-title">All Posts</h2>
+                    <div class="sort-options">
+                        <select id="sort-select">
+                            <option value="newest">Newest First</option>
+                            <option value="oldest">Oldest First</option>
+                            <option value="most-liked">Most Liked</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="posts-container" id="posts-container">
+                    <!-- Posts will be loaded dynamically -->
+                </div>
+                
+                <div class="pagination" id="pagination">
+                    <!-- Pagination will be added dynamically -->
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <!-- Login Modal -->
+    <div class="modal" id="login-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Login</h2>
+                <button class="modal-close" data-modal="login-modal">&times;</button>
+            </div>
+            <form id="login-form">
+                <div class="form-group">
+                    <label for="login-username">Username</label>
+                    <input type="text" id="login-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="login-password">Password</label>
+                    <input type="password" id="login-password" name="password" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Login</button>
+            </form>
+            <div class="modal-footer">
+                <p>Don't have an account? <a href="#" id="switch-to-register">Register here</a></p>
             </div>
         </div>
+    </div>
 
-        <!-- Profile Modal -->
-        <div id="profileModal" class="modal hidden" role="dialog" aria-modal="true">
-            <div class="modal-content">
-                <span class="close" role="button" aria-label="Close profile modal">&times;</span>
-                <div id="profileForm"></div>
+    <!-- Register Modal -->
+    <div class="modal" id="register-modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2>Register</h2>
+                <button class="modal-close" data-modal="register-modal">&times;</button>
+            </div>
+            <form id="register-form">
+                <div class="form-group">
+                    <label for="register-username">Username</label>
+                    <input type="text" id="register-username" name="username" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-email">Email</label>
+                    <input type="email" id="register-email" name="email" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-password">Password</label>
+                    <input type="password" id="register-password" name="password" required>
+                </div>
+                <div class="form-group">
+                    <label for="register-avatar">Avatar URL (optional)</label>
+                    <input type="url" id="register-avatar" name="avatar_url">
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">Register</button>
+            </form>
+            <div class="modal-footer">
+                <p>Already have an account? <a href="#" id="switch-to-login">Login here</a></p>
             </div>
         </div>
     </div>
 
-    <script type="module" src="app.js"></script>
+    <!-- Post Detail Modal -->
+    <div class="modal" id="post-modal">
+        <div class="modal-content modal-large">
+            <div class="modal-header">
+                <h2 id="post-modal-title">Post Details</h2>
+                <button class="modal-close" data-modal="post-modal">&times;</button>
+            </div>
+            <div class="modal-body" id="post-modal-body">
+                <!-- Post content and comments will be loaded here -->
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Container -->
+    <div class="notification-container" id="notification-container">
+        <!-- Notifications will be added dynamically -->
+    </div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loading-overlay">
+        <div class="loading-spinner"></div>
+    </div>
+
+    <script src="frontend/js/app.js"></script>
 </body>
 </html>
