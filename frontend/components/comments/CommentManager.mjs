@@ -393,4 +393,19 @@ export class CommentManager {
         const form = replyFormContainer.querySelector('form');
         form.addEventListener('submit', (e) => this.handleCommentSubmit(e));
     }
+
+    /**
+     * Get comments for a specific post
+     * @param {number} postId - Post ID
+     * @returns {Array} - Array of comments
+     */
+    async getPostComments(postId) {
+        try {
+            const comments = await ApiUtils.get(`/api/comments/get?post_id=${postId}`);
+            return Array.isArray(comments) ? comments : [];
+        } catch (error) {
+            console.error(`Error getting comments for post ${postId}:`, error);
+            return [];
+        }
+    }
 }

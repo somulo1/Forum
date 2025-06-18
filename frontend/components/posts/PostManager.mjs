@@ -34,14 +34,25 @@ export class PostManager {
      */
     async renderPosts(posts = null) {
         const postsToRender = posts || this.posts;
+
+        // Ensure we have a valid container
+        if (!this.postContainer) {
+            this.postContainer = document.getElementById("postFeed");
+        }
+
+        if (!this.postContainer) {
+            console.error("Post container not found");
+            return;
+        }
+
         this.postContainer.innerHTML = "";
 
         for (const post of postsToRender) {
             const postCard = PostCard.create(post);
-            
+
             // Setup comment toggle for this post
             PostCard.setupCommentToggle(postCard);
-            
+
             this.postContainer.appendChild(postCard);
         }
 

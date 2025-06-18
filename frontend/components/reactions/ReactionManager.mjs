@@ -170,4 +170,40 @@ export class ReactionManager {
             }
         }
     }
+
+    /**
+     * Get reactions for a specific post
+     * @param {number} postId - Post ID
+     * @returns {Object} - Object with likes and dislikes counts
+     */
+    async getPostReactions(postId) {
+        try {
+            const result = await ApiUtils.get(`/api/likes/reactions?post_id=${postId}`);
+            return {
+                likes: result.likes || 0,
+                dislikes: result.dislikes || 0
+            };
+        } catch (error) {
+            console.error(`Error getting reactions for post ${postId}:`, error);
+            return { likes: 0, dislikes: 0 };
+        }
+    }
+
+    /**
+     * Get reactions for a specific comment
+     * @param {number} commentId - Comment ID
+     * @returns {Object} - Object with likes and dislikes counts
+     */
+    async getCommentReactions(commentId) {
+        try {
+            const result = await ApiUtils.get(`/api/likes/reactions?comment_id=${commentId}`);
+            return {
+                likes: result.likes || 0,
+                dislikes: result.dislikes || 0
+            };
+        } catch (error) {
+            console.error(`Error getting reactions for comment ${commentId}:`, error);
+            return { likes: 0, dislikes: 0 };
+        }
+    }
 }

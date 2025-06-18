@@ -9,6 +9,7 @@ export class CategoryManager {
         this.categories = [];
         this.onCategoryFilter = onCategoryFilter;
         this.categoryContainer = document.getElementById("categoryFilter");
+        this.router = null; // Will be set by the app
     }
 
     /**
@@ -49,36 +50,45 @@ export class CategoryManager {
      */
     setupCategoryFilters() {
         const categoryBtns = document.querySelectorAll("#categoryFilter .menu-item");
-        
+
         categoryBtns.forEach(btn => {
             btn.addEventListener('click', async (event) => {
+                event.preventDefault();
+
                 // Remove active class from all buttons
                 categoryBtns.forEach(b => b.classList.remove('active'));
-                
+
                 // Add active class to clicked button
                 event.currentTarget.classList.add('active');
 
-                const catId = event.currentTarget.getAttribute('category-id');
-                
-                // Add loading state
-                const postFeed = document.getElementById('postFeed');
-                postFeed.style.opacity = '0.5';
-                postFeed.style.transition = 'opacity 0.3s ease';
+                const catId = parseInt(event.currentTarget.getAttribute('category-id'));
+
+                console.log('CategoryManager: Category clicked:', catId);
 
                 try {
                     // Scroll to top smoothly
                     window.scrollTo({ top: 0, behavior: 'smooth' });
 
-                    // Trigger category filter callback
-                    if (this.onCategoryFilter) {
-                        await this.onCategoryFilter(parseInt(catId));
+                    // Use router for navigation if available
+                    if (this.router) {
+                        if (catId === 0) {
+                            // Navigate to home for "All" categories
+                            console.log('CategoryManager: Navigating to home (all categories)');
+                            this.router.navigate('/');
+                        } else {
+                            // Navigate to category-specific route
+                            console.log('CategoryManager: Navigating to category:', catId);
+                            this.router.navigate(`/category/${catId}`);
+                        }
+                    } else {
+                        // Fallback to callback approach for backward compatibility
+                        console.log('CategoryManager: Using callback approach');
+                        if (this.onCategoryFilter) {
+                            await this.onCategoryFilter(catId);
+                        }
                     }
-
-                    // Remove loading state
-                    postFeed.style.opacity = '1';
                 } catch (error) {
-                    console.error("Error filtering posts:", error);
-                    postFeed.style.opacity = '1';
+                    console.error("Error handling category filter:", error);
                 }
             });
         });
@@ -168,5 +178,31 @@ export class CategoryManager {
      */
     getCategories() {
         return this.categories;
+    }
+
+    /**
+     * Set router reference for navigation
+     * @param {Router} router - Router instance
+     */
+    setRouter(router) {
+        this.router = router;
+        console.log('CategoryManager: Router set:', !!this.router);
+    }
+
+    /**
+     * Update active category based on current route
+     * @param {number} categoryId - Current category ID (0 for all)
+     */
+    updateActiveCategory(categoryId) {
+        const categoryBtns = document.querySelectorAll("#categoryFilter .menu-item");
+
+        categoryBtns.forEach(btn => {
+            btn.classList.remove('active');
+            const btnCategoryId = parseInt(btn.getAttribute('category-id'));
+
+            if (btnCategoryId === categoryId) {
+                btn.classList.add('active');
+            }
+        });
     }
 }
