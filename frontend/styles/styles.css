@@ -770,11 +770,16 @@ img {
 
 /* ========== comment section =========== */
 
-.post-comment h4, .post-comment .comment {
-    margin: 1rem 0.5rem;
+.post-comment h4 {
+    margin: 0.75rem 0.5rem 0.5rem 0.5rem;
+    padding: 0.25rem 0.25rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.post-comment .comment {
+    margin: 0.5rem 0.5rem;
     padding: 0.5rem 0.25rem;
     border-bottom: 1px solid var(--border-color);
-
 }
 
 
@@ -920,6 +925,16 @@ img {
     max-height: 45dvh;
     min-height: 40dvh;
     overflow: scroll;
+    margin-top: 0.5rem;
+ }
+
+ /* Reduce spacing between comment form and comments */
+ .write-comment-box {
+    margin-bottom: 0.5rem;
+ }
+
+ .post-comment {
+    padding-top: 0.5rem;
  }
 
 /* ========== Threaded Comments Styles =========== */
@@ -2909,9 +2924,9 @@ body.modal-open {
 
 /* Comment Thread Container - each comment and its replies */
 .comment-thread {
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
-    padding-bottom: 1rem;
+    padding-bottom: 0.75rem;
 }
 
 .comment-thread:last-child {
@@ -2922,6 +2937,100 @@ body.modal-open {
 /* Replies container */
 .replies-container {
     margin-top: 0.5rem;
+}
+
+/* Reply Form Container - positioned under specific comments */
+.reply-form-container {
+    margin-top: 0.75rem;
+    margin-bottom: 0.75rem;
+    padding: 1rem;
+    background: var(--hover-color2);
+    border-radius: var(--radius);
+    border-left: 3px solid var(--accent-color);
+}
+
+/* Reply comment header */
+.reply-comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+}
+
+.reply-comment-header p {
+    margin: 0;
+    font-style: italic;
+    color: var(--accent-color);
+    font-weight: 500;
+}
+
+.reply-comment-header .close-reply {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--muted-text);
+    padding: 0.25rem 0.75rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-size: 0.85rem;
+    transition: var(--transition);
+}
+
+.reply-comment-header .close-reply:hover {
+    background: var(--hover-color);
+    color: var(--text-color);
+}
+
+/* Original comment preview in reply form */
+.original-comment-preview {
+    background: var(--card-color);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    margin-bottom: 0.75rem;
+    border: 1px solid var(--border-color);
+    opacity: 0.8;
+}
+
+.original-comment-preview .comment-avatar img {
+    width: 28px;
+    height: 28px;
+}
+
+.original-comment-preview .comment-details {
+    font-size: 0.9rem;
+}
+
+/* Reply form styling */
+.reply-form {
+    margin-top: 0.5rem;
+}
+
+.reply-form textarea {
+    border: 2px solid var(--accent-color);
+    border-radius: var(--radius);
+    padding: 0.75rem;
+    font-size: 0.95rem;
+}
+
+.reply-form textarea:focus {
+    outline: none;
+    border-color: var(--primary-color);
+    box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+}
+
+.reply-form button {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1.5rem;
+    border-radius: var(--radius);
+    font-weight: 500;
+    margin-top: 0.5rem;
+    cursor: pointer;
+    transition: var(--transition);
+}
+
+.reply-form button:hover {
+    background: var(--primary-color);
 }
 
 .comments-list .comment-avatar img {
