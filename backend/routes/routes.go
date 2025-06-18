@@ -38,7 +38,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.Handle("/api/comments/create", middleware.AuthMiddleware(db, HandlerWrapper(db, handlers.CreateComment)))
 	mux.HandleFunc("/api/comments/get", HandlerWrapper(db, handlers.GetPostComments)) // Public access
 
-	// Add public route for fetching reply comments
+	//public route for fetching reply comments
 	mux.HandleFunc("/api/replycomments/get", HandlerWrapper(db, handlers.GetReplyComments)) // Public access
 
 	// Category routes (protected by auth middleware)
@@ -49,7 +49,7 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	mux.HandleFunc("/api/likes/reactions", HandlerWrapper(db, handlers.GetReactions))                       // Public
 
 	// comment, post and likes owner
-	mux.Handle("/api/owner", HandlerWrapper(db, handlers.GetOwner))
+	// mux.Handle("/api/owner", HandlerWrapper(db, handlers.GetOwner))
 
 	// Serve static files securely (prevent directory listing)
 	fs := http.FileServer(http.Dir("./static"))
