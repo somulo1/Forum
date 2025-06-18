@@ -78,7 +78,7 @@ export class PostManager {
 
         for (const btn of commentBtns) {
             const postId = btn.getAttribute('data-id');
-            
+
             try {
                 const comments = await ApiUtils.get(`/api/comments/get?post_id=${postId}`);
 
@@ -86,9 +86,20 @@ export class PostManager {
                 const commentsArray = comments && Array.isArray(comments) ? comments : [];
 
                 // Update comment count
-                PostCard.updateCommentCount(postId, commentsArray.length);
+                // Calculate total comment count (including replies)
+                let totalCommentCount = commentsArray.length;
+                commentsArray.forEach(comment => {
+                    // Check both 'replies' and 'Replies' for compatibility
+                    const replies = comment.replies || comment.Replies;
+                    if (replies && Array.isArray(replies)) {
+                        console.log(`Comment ${comment.id} has ${replies.length} replies in PostManager`); // Debug log
+                        totalCommentCount += replies.length;
+                    }
+                });
 
-                // Render comments
+                PostCard.updateCommentCount(postId, totalCommentCount);
+
+                // Render comments with replies
                 const commentsContainer = PostCard.getCommentsContainer(postId);
                 if (commentsContainer) {
                     this.renderCommentsInContainer(commentsContainer, commentsArray);
@@ -102,7 +113,7 @@ export class PostManager {
     }
 
     /**
-     * Render comments in a container
+     * Render comments in a container with proper threading
      * @param {HTMLElement} container - Comments container
      * @param {Array} comments - Comments to render
      */
@@ -116,9 +127,26 @@ export class PostManager {
             container.innerHTML = '<h4>Comments</h4>';
         }
 
+        // Render each top-level comment with its own independent thread
         for (const comment of comments) {
+            // Create a comment thread container for this specific comment
+            const commentThreadContainer = document.createElement('div');
+            commentThreadContainer.classList.add('comment-thread');
+            commentThreadContainer.setAttribute('data-comment-id', comment.id);
+
+            // Create the main comment element
             const commentElement = this.commentManager.createCommentElement(comment);
-            container.appendChild(commentElement);
+            commentThreadContainer.appendChild(commentElement);
+
+            // Render replies directly under this specific comment
+            const replies = comment.replies || comment.Replies;
+            if (replies && Array.isArray(replies) && replies.length > 0) {
+                console.log(`Rendering ${replies.length} replies for comment ${comment.id} in PostManager`); // Debug log
+                this.commentManager.renderRepliesForComment(commentElement, replies);
+            }
+
+            // Add the complete thread (comment + replies) to the comments container
+            container.appendChild(commentThreadContainer);
         }
     }
 
@@ -182,7 +210,17 @@ export class PostManager {
             // Handle null or undefined responses by treating them as empty arrays
             const commentsArray = comments && Array.isArray(comments) ? comments : [];
 
-            PostCard.updateCommentCount(postId, commentsArray.length);
+            // Calculate total comment count (including replies)
+            let totalCommentCount = commentsArray.length;
+            commentsArray.forEach(comment => {
+                // Check both 'replies' and 'Replies' for compatibility
+                const replies = comment.replies || comment.Replies;
+                if (replies && Array.isArray(replies)) {
+                    totalCommentCount += replies.length;
+                }
+            });
+
+            PostCard.updateCommentCount(postId, totalCommentCount);
 
             const commentsContainer = PostCard.getCommentsContainer(postId);
             if (commentsContainer) {

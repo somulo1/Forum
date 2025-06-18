@@ -228,18 +228,28 @@ export class PostDetailView extends BaseView {
                     </div>
                 `;
             } else {
-                // Render comments manually using the CommentManager's createCommentElement method
+                // Render comments with proper threading using the same logic as CommentManager
                 commentsList.innerHTML = '<h4>Comments</h4>';
 
+                // Render each top-level comment with its own independent thread
                 for (const comment of comments) {
-                    const commentElement = this.app.getCommentManager().createCommentElement(comment);
-                    commentsList.appendChild(commentElement);
+                    // Create a comment thread container for this specific comment
+                    const commentThreadContainer = document.createElement('div');
+                    commentThreadContainer.classList.add('comment-thread');
+                    commentThreadContainer.setAttribute('data-comment-id', comment.id);
 
-                    // Render replies if they exist
+                    // Create the main comment element
+                    const commentElement = this.app.getCommentManager().createCommentElement(comment);
+                    commentThreadContainer.appendChild(commentElement);
+
+                    // Render replies directly under this specific comment
                     const replies = comment.replies || comment.Replies;
                     if (replies && Array.isArray(replies) && replies.length > 0) {
                         this.app.getCommentManager().renderRepliesForComment(commentElement, replies);
                     }
+
+                    // Add the complete thread (comment + replies) to the comments container
+                    commentsList.appendChild(commentThreadContainer);
                 }
             }
 

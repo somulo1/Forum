@@ -30,6 +30,22 @@ export class CommentManager {
         const username = comment.username || comment.UserName;
         const avatarUrl = comment.avatar_url || comment.ProfileAvatar;
 
+        // Build comment actions - only show reactions for top-level comments
+        let commentActions = '';
+        if (isReply) {
+            // Reply comments only show timestamp, no reactions or reply button
+            commentActions = '';
+        } else {
+            // Top-level comments show reactions and reply button
+            commentActions = `
+                <div class="comment-actions">
+                    <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
+                    <button class="reaction-btn comment-dislike-btn" data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
+                    <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                </div>
+            `;
+        }
+
         commentItem.innerHTML = `
             <div class="comment-avatar">
                 <img class="post-author-img" src="http://localhost:8080${avatarUrl || '/static/pictures/default-avatar.png'}"
@@ -38,11 +54,7 @@ export class CommentManager {
             <div class="comment-details">
                 <p class="comment-content"> <strong><span class="comment-username">${username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
                 <div class="comment-footer">
-                    <div class="comment-actions">
-                        <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
-                        <button class="reaction-btn comment-dislike-btn" data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
-                        ${!isReply ? `<button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>` : ''}
-                    </div>
+                    ${commentActions}
                     <p class="comment-time">${TimeUtils.getTimeAgo(comment.created_at)}</p>
                 </div>
             </div>
@@ -244,21 +256,31 @@ export class CommentManager {
 
             console.log(`Total comment count for post ${postId}: ${totalCommentCount}`); // Debug log
 
-            // Clear and re-render comments
+            // Clear and re-render comments with proper threading
             const commentsContainer = PostCard.getCommentsContainer(postId);
             if (commentsContainer) {
                 commentsContainer.innerHTML = '<h4>Comments</h4>';
 
+                // Render each top-level comment with its own independent thread
                 for (const comment of comments) {
-                    const commentElement = this.createCommentElement(comment);
-                    commentsContainer.appendChild(commentElement);
+                    // Create a comment thread container for this specific comment
+                    const commentThreadContainer = document.createElement('div');
+                    commentThreadContainer.classList.add('comment-thread');
+                    commentThreadContainer.setAttribute('data-comment-id', comment.id);
 
-                    // Render replies if they exist (check both field names)
+                    // Create the main comment element
+                    const commentElement = this.createCommentElement(comment);
+                    commentThreadContainer.appendChild(commentElement);
+
+                    // Render replies directly under this specific comment
                     const replies = comment.replies || comment.Replies;
                     if (replies && Array.isArray(replies) && replies.length > 0) {
                         console.log(`Rendering ${replies.length} replies for comment ${comment.id}`); // Debug log
                         this.renderRepliesForComment(commentElement, replies);
                     }
+
+                    // Add the complete thread (comment + replies) to the comments container
+                    commentsContainer.appendChild(commentThreadContainer);
                 }
             }
 
