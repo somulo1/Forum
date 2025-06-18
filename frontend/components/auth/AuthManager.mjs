@@ -2,7 +2,7 @@
  * Authentication Manager - Handles user authentication state and operations
  */
 
-import { ApiUtils } from '../utils/ApiUtils.js';
+import { ApiUtils } from '../utils/ApiUtils.mjs';
 
 export class AuthManager {
     constructor() {

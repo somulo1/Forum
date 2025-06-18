@@ -2,7 +2,7 @@
  * Post Form - Handles the create post form functionality
  */
 
-import { ApiUtils } from '../utils/ApiUtils.js';
+import { ApiUtils } from '../utils/ApiUtils.mjs';
 
 export class PostForm {
     constructor(categoryManager, authModal, onPostCreated) {

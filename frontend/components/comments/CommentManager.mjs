@@ -2,9 +2,9 @@
  * Comment Manager - Handles comment functionality including creation, replies, and rendering
  */
 
-import { ApiUtils } from '../utils/ApiUtils.js';
-import { TimeUtils } from '../utils/TimeUtils.js';
-import { PostCard } from '../posts/PostCard.js';
+import { ApiUtils } from '../utils/ApiUtils.mjs';
+import { TimeUtils } from '../utils/TimeUtils.mjs';
+import { PostCard } from '../posts/PostCard.mjs';
 
 export class CommentManager {
     constructor(authModal, reactionManager) {
