@@ -271,6 +271,7 @@ class ForumApp {
         // Add "All Posts" item
         const allItem = document.createElement('div');
         allItem.className = 'category-item active';
+        allItem.dataset.categoryId = 'all';
         allItem.innerHTML = `
             <span class="category-name">All Posts</span>
             <span class="post-count">${this.posts ? this.posts.length : 0}</span>
@@ -282,6 +283,7 @@ class ForumApp {
         this.allCategories.forEach(category => {
             const item = document.createElement('div');
             item.className = 'category-item';
+            item.dataset.categoryId = category.id;
             item.innerHTML = `
                 <span class="category-name">${category.name}</span>
                 <span class="post-count">0</span>
@@ -311,16 +313,18 @@ class ForumApp {
             }
         });
 
-        // Update the display
+
+
+        // Update the display using data attributes
         this.allCategories.forEach(category => {
-            const countElement = document.querySelector(`.category-item:nth-child(${this.allCategories.indexOf(category) + 2}) .post-count`);
+            const countElement = document.querySelector(`[data-category-id="${category.id}"] .post-count`);
             if (countElement) {
                 countElement.textContent = categoryCounts[category.id] || 0;
             }
         });
 
         // Update "All Posts" count
-        const allCountElement = document.querySelector('.category-item:first-child .post-count');
+        const allCountElement = document.querySelector('[data-category-id="all"] .post-count');
         if (allCountElement) {
             allCountElement.textContent = this.posts.length;
         }
