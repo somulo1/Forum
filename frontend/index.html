@@ -15,6 +15,7 @@
         <div class="container">
             <div class="header-content">
                 <div class="logo">
+                    <button class="mobile-menu-btn mobile-only" id="mobile-menu-btn">☰</button>
                     <h1>Forum</h1>
                 </div>
                 
@@ -43,72 +44,84 @@
     <!-- Main Content -->
     <main class="main">
         <div class="container">
-            <!-- Create Post Section -->
-            <section class="create-post-section user-only hidden">
-                <div class="create-post-card">
-                    <h2>Create New Post</h2>
-                    <form id="create-post-form" enctype="multipart/form-data">
-                        <div class="form-group">
-                            <label for="post-title">Title</label>
-                            <input type="text" id="post-title" name="title" required>
+            <div class="layout">
+                <!-- Left Sidebar - Categories -->
+                <aside class="sidebar" id="sidebar">
+                    <div class="sidebar-content">
+                        <div class="sidebar-header">
+                            <h3>Categories</h3>
+                            <button class="sidebar-toggle mobile-only" id="sidebar-toggle">✕</button>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="post-content">Content</label>
-                            <textarea id="post-content" name="content" rows="6" required></textarea>
+                        <div class="category-list" id="category-list">
+                            <!-- Categories will be loaded dynamically -->
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="post-categories">Categories</label>
-                            <div class="categories-input">
-                                <input type="text" id="category-input" placeholder="Add category and press Enter">
-                                <div class="selected-categories" id="selected-categories"></div>
+
+                        <!-- Search in Sidebar -->
+                        <div class="sidebar-search">
+                            <h4>Search</h4>
+                            <input type="text" id="search-input" placeholder="Search posts...">
+                        </div>
+                    </div>
+                </aside>
+
+                <!-- Main Content Area -->
+                <div class="main-content">
+                    <!-- Create Post Section -->
+                    <section class="create-post-section user-only hidden">
+                        <div class="create-post-card">
+                            <h2>Create New Post</h2>
+                            <form id="create-post-form" enctype="multipart/form-data">
+                                <div class="form-group">
+                                    <label for="post-title">Title</label>
+                                    <input type="text" id="post-title" name="title" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="post-content">Content</label>
+                                    <textarea id="post-content" name="content" rows="6" required></textarea>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="post-categories">Categories</label>
+                                    <div class="categories-input">
+                                        <input type="text" id="category-input" placeholder="Add category and press Enter">
+                                        <div class="selected-categories" id="selected-categories"></div>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="post-image">Image (optional)</label>
+                                    <input type="file" id="post-image" name="image" accept="image/*">
+                                </div>
+
+                                <button type="submit" class="btn btn-primary">Create Post</button>
+                            </form>
+                        </div>
+                    </section>
+
+                    <!-- Posts Section -->
+                    <section class="posts-section">
+                        <div class="posts-header">
+                            <h2 id="posts-title">All Posts</h2>
+                            <div class="sort-options">
+                                <select id="sort-select">
+                                    <option value="newest">Newest First</option>
+                                    <option value="oldest">Oldest First</option>
+                                    <option value="most-liked">Most Liked</option>
+                                </select>
                             </div>
                         </div>
-                        
-                        <div class="form-group">
-                            <label for="post-image">Image (optional)</label>
-                            <input type="file" id="post-image" name="image" accept="image/*">
+
+                        <div class="posts-container" id="posts-container">
+                            <!-- Posts will be loaded dynamically -->
                         </div>
-                        
-                        <button type="submit" class="btn btn-primary">Create Post</button>
-                    </form>
-                </div>
-            </section>
 
-            <!-- Filters Section -->
-            <section class="filters-section">
-                <div class="filters">
-                    <div class="category-filters" id="category-filters">
-                        <!-- Categories will be loaded dynamically -->
-                    </div>
-                    <div class="search-filter">
-                        <input type="text" id="search-input" placeholder="Search posts...">
-                    </div>
+                        <div class="pagination" id="pagination">
+                            <!-- Pagination will be added dynamically -->
+                        </div>
+                    </section>
                 </div>
-            </section>
-
-            <!-- Posts Section -->
-            <section class="posts-section">
-                <div class="posts-header">
-                    <h2 id="posts-title">All Posts</h2>
-                    <div class="sort-options">
-                        <select id="sort-select">
-                            <option value="newest">Newest First</option>
-                            <option value="oldest">Oldest First</option>
-                            <option value="most-liked">Most Liked</option>
-                        </select>
-                    </div>
-                </div>
-                
-                <div class="posts-container" id="posts-container">
-                    <!-- Posts will be loaded dynamically -->
-                </div>
-                
-                <div class="pagination" id="pagination">
-                    <!-- Pagination will be added dynamically -->
-                </div>
-            </section>
+            </div>
         </div>
     </main>
 
@@ -143,7 +156,7 @@
                 <h2>Register</h2>
                 <button class="modal-close" data-modal="register-modal">&times;</button>
             </div>
-            <form id="register-form">
+            <form id="register-form" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="register-username">Username</label>
                     <input type="text" id="register-username" name="username" required>
@@ -157,8 +170,9 @@
                     <input type="password" id="register-password" name="password" required>
                 </div>
                 <div class="form-group">
-                    <label for="register-avatar">Avatar URL (optional)</label>
-                    <input type="url" id="register-avatar" name="avatar_url">
+                    <label for="register-avatar">Profile Picture (required)</label>
+                    <input type="file" id="register-avatar" name="avatar" accept="image/jpeg,image/png,image/gif" required>
+                    <small class="form-help">Upload your own profile picture (JPG, PNG, or GIF)</small>
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Register</button>
             </form>
@@ -190,6 +204,9 @@
     <div class="loading-overlay hidden" id="loading-overlay">
         <div class="loading-spinner"></div>
     </div>
+
+    <!-- Sidebar Overlay for Mobile -->
+    <div class="sidebar-overlay" id="sidebar-overlay"></div>
 
     <script src="frontend/js/app.js"></script>
 </body>
