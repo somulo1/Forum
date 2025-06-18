@@ -558,6 +558,132 @@ func UpdatePostWithCategories(db *sql.DB, postID int, title, content, imageURL s
 	return tx.Commit()
 }
 
+// GetPostsWithFilters fetches posts with various filtering options
+func GetPostsWithFilters(db *sql.DB, page, limit int, categoryID, searchQuery, sortBy, filterType, userID string) ([]models.Post, error) {
+	offset := (page - 1) * limit
+
+	// Build the base query
+	query := `
+		SELECT DISTINCT p.id, p.title, p.content, p.user_id, p.image_url, p.created_at, p.updated_at
+		FROM posts p
+	`
+
+	// Add joins if needed
+	var joins []string
+	var conditions []string
+	var args []interface{}
+
+	// Category filter
+	if categoryID != "" {
+		joins = append(joins, "LEFT JOIN post_categories pc ON p.id = pc.post_id")
+		conditions = append(conditions, "pc.category_id = ?")
+		args = append(args, categoryID)
+	}
+
+	// User filter (my posts)
+	if filterType == "my-posts" && userID != "" {
+		conditions = append(conditions, "p.user_id = ?")
+		args = append(args, userID)
+	}
+
+	// Liked posts filter
+	if filterType == "liked-posts" && userID != "" {
+		joins = append(joins, "LEFT JOIN likes l ON p.id = l.post_id")
+		conditions = append(conditions, "l.user_id = ? AND l.type = 'like'")
+		args = append(args, userID)
+	}
+
+	// Search filter
+	if searchQuery != "" {
+		conditions = append(conditions, "(p.title LIKE ? OR p.content LIKE ?)")
+		searchPattern := "%" + searchQuery + "%"
+		args = append(args, searchPattern, searchPattern)
+	}
+
+	// Add joins to query
+	for _, join := range joins {
+		query += " " + join
+	}
+
+	// Add WHERE clause if there are conditions
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Add sorting
+	switch sortBy {
+	case "oldest":
+		query += " ORDER BY p.created_at ASC"
+	case "title":
+		query += " ORDER BY p.title ASC"
+	default: // newest
+		query += " ORDER BY p.created_at DESC"
+	}
+
+	// Add pagination
+	query += " LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	rows, err := db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var posts []models.Post
+	for rows.Next() {
+		var post models.Post
+		err := rows.Scan(
+			&post.ID,
+			&post.Title,
+			&post.Content,
+			&post.UserID,
+			&post.ImageURL,
+			&post.CreatedAt,
+			&post.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		// Get username for the post
+		userInfo, err := GetUserByID(db, post.UserID)
+		if err == nil {
+			post.Username = userInfo.Username
+		}
+
+		// Get category IDs for the post
+		categoryIDs, err := GetPostCategoryIDs(db, post.ID)
+		if err == nil {
+			post.CategoryIDs = categoryIDs
+		}
+
+		posts = append(posts, post)
+	}
+
+	return posts, nil
+}
+
+// GetPostCategoryIDs retrieves category IDs for a specific post
+func GetPostCategoryIDs(db *sql.DB, postID int) ([]int, error) {
+	rows, err := db.Query(`SELECT category_id FROM post_categories WHERE post_id = ?`, postID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var categoryIDs []int
+	for rows.Next() {
+		var catID int
+		if err := rows.Scan(&catID); err != nil {
+			return nil, err
+		}
+		categoryIDs = append(categoryIDs, catID)
+	}
+
+	return categoryIDs, nil
+}
+
 // DeleteComment removes a comment from the database by its ID
 func DeleteComment(db *sql.DB, commentID int) error {
 	_, err := db.Exec(`
