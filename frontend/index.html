@@ -84,7 +84,10 @@
                                 <div class="form-group">
                                     <label for="post-categories">Categories</label>
                                     <div class="categories-input">
-                                        <input type="text" id="category-input" placeholder="Add category and press Enter">
+                                        <select id="category-dropdown" class="category-dropdown">
+                                            <option value="">Select a category to add...</option>
+                                            <!-- Categories will be loaded dynamically -->
+                                        </select>
                                         <div class="selected-categories" id="selected-categories"></div>
                                     </div>
                                 </div>
