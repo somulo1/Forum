@@ -37,13 +37,14 @@ func RegisterUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Handle avatar upload
+	// Handle avatar upload - REQUIRED
 	var avatarURL string
 
 	file, handler, err := r.FormFile("avatar")
 	if err != nil {
-		log.Printf("No avatar uploaded or failed to read: %v\n", err)
-		avatarURL = "/static/default.png"
+		log.Printf("No avatar uploaded: %v\n", err)
+		utils.SendJSONError(w, "Avatar image is required. Please upload a profile picture.", http.StatusBadRequest)
+		return
 	} else {
 		defer file.Close()
 
@@ -126,7 +127,7 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	var credentials struct {
-		Email    string `json:"email"`
+		Username string `json:"username"`
 		Password string `json:"password"`
 	}
 
@@ -140,11 +141,11 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Get user from DB
-	user, err := sqlite.GetUserByEmail(db, credentials.Email)
+	// Get user from DB by username
+	user, err := sqlite.GetUserByUsername(db, credentials.Username)
 	if err != nil {
 		if err == sql.ErrNoRows {
-			utils.SendJSONError(w, "Invalid email or password", http.StatusUnauthorized)
+			utils.SendJSONError(w, "Invalid username or password", http.StatusUnauthorized)
 			return
 		}
 		utils.SendJSONError(w, "Database error", http.StatusInternalServerError)
@@ -153,7 +154,7 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	// Validate password
 	if !utils.CheckPasswordHash(credentials.Password, user.PasswordHash) {
-		utils.SendJSONError(w, "Invalid email or password", http.StatusUnauthorized)
+		utils.SendJSONError(w, "Invalid username or password", http.StatusUnauthorized)
 		return
 	}
 
@@ -179,7 +180,6 @@ func LoginUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 func GetUser(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	userID, err := utils.GetUserIDFromSession(db, r)
 	// log.Printf("errr: %v\n", err)
-
 	if err != nil {
 		utils.SendJSONError(w, "Unauthorized1", http.StatusUnauthorized)
 
