@@ -66,11 +66,28 @@ class ForumApp {
         document.getElementById('search-input').addEventListener('input', (e) => {
             this.debounce(() => this.searchPosts(e.target.value), 300)();
         });
-        
+
         // Sort
         document.getElementById('sort-select').addEventListener('change', (e) => {
             this.sortPosts(e.target.value);
         });
+
+        // Mobile sidebar functionality
+        const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+        const sidebarToggle = document.getElementById('sidebar-toggle');
+        const sidebarOverlay = document.getElementById('sidebar-overlay');
+
+        if (mobileMenuBtn) {
+            mobileMenuBtn.addEventListener('click', () => this.toggleMobileSidebar());
+        }
+
+        if (sidebarToggle) {
+            sidebarToggle.addEventListener('click', () => this.toggleMobileSidebar());
+        }
+
+        if (sidebarOverlay) {
+            sidebarOverlay.addEventListener('click', () => this.toggleMobileSidebar());
+        }
         
         // Close modals on outside click
         document.querySelectorAll('.modal').forEach(modal => {
@@ -112,7 +129,7 @@ class ForumApp {
             userOnlyElements.forEach(el => el.classList.remove('hidden'));
             
             // Update user info
-            document.querySelector('.user-avatar').src = this.currentUser.avatar_url || '/static/default-avatar.png';
+            document.querySelector('.user-avatar').src = this.currentUser.avatar_url;
             document.querySelector('.username').textContent = this.currentUser.username;
         } else {
             userInfo.classList.add('hidden');
@@ -182,20 +199,14 @@ class ForumApp {
         this.setButtonLoading(submitButton, true);
         this.showLoading();
 
-        const registerData = {
-            username: formData.get('username'),
-            email: formData.get('email'),
-            password: formData.get('password'),
-            avatar_url: formData.get('avatar_url') || ''
-        };
+        // The backend expects multipart/form-data, so we send FormData directly
+        // No need to convert to JSON since backend uses r.ParseMultipartForm()
 
         try {
             const response = await this.makeRequest('/api/register', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(registerData)
+                // Don't set Content-Type header - let browser set it for multipart/form-data
+                body: formData
             });
 
             if (response.ok) {
@@ -251,24 +262,67 @@ class ForumApp {
     }
 
     renderCategoryFilters() {
-        const container = document.getElementById('category-filters');
+        const container = document.getElementById('category-list');
+        if (!container) return; // Fallback if element doesn't exist
+
         container.innerHTML = '';
-        
-        // Add "All" filter
-        const allFilter = document.createElement('button');
-        allFilter.className = 'category-filter active';
-        allFilter.textContent = 'All';
-        allFilter.addEventListener('click', (e) => this.filterByCategory(null, e.target));
-        container.appendChild(allFilter);
-        
-        // Add category filters
+
+        // Add "All Posts" item
+        const allItem = document.createElement('div');
+        allItem.className = 'category-item active';
+        allItem.innerHTML = `
+            <span class="category-name">All Posts</span>
+            <span class="post-count">${this.posts ? this.posts.length : 0}</span>
+        `;
+        allItem.addEventListener('click', () => this.filterByCategory(null, allItem));
+        container.appendChild(allItem);
+
+        // Add category items
         this.allCategories.forEach(category => {
-            const button = document.createElement('button');
-            button.className = 'category-filter';
-            button.textContent = category.name;
-            button.addEventListener('click', (e) => this.filterByCategory(category.id, e.target));
-            container.appendChild(button);
+            const item = document.createElement('div');
+            item.className = 'category-item';
+            item.innerHTML = `
+                <span class="category-name">${category.name}</span>
+                <span class="post-count">0</span>
+            `;
+            item.addEventListener('click', () => this.filterByCategory(category.id, item));
+            container.appendChild(item);
         });
+
+        // Update post counts for each category
+        this.updateCategoryPostCounts();
+    }
+
+    updateCategoryPostCounts() {
+        if (!this.posts || !this.allCategories) return;
+
+        // Count posts for each category
+        const categoryCounts = {};
+        this.allCategories.forEach(cat => categoryCounts[cat.id] = 0);
+
+        this.posts.forEach(post => {
+            if (post.category_ids) {
+                post.category_ids.forEach(catId => {
+                    if (categoryCounts[catId] !== undefined) {
+                        categoryCounts[catId]++;
+                    }
+                });
+            }
+        });
+
+        // Update the display
+        this.allCategories.forEach(category => {
+            const countElement = document.querySelector(`.category-item:nth-child(${this.allCategories.indexOf(category) + 2}) .post-count`);
+            if (countElement) {
+                countElement.textContent = categoryCounts[category.id] || 0;
+            }
+        });
+
+        // Update "All Posts" count
+        const allCountElement = document.querySelector('.category-item:first-child .post-count');
+        if (allCountElement) {
+            allCountElement.textContent = this.posts.length;
+        }
     }
 
     addCategory() {
@@ -331,6 +385,7 @@ class ForumApp {
 
         if (this.posts.length === 0) {
             container.innerHTML = '<p class="no-posts">No posts found.</p>';
+            this.updateCategoryPostCounts();
             return;
         }
 
@@ -338,6 +393,9 @@ class ForumApp {
             const postElement = this.createPostElement(post);
             container.appendChild(postElement);
         });
+
+        // Update category post counts after rendering
+        this.updateCategoryPostCounts();
     }
 
     createPostElement(post) {
@@ -351,7 +409,7 @@ class ForumApp {
 
         postDiv.innerHTML = `
             <div class="post-header">
-                <img class="post-avatar" src="${post.avatar_url || '/static/default-avatar.png'}" alt="${post.username}">
+                <img class="post-avatar" src="${post.avatar_url}" alt="${post.username}">
                 <div class="post-meta">
                     <div class="post-author">${post.username}</div>
                     <div class="post-date">${this.formatDate(post.created_at)}</div>
@@ -402,8 +460,9 @@ class ForumApp {
             }
         });
 
-        // Load reaction counts
+        // Load reaction counts and comment counts
         this.loadReactionCounts(post.id, 'post');
+        this.loadCommentCounts(post.id);
 
         return postDiv;
     }
@@ -504,15 +563,22 @@ class ForumApp {
         }
     }
 
-    filterByCategory(categoryId, buttonElement) {
-        // Update active category filter
-        document.querySelectorAll('.category-filter').forEach(btn => btn.classList.remove('active'));
-        if (buttonElement) {
-            buttonElement.classList.add('active');
+    filterByCategory(categoryId, itemElement) {
+        // Update active category item
+        document.querySelectorAll('.category-item').forEach(item => item.classList.remove('active'));
+        if (itemElement) {
+            itemElement.classList.add('active');
         }
 
         this.currentCategoryFilter = categoryId;
         this.currentPage = 1;
+
+        // Update posts title
+        const categoryName = categoryId ?
+            this.allCategories.find(cat => cat.id === categoryId)?.name :
+            'All Posts';
+        document.getElementById('posts-title').textContent = categoryName;
+
         this.loadPosts();
     }
 
@@ -520,6 +586,23 @@ class ForumApp {
         this.currentSearchQuery = query;
         this.currentPage = 1;
         this.loadPosts();
+    }
+
+    toggleMobileSidebar() {
+        const sidebar = document.getElementById('sidebar');
+        const overlay = document.getElementById('sidebar-overlay');
+
+        if (sidebar && overlay) {
+            const isOpen = sidebar.classList.contains('show');
+
+            if (isOpen) {
+                sidebar.classList.remove('show');
+                overlay.classList.remove('show');
+            } else {
+                sidebar.classList.add('show');
+                overlay.classList.add('show');
+            }
+        }
     }
 
     sortPosts(sortBy) {
@@ -649,6 +732,39 @@ class ForumApp {
         }
     }
 
+    async loadCommentCounts(postId) {
+        try {
+            const response = await fetch(`/api/comments/get?post_id=${postId}`);
+
+            if (response.ok) {
+                const comments = await response.json();
+                const totalComments = this.countTotalComments(comments);
+
+                const countElement = document.getElementById(`comments-count-${postId}`);
+                if (countElement) {
+                    countElement.textContent = totalComments;
+                }
+            }
+        } catch (error) {
+            console.error('Failed to load comment counts:', error);
+        }
+    }
+
+    countTotalComments(comments) {
+        if (!Array.isArray(comments)) return 0;
+
+        let total = comments.length; // Count top-level comments
+
+        // Count replies
+        comments.forEach(comment => {
+            if (comment.replies && Array.isArray(comment.replies)) {
+                total += comment.replies.length;
+            }
+        });
+
+        return total;
+    }
+
     // Comments Methods
     async openPostDetails(postId) {
         this.showLoading();
@@ -661,10 +777,24 @@ class ForumApp {
                 return;
             }
 
-            const commentsResponse = await fetch(`/api/comments/get?post_id=${postId}`);
+            // Load comments with better error handling
             let comments = [];
-            if (commentsResponse.ok) {
-                comments = await commentsResponse.json();
+            try {
+                const commentsResponse = await fetch(`/api/comments/get?post_id=${postId}`, {
+                    credentials: 'include'
+                });
+
+                if (commentsResponse.ok) {
+                    const commentsData = await commentsResponse.json();
+                    // Ensure comments is always an array
+                    comments = Array.isArray(commentsData) ? commentsData : [];
+                } else {
+                    console.warn('Failed to load comments:', commentsResponse.status);
+                    comments = [];
+                }
+            } catch (commentsError) {
+                console.error('Error loading comments:', commentsError);
+                comments = [];
             }
 
             this.renderPostModal(post, comments);
@@ -679,13 +809,17 @@ class ForumApp {
 
     renderPostModal(post, comments) {
         const modalBody = document.getElementById('post-modal-body');
+
+        // Ensure comments is always an array
+        comments = Array.isArray(comments) ? comments : [];
+
         const postCategories = post.category_ids ?
             post.category_ids.map(id => this.allCategories.find(cat => cat.id === id)?.name).filter(Boolean) : [];
 
         modalBody.innerHTML = `
-            <div class="post-detail">
+            <div class="post-detail" data-post-id="${post.id}">
                 <div class="post-header">
-                    <img class="post-avatar" src="${post.avatar_url || '/static/default-avatar.png'}" alt="${post.username}">
+                    <img class="post-avatar" src="${post.avatar_url}" alt="${post.username}">
                     <div class="post-meta">
                         <div class="post-author">${post.username}</div>
                         <div class="post-date">${this.formatDate(post.created_at)}</div>
@@ -737,23 +871,33 @@ class ForumApp {
         this.loadReactionCounts(post.id, 'post');
 
         // Load reaction counts for comments
-        comments.forEach(comment => {
-            this.loadReactionCounts(comment.id, 'comment');
-            if (comment.replies) {
-                comment.replies.forEach(reply => {
-                    this.loadReactionCounts(reply.id, 'comment');
-                });
-            }
-        });
+        if (Array.isArray(comments)) {
+            comments.forEach(comment => {
+                if (comment && comment.id) {
+                    this.loadReactionCounts(comment.id, 'comment');
+                    if (comment.replies && Array.isArray(comment.replies)) {
+                        comment.replies.forEach(reply => {
+                            if (reply && reply.id) {
+                                this.loadReactionCounts(reply.id, 'comment');
+                            }
+                        });
+                    }
+                }
+            });
+        }
     }
 
     createCommentElement(comment) {
+        if (!comment || !comment.id) {
+            return '';
+        }
+
         return `
             <div class="comment" data-comment-id="${comment.id}">
                 <div class="comment-header">
-                    <img class="comment-avatar" src="${comment.avatar_url || '/static/default-avatar.png'}" alt="${comment.username}">
+                    <img class="comment-avatar" src="${comment.avatar_url || ''}" alt="${comment.username || 'User'}">
                     <div class="comment-meta">
-                        <div class="comment-author">${comment.username}</div>
+                        <div class="comment-author">${comment.username || 'Unknown User'}</div>
                         <div class="comment-date">${this.formatDate(comment.created_at)}</div>
                     </div>
                     ${this.currentUser && this.currentUser.id === comment.user_id ?
@@ -783,7 +927,7 @@ class ForumApp {
                         ${comment.replies.map(reply => `
                             <div class="reply" data-comment-id="${reply.id}">
                                 <div class="comment-header">
-                                    <img class="comment-avatar" src="${reply.avatar_url || '/static/default-avatar.png'}" alt="${reply.username}">
+                                    <img class="comment-avatar" src="${reply.avatar_url}" alt="${reply.username}">
                                     <div class="comment-meta">
                                         <div class="comment-author">${reply.username}</div>
                                         <div class="comment-date">${this.formatDate(reply.created_at)}</div>
@@ -846,6 +990,8 @@ class ForumApp {
                 textarea.value = '';
                 // Reload post details to show new comment
                 await this.openPostDetails(postId);
+                // Update comment count in the main posts view
+                await this.loadCommentCounts(postId);
             } else {
                 const error = await response.text();
                 this.showNotification(error || 'Failed to post comment', 'error');
@@ -881,6 +1027,12 @@ class ForumApp {
                 const commentElement = document.querySelector(`[data-comment-id="${commentId}"]`);
                 if (commentElement) {
                     commentElement.remove();
+                }
+                // Update comment count in the main posts view
+                const postId = document.querySelector('.post-detail').dataset.postId ||
+                             this.posts.find(p => p.id)?.id;
+                if (postId) {
+                    await this.loadCommentCounts(postId);
                 }
             } else {
                 const error = await response.text();
@@ -954,6 +1106,8 @@ class ForumApp {
                              this.posts.find(p => p.id)?.id;
                 if (postId) {
                     await this.openPostDetails(postId);
+                    // Update comment count in the main posts view
+                    await this.loadCommentCounts(postId);
                 }
             } else {
                 const error = await response.text();
@@ -1034,6 +1188,7 @@ class ForumApp {
         const username = formData.get('username');
         const email = formData.get('email');
         const password = formData.get('password');
+        const avatar = formData.get('avatar');
 
         if (!this.validateUsername(username)) {
             errors.push('Username must be at least 3 characters and contain only letters, numbers, and underscores');
@@ -1045,6 +1200,14 @@ class ForumApp {
 
         if (!this.validatePassword(password)) {
             errors.push('Password must be at least 6 characters long');
+        }
+
+        if (!avatar || avatar.size === 0) {
+            errors.push('Profile picture is required. Please upload an image file');
+        } else if (avatar.size > 5 * 1024 * 1024) { // 5MB limit
+            errors.push('Profile picture must be smaller than 5MB');
+        } else if (!['image/jpeg', 'image/png', 'image/gif'].includes(avatar.type)) {
+            errors.push('Profile picture must be a JPG, PNG, or GIF image');
         }
 
         return errors;
