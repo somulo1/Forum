@@ -852,7 +852,7 @@ class ForumApp {
 
     getAvatarUrl(avatarUrl, username) {
         // Return a data URL for a simple avatar with the user's initials if avatar is missing
-        if (!avatarUrl || avatarUrl === '/static/default.png') {
+        if (!avatarUrl || avatarUrl === '/static/default.png' || avatarUrl === '') {
             const initials = username ? username.substring(0, 2).toUpperCase() : 'U';
             const canvas = document.createElement('canvas');
             canvas.width = 40;
@@ -874,6 +874,12 @@ class ForumApp {
 
             return canvas.toDataURL();
         }
+
+        // If avatar URL starts with /static/, prepend the backend URL
+        if (avatarUrl.startsWith('/static/')) {
+            return `http://localhost:8080${avatarUrl}`;
+        }
+
         return avatarUrl;
     }
 
