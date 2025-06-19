@@ -502,11 +502,26 @@ class ForumApp {
 
         // Load reaction counts for all posts after DOM is fully rendered
         setTimeout(() => {
+            console.log('Loading reaction counts for', this.posts.length, 'posts');
             this.posts.forEach(post => {
-                this.loadReactionCounts(post.id, 'post');
-                this.loadCommentCounts(post.id);
+                console.log(`Loading reactions for post ${post.id}`);
+                // Check if elements exist before loading
+                const likesElement = document.getElementById(`likes-count-${post.id}`);
+                const dislikesElement = document.getElementById(`dislikes-count-${post.id}`);
+
+                if (likesElement && dislikesElement) {
+                    this.loadReactionCounts(post.id, 'post');
+                    this.loadCommentCounts(post.id);
+                } else {
+                    console.warn(`Post ${post.id} reaction elements not found, retrying...`);
+                    // Retry after a longer delay
+                    setTimeout(() => {
+                        this.loadReactionCounts(post.id, 'post');
+                        this.loadCommentCounts(post.id);
+                    }, 500);
+                }
             });
-        }, 200);
+        }, 300);
     }
 
     createPostElement(post) {
@@ -935,9 +950,9 @@ class ForumApp {
     }
 
     refreshAllVisibleReactionCounts() {
+        console.log('Refreshing all visible reaction counts...');
         // Find all reaction count elements currently in the DOM and refresh them
         const likeElements = document.querySelectorAll('[id^="likes-count-"]');
-        const dislikeElements = document.querySelectorAll('[id^="dislikes-count-"]');
 
         const processedIds = new Set();
 
@@ -947,20 +962,43 @@ class ForumApp {
             if (!processedIds.has(id)) {
                 processedIds.add(id);
                 // Determine if it's a post or comment based on context
-                const target = element.closest('.post-card') ? 'post' : 'comment';
+                const isPost = element.closest('.post-card') || element.closest('.post-detail');
+                const isComment = element.closest('.comment') || element.closest('.reply');
+
+                let target = 'post'; // default
+                if (isComment && !isPost) {
+                    target = 'comment';
+                } else if (isPost) {
+                    target = 'post';
+                }
+
+                console.log(`Refreshing ${target} ${id} reaction counts`);
                 this.loadReactionCounts(parseInt(id), target);
+            }
+        });
+    }
+
+    // Manual function to force refresh all reaction counts (for debugging)
+    forceRefreshAllReactionCounts() {
+        console.log('Force refreshing all reaction counts...');
+
+        // Refresh post reaction counts
+        this.posts.forEach(post => {
+            console.log(`Force refreshing post ${post.id}`);
+            this.loadReactionCounts(post.id, 'post');
+        });
+
+        // Refresh any visible comment reaction counts
+        const commentElements = document.querySelectorAll('[data-comment-id]');
+        commentElements.forEach(element => {
+            const commentId = element.getAttribute('data-comment-id');
+            if (commentId) {
+                console.log(`Force refreshing comment ${commentId}`);
+                this.loadReactionCounts(parseInt(commentId), 'comment');
             }
         });
 
-        // Process dislike elements (in case some like elements are missing)
-        dislikeElements.forEach(element => {
-            const id = element.id.replace('dislikes-count-', '');
-            if (!processedIds.has(id)) {
-                processedIds.add(id);
-                const target = element.closest('.post-card') ? 'post' : 'comment';
-                this.loadReactionCounts(parseInt(id), target);
-            }
-        });
+        console.log('Force refresh completed');
     }
 
     async loadCommentCounts(postId) {
@@ -1721,4 +1759,13 @@ class ForumApp {
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', () => {
     window.app = new ForumApp();
+
+    // Add debug functions to window for testing
+    window.debugRefreshReactions = () => {
+        window.app.forceRefreshAllReactionCounts();
+    };
+
+    window.debugLoadReactions = (id, target) => {
+        window.app.loadReactionCounts(id, target);
+    };
 });
