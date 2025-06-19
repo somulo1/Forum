@@ -59,7 +59,7 @@
                         <!-- Search in Sidebar -->
                         <div class="sidebar-search">
                             <h4>Search</h4>
-                            <input type="text" id="search-input" placeholder="Search posts...">
+                            <input type="text" id="search-input" placeholder="Search posts..." autocomplete="off">
                         </div>
                     </div>
                 </aside>
@@ -73,7 +73,7 @@
                             <form id="create-post-form" enctype="multipart/form-data">
                                 <div class="form-group">
                                     <label for="post-title">Title</label>
-                                    <input type="text" id="post-title" name="title" required>
+                                    <input type="text" id="post-title" name="title" required autocomplete="off">
                                 </div>
 
                                 <div class="form-group">
@@ -138,11 +138,11 @@
             <form id="login-form">
                 <div class="form-group">
                     <label for="login-username">Username</label>
-                    <input type="text" id="login-username" name="username" required>
+                    <input type="text" id="login-username" name="username" required autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label for="login-password">Password</label>
-                    <input type="password" id="login-password" name="password" required>
+                    <input type="password" id="login-password" name="password" required autocomplete="current-password">
                 </div>
                 <button type="submit" class="btn btn-primary btn-full">Login</button>
             </form>
@@ -162,15 +162,15 @@
             <form id="register-form" enctype="multipart/form-data">
                 <div class="form-group">
                     <label for="register-username">Username</label>
-                    <input type="text" id="register-username" name="username" required>
+                    <input type="text" id="register-username" name="username" required autocomplete="username">
                 </div>
                 <div class="form-group">
                     <label for="register-email">Email</label>
-                    <input type="email" id="register-email" name="email" required>
+                    <input type="email" id="register-email" name="email" required autocomplete="email">
                 </div>
                 <div class="form-group">
                     <label for="register-password">Password</label>
-                    <input type="password" id="register-password" name="password" required>
+                    <input type="password" id="register-password" name="password" required autocomplete="new-password">
                 </div>
                 <div class="form-group">
                     <label for="register-avatar">Profile Picture (required)</label>
@@ -211,7 +211,7 @@
 
                     <div class="form-group">
                         <label for="edit-post-title">Title</label>
-                        <input type="text" id="edit-post-title" name="title" required>
+                        <input type="text" id="edit-post-title" name="title" required autocomplete="off">
                     </div>
 
                     <div class="form-group">
