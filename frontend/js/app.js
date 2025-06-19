@@ -828,10 +828,14 @@ class ForumApp {
 
         let processedText = text.toString();
 
-        // Only break up extremely long words (no spaces) that could cause horizontal overflow
-        // This preserves normal text while handling edge cases like very long URLs or code
-        processedText = processedText.replace(/\S{80,}/g, (match) => {
-            return match.replace(/(.{80})/g, '$1​'); // Add zero-width space every 80 chars for very long words only
+        // Handle extremely long sequences of repeated characters (like wwwwwwww...)
+        processedText = processedText.replace(/(.)\1{30,}/g, (_, char) => {
+            return char.repeat(30) + '...'; // Limit repeated chars to 30 + ellipsis
+        });
+
+        // Break up extremely long words (no spaces) that could cause horizontal overflow
+        processedText = processedText.replace(/\S{50,}/g, (match) => {
+            return match.replace(/(.{50})/g, '$1​'); // Add zero-width space every 50 chars
         });
 
         const div = document.createElement('div');

@@ -796,6 +796,7 @@ body {
 .post-card * {
     word-wrap: break-word !important;
     overflow-wrap: break-word !important; /* Break only when necessary */
+    word-break: break-word !important; /* Force break for problematic content */
     max-width: 100% !important;
     box-sizing: border-box !important;
 }
