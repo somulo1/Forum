@@ -31,8 +31,8 @@ func CreatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	title := r.FormValue("title")
-	content := r.FormValue("content")
+	title := utils.SanitizeHTML(r.FormValue("title"))
+	content := utils.SanitizeHTML(r.FormValue("content"))
 
 	// Get category IDs or names from the form
 	categoryIDStrings := r.Form["category_ids[]"]
@@ -188,8 +188,8 @@ func UpdatePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	title := r.FormValue("title")
-	content := r.FormValue("content")
+	title := utils.SanitizeHTML(r.FormValue("title"))
+	content := utils.SanitizeHTML(r.FormValue("content"))
 
 	// Get category IDs from the form
 	categoryIDStrings := r.Form["category_ids[]"]

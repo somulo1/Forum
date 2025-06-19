@@ -24,6 +24,9 @@ func CreateComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Sanitize comment content to prevent XSS
+	comment.Content = utils.SanitizeHTML(comment.Content)
+
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
 	if !ok || userID == "" {
@@ -60,6 +63,9 @@ func CreateReplComment(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid reply data", http.StatusBadRequest)
 		return
 	}
+
+	// Sanitize reply content to prevent XSS
+	reply.Content = utils.SanitizeHTML(reply.Content)
 
 	// Validate user session
 	userID, ok := RequireAuth(db, w, r)
