@@ -465,10 +465,7 @@ class ForumApp {
             );
         }
 
-        // Filter by type
-        if (this.currentFilter === 'my-posts' && this.currentUser) {
-            filteredPosts = filteredPosts.filter(post => post.user_id === this.currentUser.id);
-        }
+        // Note: User-specific filtering (my-posts, liked-posts) is now handled by the backend
 
         // Search filter
         if (this.currentSearchQuery) {
@@ -1748,10 +1745,8 @@ class ForumApp {
                 url += `&search=${encodeURIComponent(this.currentSearchQuery)}`;
             }
 
-            if (this.currentFilter === 'my-posts') {
-                url += `&user_posts=true`;
-            } else if (this.currentFilter === 'liked-posts') {
-                url += `&liked_posts=true`;
+            if (this.currentFilter && this.currentFilter !== 'all') {
+                url += `&filter=${this.currentFilter}`;
             }
 
             const response = await this.makeRequest(url);
