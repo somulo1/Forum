@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"log"
 	"net/http"
+	"strings"
 
 	"forum/handlers"
 	"forum/middleware"
@@ -64,13 +65,29 @@ func SetupRoutes(db *sql.DB) http.Handler {
 	frontendFS := http.FileServer(http.Dir("../frontend"))
 	mux.Handle("/frontend/", http.StripPrefix("/frontend/", frontendFS))
 
-	// Serve index.html at root
+	// Serve index.html for all non-API routes (SPA routing support)
 	mux.HandleFunc("/", func(w http.ResponseWriter, r *http.Request) {
-		if r.URL.Path == "/" {
-			http.ServeFile(w, r, "../frontend/index.html")
-		} else {
+		// If it's an API route, let it be handled by the API handlers
+		if strings.HasPrefix(r.URL.Path, "/api/") {
 			http.NotFound(w, r)
+			return
 		}
+
+		// If it's a static file request, let it be handled by static file server
+		if strings.HasPrefix(r.URL.Path, "/static/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		// If it's a frontend file request, let it be handled by frontend file server
+		if strings.HasPrefix(r.URL.Path, "/frontend/") {
+			http.NotFound(w, r)
+			return
+		}
+
+		// For all other routes (including /post/123, /categories, etc.), serve index.html
+		// This enables client-side routing
+		http.ServeFile(w, r, "../frontend/index.html")
 	})
 
 	return mux
