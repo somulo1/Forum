@@ -1342,7 +1342,8 @@ class ForumApp {
                     commentElement.remove();
                 }
                 // Update comment count in the main posts view
-                const postId = document.querySelector('.post-detail').dataset.postId ||
+                const postDetailElement = document.querySelector('.post-detail');
+                const postId = postDetailElement ? parseInt(postDetailElement.dataset.postId) :
                              this.posts.find(p => p.id)?.id;
                 if (postId) {
                     await this.loadCommentCounts(postId);
@@ -1415,12 +1416,19 @@ class ForumApp {
                 this.showNotification('Reply posted successfully!', 'success');
                 this.hideReplyForm(parentCommentId);
                 // Reload the current post to show new reply
-                const postId = document.querySelector('.post-detail').dataset.postId ||
+                const postDetailElement = document.querySelector('.post-detail');
+                const postId = postDetailElement ? parseInt(postDetailElement.dataset.postId) :
                              this.posts.find(p => p.id)?.id;
+
+                console.log('Reply success - trying to reload post:', postId);
+
                 if (postId) {
                     await this.openPostDetails(postId);
                     // Update comment count in the main posts view
                     await this.loadCommentCounts(postId);
+                } else {
+                    console.error('Could not find post ID to reload');
+                    this.showNotification('Reply posted, but could not refresh view', 'warning');
                 }
             } else {
                 const error = await response.text();
