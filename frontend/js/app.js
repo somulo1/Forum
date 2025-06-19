@@ -441,9 +441,14 @@ class ForumApp {
             // Add filter type (my-posts, liked-posts, etc.)
             if (this.currentFilter && this.currentFilter !== 'all') {
                 params.append('filter', this.currentFilter);
+                console.log(`DEBUG: Adding filter parameter: ${this.currentFilter}`);
             }
 
-            const response = await fetch(`${API_BASE_URL}/api/posts?${params.toString()}`, {
+            const finalUrl = `${API_BASE_URL}/api/posts?${params.toString()}`;
+            console.log(`DEBUG: Making request to: ${finalUrl}`);
+            console.log(`DEBUG: Current user authenticated: ${!!this.currentUser}`);
+
+            const response = await fetch(finalUrl, {
                 credentials: 'include'
             });
 
@@ -670,6 +675,13 @@ class ForumApp {
     // Navigation and Filtering
     handleNavigation(e) {
         const filter = e.target.dataset.filter;
+
+        // Check authentication for user-specific filters
+        if ((filter === 'my-posts' || filter === 'liked-posts') && !this.currentUser) {
+            this.showNotification('Please log in to view your posts and liked posts', 'warning');
+            this.showModal('login-modal');
+            return;
+        }
 
         // Update active nav button
         document.querySelectorAll('.nav-btn').forEach(btn => btn.classList.remove('active'));
