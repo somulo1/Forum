@@ -828,14 +828,10 @@ class ForumApp {
 
         let processedText = text.toString();
 
-        // Handle extremely long sequences of repeated characters (like wwwwwwww...)
-        processedText = processedText.replace(/(.)\1{30,}/g, (_, char) => {
-            return char.repeat(30) + '...'; // Limit repeated chars to 30 + ellipsis
-        });
-
-        // Break up extremely long words (no spaces) that could cause horizontal overflow
-        processedText = processedText.replace(/\S{50,}/g, (match) => {
-            return match.replace(/(.{50})/g, '$1​'); // Add zero-width space every 50 chars
+        // Insert zero-width spaces in very long words to allow line breaking
+        // This preserves all content while allowing it to wrap to new lines
+        processedText = processedText.replace(/\S{40,}/g, (match) => {
+            return match.replace(/(.{40})/g, '$1​'); // Add zero-width space every 40 chars
         });
 
         const div = document.createElement('div');
