@@ -920,26 +920,44 @@ class ForumApp {
 
             if (response.ok) {
                 const data = await response.json();
+
+                // Update main feed elements
                 const likesElement = document.getElementById(`likes-count-${id}`);
                 const dislikesElement = document.getElementById(`dislikes-count-${id}`);
 
-                console.log(`Loading reaction counts for ${target} ${id}:`, data);
-                console.log(`Looking for elements: likes-count-${id}, dislikes-count-${id}`);
-                console.log('Likes element found:', !!likesElement);
-                console.log('Dislikes element found:', !!dislikesElement);
+                // Update modal elements (if they exist)
+                const modalLikesElement = document.getElementById(`modal-likes-count-${id}`);
+                const modalDislikesElement = document.getElementById(`modal-dislikes-count-${id}`);
 
+                console.log(`Loading reaction counts for ${target} ${id}:`, data);
+                console.log(`Looking for elements: likes-count-${id}, modal-likes-count-${id}`);
+                console.log('Main likes element found:', !!likesElement);
+                console.log('Modal likes element found:', !!modalLikesElement);
+
+                // Update main feed elements
                 if (likesElement) {
                     likesElement.textContent = data.likes || 0;
-                    console.log(`Updated likes count for ${target} ${id}: ${data.likes || 0}`);
-                } else {
-                    console.warn(`Likes element not found for ${target} ${id}`);
+                    console.log(`Updated main likes count for ${target} ${id}: ${data.likes || 0}`);
                 }
 
                 if (dislikesElement) {
                     dislikesElement.textContent = data.dislikes || 0;
-                    console.log(`Updated dislikes count for ${target} ${id}: ${data.dislikes || 0}`);
-                } else {
-                    console.warn(`Dislikes element not found for ${target} ${id}`);
+                    console.log(`Updated main dislikes count for ${target} ${id}: ${data.dislikes || 0}`);
+                }
+
+                // Update modal elements
+                if (modalLikesElement) {
+                    modalLikesElement.textContent = data.likes || 0;
+                    console.log(`Updated modal likes count for ${target} ${id}: ${data.likes || 0}`);
+                }
+
+                if (modalDislikesElement) {
+                    modalDislikesElement.textContent = data.dislikes || 0;
+                    console.log(`Updated modal dislikes count for ${target} ${id}: ${data.dislikes || 0}`);
+                }
+
+                if (!likesElement && !modalLikesElement) {
+                    console.warn(`No likes elements found for ${target} ${id}`);
                 }
             } else {
                 console.error(`Failed to load reaction counts: ${response.status}`);
@@ -1115,11 +1133,11 @@ class ForumApp {
                     <div class="reaction-buttons">
                         <button class="reaction-btn like" onclick="app.toggleReaction(${post.id}, 'like', 'post')">
                             <span>👍</span>
-                            <span id="likes-count-${post.id}">0</span>
+                            <span id="modal-likes-count-${post.id}">0</span>
                         </button>
                         <button class="reaction-btn dislike" onclick="app.toggleReaction(${post.id}, 'dislike', 'post')">
                             <span>👎</span>
-                            <span id="dislikes-count-${post.id}">0</span>
+                            <span id="modal-dislikes-count-${post.id}">0</span>
                         </button>
                     </div>
                 </div>
@@ -1149,12 +1167,12 @@ class ForumApp {
             if (Array.isArray(comments)) {
                 comments.forEach(comment => {
                     if (comment && comment.id) {
-                        // Check if element exists before loading
-                        const likesElement = document.getElementById(`likes-count-${comment.id}`);
-                        if (likesElement) {
+                        // Check if modal element exists before loading
+                        const modalLikesElement = document.getElementById(`modal-likes-count-${comment.id}`);
+                        if (modalLikesElement) {
                             this.loadReactionCounts(comment.id, 'comment');
                         } else {
-                            console.warn(`Comment ${comment.id} likes element not found, retrying...`);
+                            console.warn(`Comment ${comment.id} modal likes element not found, retrying...`);
                             // Retry after a longer delay
                             setTimeout(() => {
                                 this.loadReactionCounts(comment.id, 'comment');
@@ -1164,11 +1182,11 @@ class ForumApp {
                         if (comment.replies && Array.isArray(comment.replies)) {
                             comment.replies.forEach(reply => {
                                 if (reply && reply.id) {
-                                    const replyLikesElement = document.getElementById(`likes-count-${reply.id}`);
-                                    if (replyLikesElement) {
+                                    const replyModalLikesElement = document.getElementById(`modal-likes-count-${reply.id}`);
+                                    if (replyModalLikesElement) {
                                         this.loadReactionCounts(reply.id, 'comment');
                                     } else {
-                                        console.warn(`Reply ${reply.id} likes element not found, retrying...`);
+                                        console.warn(`Reply ${reply.id} modal likes element not found, retrying...`);
                                         setTimeout(() => {
                                             this.loadReactionCounts(reply.id, 'comment');
                                         }, 500);
@@ -1205,11 +1223,11 @@ class ForumApp {
                     <div class="reaction-buttons">
                         <button class="reaction-btn like" onclick="app.toggleReaction(${comment.id}, 'like', 'comment')">
                             <span>👍</span>
-                            <span id="likes-count-${comment.id}">0</span>
+                            <span id="modal-likes-count-${comment.id}">0</span>
                         </button>
                         <button class="reaction-btn dislike" onclick="app.toggleReaction(${comment.id}, 'dislike', 'comment')">
                             <span>👎</span>
-                            <span id="dislikes-count-${comment.id}">0</span>
+                            <span id="modal-dislikes-count-${comment.id}">0</span>
                         </button>
                         ${this.currentUser ? `<button class="btn btn-sm btn-secondary" onclick="app.showReplyForm(${comment.id})">Reply</button>` : ''}
                     </div>
@@ -1237,11 +1255,11 @@ class ForumApp {
                                     <div class="reaction-buttons">
                                         <button class="reaction-btn like" onclick="app.toggleReaction(${reply.id}, 'like', 'comment')">
                                             <span>👍</span>
-                                            <span id="likes-count-${reply.id}">0</span>
+                                            <span id="modal-likes-count-${reply.id}">0</span>
                                         </button>
                                         <button class="reaction-btn dislike" onclick="app.toggleReaction(${reply.id}, 'dislike', 'comment')">
                                             <span>👎</span>
-                                            <span id="dislikes-count-${reply.id}">0</span>
+                                            <span id="modal-dislikes-count-${reply.id}">0</span>
                                         </button>
                                     </div>
                                 </div>
