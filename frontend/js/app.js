@@ -851,6 +851,8 @@ class ForumApp {
 
     // Reaction Methods
     async toggleReaction(id, type, target) {
+        console.log(`toggleReaction called: id=${id}, type=${type}, target=${target}`);
+
         if (!this.currentUser) {
             this.showNotification('Please log in to react to posts', 'warning');
             return;
@@ -863,6 +865,8 @@ class ForumApp {
             payload.comment_id = id;
         }
 
+        console.log('Sending payload:', payload);
+
         try {
             const response = await fetch('/api/likes/toggle', {
                 method: 'POST',
@@ -873,12 +877,19 @@ class ForumApp {
                 body: JSON.stringify(payload)
             });
 
+            console.log('Response status:', response.status);
+
             if (response.ok) {
-                // Reload reaction counts
+                const result = await response.json();
+                console.log('Toggle response:', result);
+                // Reload reaction counts for the specific item
                 await this.loadReactionCounts(id, target);
+                // Also refresh all visible reaction counts to ensure consistency
+                this.refreshAllVisibleReactionCounts();
                 this.showNotification('Reaction updated!', 'success');
             } else {
                 const error = await response.text();
+                console.error('Toggle error:', error);
                 this.showNotification(error || 'Failed to update reaction', 'error');
             }
         } catch (error) {
@@ -897,17 +908,59 @@ class ForumApp {
                 const likesElement = document.getElementById(`likes-count-${id}`);
                 const dislikesElement = document.getElementById(`dislikes-count-${id}`);
 
+                console.log(`Loading reaction counts for ${target} ${id}:`, data);
+                console.log(`Looking for elements: likes-count-${id}, dislikes-count-${id}`);
+                console.log('Likes element found:', !!likesElement);
+                console.log('Dislikes element found:', !!dislikesElement);
+
                 if (likesElement) {
                     likesElement.textContent = data.likes || 0;
+                    console.log(`Updated likes count for ${target} ${id}: ${data.likes || 0}`);
+                } else {
+                    console.warn(`Likes element not found for ${target} ${id}`);
                 }
 
                 if (dislikesElement) {
                     dislikesElement.textContent = data.dislikes || 0;
+                    console.log(`Updated dislikes count for ${target} ${id}: ${data.dislikes || 0}`);
+                } else {
+                    console.warn(`Dislikes element not found for ${target} ${id}`);
                 }
+            } else {
+                console.error(`Failed to load reaction counts: ${response.status}`);
             }
         } catch (error) {
             console.error('Failed to load reaction counts:', error);
         }
+    }
+
+    refreshAllVisibleReactionCounts() {
+        // Find all reaction count elements currently in the DOM and refresh them
+        const likeElements = document.querySelectorAll('[id^="likes-count-"]');
+        const dislikeElements = document.querySelectorAll('[id^="dislikes-count-"]');
+
+        const processedIds = new Set();
+
+        // Process like elements
+        likeElements.forEach(element => {
+            const id = element.id.replace('likes-count-', '');
+            if (!processedIds.has(id)) {
+                processedIds.add(id);
+                // Determine if it's a post or comment based on context
+                const target = element.closest('.post-card') ? 'post' : 'comment';
+                this.loadReactionCounts(parseInt(id), target);
+            }
+        });
+
+        // Process dislike elements (in case some like elements are missing)
+        dislikeElements.forEach(element => {
+            const id = element.id.replace('dislikes-count-', '');
+            if (!processedIds.has(id)) {
+                processedIds.add(id);
+                const target = element.closest('.post-card') ? 'post' : 'comment';
+                this.loadReactionCounts(parseInt(id), target);
+            }
+        });
     }
 
     async loadCommentCounts(postId) {
@@ -977,6 +1030,11 @@ class ForumApp {
 
             this.renderPostModal(post, comments);
             this.showModal('post-modal');
+
+            // Ensure reaction counts are loaded after modal is fully shown
+            setTimeout(() => {
+                this.refreshAllVisibleReactionCounts();
+            }, 500);
         } catch (error) {
             console.error('Failed to load post details:', error);
             this.showNotification('Failed to load post details', 'error');
@@ -1045,7 +1103,7 @@ class ForumApp {
             </div>
         `;
 
-        // Load reaction counts after a small delay to ensure DOM is ready
+        // Load reaction counts after a delay to ensure DOM is ready
         setTimeout(() => {
             this.loadReactionCounts(post.id, 'post');
 
@@ -1053,18 +1111,37 @@ class ForumApp {
             if (Array.isArray(comments)) {
                 comments.forEach(comment => {
                     if (comment && comment.id) {
-                        this.loadReactionCounts(comment.id, 'comment');
+                        // Check if element exists before loading
+                        const likesElement = document.getElementById(`likes-count-${comment.id}`);
+                        if (likesElement) {
+                            this.loadReactionCounts(comment.id, 'comment');
+                        } else {
+                            console.warn(`Comment ${comment.id} likes element not found, retrying...`);
+                            // Retry after a longer delay
+                            setTimeout(() => {
+                                this.loadReactionCounts(comment.id, 'comment');
+                            }, 500);
+                        }
+
                         if (comment.replies && Array.isArray(comment.replies)) {
                             comment.replies.forEach(reply => {
                                 if (reply && reply.id) {
-                                    this.loadReactionCounts(reply.id, 'comment');
+                                    const replyLikesElement = document.getElementById(`likes-count-${reply.id}`);
+                                    if (replyLikesElement) {
+                                        this.loadReactionCounts(reply.id, 'comment');
+                                    } else {
+                                        console.warn(`Reply ${reply.id} likes element not found, retrying...`);
+                                        setTimeout(() => {
+                                            this.loadReactionCounts(reply.id, 'comment');
+                                        }, 500);
+                                    }
                                 }
                             });
                         }
                     }
                 });
             }
-        }, 100);
+        }, 300);
     }
 
     createCommentElement(comment) {
