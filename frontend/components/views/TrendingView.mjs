@@ -178,9 +178,9 @@ export class TrendingView extends BaseView {
                 return;
             }
 
-            // Render trending posts
+            // Render trending posts with interactive reaction buttons
             postsContainer.innerHTML = trendingPosts.map((post, index) => `
-                <div class="trending-post-item" data-post-id="${post.id}">
+                <div class="trending-post-item post-card" data-id="${post.id}">
                     <div class="post-content">
                         <div class="post-header">
                             <img src="http://localhost:8080${post.avatar_url || '/static/pictures/default-avatar.png'}"
@@ -197,32 +197,49 @@ export class TrendingView extends BaseView {
                             </div>
                         ` : ''}
                         <div class="post-snippet">${this.truncateContent(post.content, 150)}</div>
-                        <div class="engagement-stats">
-                            <div class="stat">
-                                <i class="fas fa-heart"></i>
-                                <span>${post.likes}</span>
-                            </div>
-                            <div class="stat">
-                                <i class="fas fa-thumbs-down"></i>
-                                <span>${post.dislikes}</span>
-                            </div>
-                            <div class="stat">
-                                <i class="fas fa-comment"></i>
-                                <span>${post.commentsCount}</span>
-                            </div>
-                            <div class="engagement-score">
-                                <i class="fas fa-fire"></i>
-                                <span>${Math.round(post.engagementScore)}</span>
+
+                        <!-- Interactive reaction buttons -->
+                        <div class="post-actions">
+                            <div class="action-buttons">
+                                <button class="reaction-btn like-btn" data-id="${post.id}">
+                                    <i class="fas fa-thumbs-up"></i>
+                                    <span class="like-count">${post.likes}</span>
+                                </button>
+                                <button class="reaction-btn dislike-btn" data-id="${post.id}">
+                                    <i class="fas fa-thumbs-down"></i>
+                                    <span class="dislike-count">${post.dislikes}</span>
+                                </button>
+                                <button class="reaction-btn comment-btn" data-id="${post.id}">
+                                    <i class="fas fa-comment"></i>
+                                    <span class="comment-count">${post.commentsCount}</span>
+                                </button>
+                                <div class="engagement-score">
+                                    <i class="fas fa-fire"></i>
+                                    <span>${Math.round(post.engagementScore)}</span>
+                                </div>
                             </div>
                         </div>
+                    </div>
+
+                    <!-- Hidden comment section for consistency -->
+                    <div class="post-comment" data-id="${post.id}" style="display: none;">
+                        <div class="comments-container">
+                            <h4>Comments</h4>
+                        </div>
+                        <div class="write-comment-box"></div>
                     </div>
                 </div>
             `).join('');
 
-            // Add click handlers for posts
-            postsContainer.querySelectorAll('.trending-post-item').forEach(item => {
-                item.addEventListener('click', () => {
-                    const postId = item.getAttribute('data-post-id');
+            // Initialize reaction system for trending posts
+            await this.initializeTrendingPostReactions();
+
+            // Add click handlers for post titles/content (not the whole card)
+            postsContainer.querySelectorAll('.post-title, .post-snippet').forEach(element => {
+                element.style.cursor = 'pointer';
+                element.addEventListener('click', () => {
+                    const postCard = element.closest('.trending-post-item');
+                    const postId = postCard.getAttribute('data-id');
                     this.app.router.navigate(`/post/${postId}`);
                 });
             });
@@ -234,6 +251,26 @@ export class TrendingView extends BaseView {
                 'Failed to load trending posts.',
                 () => this.loadTrendingPosts(filter)
             ));
+        }
+    }
+
+    /**
+     * Initialize reaction system for trending posts
+     */
+    async initializeTrendingPostReactions() {
+        try {
+            // Load post reactions (likes/dislikes)
+            await this.app.getReactionManager().loadPostsLikes();
+
+            // Initialize comment forms for trending posts
+            this.app.getCommentManager().initializeCommentForms();
+
+            // Load comment reactions
+            await this.app.getReactionManager().loadCommentsLikes();
+
+            console.log('Trending post reactions initialized');
+        } catch (error) {
+            console.error('Error initializing trending post reactions:', error);
         }
     }
 

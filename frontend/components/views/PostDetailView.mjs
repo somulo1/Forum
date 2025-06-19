@@ -133,9 +133,13 @@ export class PostDetailView extends BaseView {
 
                 <div class="post-footer">
                     <div class="post-stats">
-                        <button class="like-btn" data-post-id="${this.post.id}">
-                            <i class="fas fa-heart"></i>
+                        <button class="reaction-btn like-btn" data-id="${this.post.id}">
+                            <i class="fas fa-thumbs-up"></i>
                             <span class="like-count">${this.post.likes}</span>
+                        </button>
+                        <button class="reaction-btn dislike-btn" data-id="${this.post.id}">
+                            <i class="fas fa-thumbs-down"></i>
+                            <span class="dislike-count">${this.post.dislikes}</span>
                         </button>
                         <span class="comment-count">
                             <i class="fas fa-comment"></i>
@@ -164,6 +168,9 @@ export class PostDetailView extends BaseView {
 
         // Setup event listeners
         this.setupEventListeners();
+
+        // Initialize reaction system for the post
+        await this.app.getReactionManager().loadPostsLikes();
 
         // Load comments
         await this.loadComments();
@@ -197,13 +204,7 @@ export class PostDetailView extends BaseView {
             });
         }
 
-        // Like button
-        const likeBtn = document.querySelector('.like-btn');
-        if (likeBtn) {
-            likeBtn.addEventListener('click', () => {
-                this.toggleLike();
-            });
-        }
+        // Note: Like/dislike buttons are handled by ReactionManager automatically
     }
 
     /**
@@ -337,33 +338,7 @@ export class PostDetailView extends BaseView {
 
 
 
-    /**
-     * Toggle like status
-     */
-    async toggleLike() {
-        try {
-            if (!await this.isAuthenticated()) {
-                this.showAuthModal();
-                return;
-            }
-
-            // This would typically toggle like via API
-            console.log('Toggling like for post:', this.postId);
-            
-            // Update UI optimistically
-            const likeBtn = document.querySelector('.like-btn');
-            const likeCount = document.querySelector('.like-count');
-            
-            if (likeBtn && likeCount) {
-                const currentCount = parseInt(likeCount.textContent);
-                likeCount.textContent = currentCount + 1;
-                likeBtn.classList.add('liked');
-            }
-
-        } catch (error) {
-            console.error('Error toggling like:', error);
-        }
-    }
+    // Note: Like/dislike functionality is handled by ReactionManager
 
     /**
      * Toggle save post
