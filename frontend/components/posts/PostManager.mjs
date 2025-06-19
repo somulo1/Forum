@@ -12,6 +12,24 @@ export class PostManager {
         this.reactionManager = reactionManager;
         this.commentManager = commentManager;
         this.postContainer = document.getElementById("postFeed");
+        this.router = null; // Will be set by the app
+        this.app = null; // Will be set by the app
+    }
+
+    /**
+     * Set router instance for navigation
+     * @param {Object} router - Router instance
+     */
+    setRouter(router) {
+        this.router = router;
+    }
+
+    /**
+     * Set app instance for accessing other managers
+     * @param {Object} app - App instance
+     */
+    setApp(app) {
+        this.app = app;
     }
 
     /**
@@ -52,6 +70,9 @@ export class PostManager {
 
             // Setup comment toggle for this post
             PostCard.setupCommentToggle(postCard);
+
+            // Setup post navigation for this post (pass app instance instead of router)
+            PostCard.setupPostNavigation(postCard, this.app);
 
             this.postContainer.appendChild(postCard);
         }
@@ -233,6 +254,28 @@ export class PostManager {
             console.error(`Error updating comments for post ${postId}:`, error);
             // Set comment count to 0 on error
             PostCard.updateCommentCount(postId, 0);
+        }
+    }
+
+    /**
+     * Get a post by ID (fetch from API if not in cache)
+     * @param {string} postId - Post ID
+     * @returns {Object} - Post data
+     */
+    async getPostById(postId) {
+        // First check if we have it in our cached posts
+        const cachedPost = this.posts.find(post => post.id.toString() === postId.toString());
+        if (cachedPost) {
+            return cachedPost;
+        }
+
+        // If not cached, fetch from API
+        try {
+            const post = await ApiUtils.get(`/api/posts/${postId}`);
+            return post;
+        } catch (error) {
+            console.error('Error fetching post by ID:', error);
+            throw error;
         }
     }
 }

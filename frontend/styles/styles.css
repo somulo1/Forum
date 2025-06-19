@@ -661,6 +661,164 @@ img {
     box-shadow: 0px 6px 18px rgba(0, 0, 0, 0.2); /* Slightly more lift */
 }
 
+/* Clickable post card styling */
+.post-card-clickable {
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.post-card-clickable:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+    border-color: var(--accent-color);
+}
+
+.post-card-clickable:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+/* Prevent text selection on clickable cards */
+.post-card-clickable {
+    user-select: none;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+}
+
+/* Re-enable text selection for specific elements */
+.post-card-clickable .post-content,
+.post-card-clickable .post-title {
+    user-select: text;
+    -webkit-user-select: text;
+    -moz-user-select: text;
+    -ms-user-select: text;
+}
+
+/* Post Detail Expansion Styles */
+.post-expanded {
+    border: 2px solid var(--accent-color);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+
+.post-detail-expansion {
+    margin-top: 1rem;
+    padding: 1.5rem;
+    background: var(--hover-color2);
+    border-radius: var(--radius);
+    border-top: 1px solid var(--border-color);
+}
+
+.post-detail-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.collapse-post-btn {
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: var(--radius);
+    cursor: pointer;
+    font-weight: 500;
+    transition: var(--transition);
+}
+
+.collapse-post-btn:hover {
+    background: var(--primary-color);
+}
+
+.post-full-content {
+    margin: 1rem 0;
+}
+
+.post-image-full {
+    width: 100%;
+    max-height: 400px;
+    object-fit: cover;
+    border-radius: var(--radius);
+    margin-bottom: 1rem;
+}
+
+.post-full-text {
+    font-size: 1rem;
+    line-height: 1.6;
+    color: var(--text-color);
+    margin-bottom: 1rem;
+}
+
+.post-stats-detailed {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem 0;
+    border-top: 1px solid var(--border-color);
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comment-count-detailed {
+    color: var(--muted-text);
+    font-size: 0.9rem;
+}
+
+.comments-section-expanded {
+    margin-top: 1.5rem;
+}
+
+.comments-header h3 {
+    color: var(--text-color);
+    margin-bottom: 1rem;
+    font-size: 1.2rem;
+}
+
+.comment-form-expanded {
+    margin-bottom: 1.5rem;
+}
+
+.comments-list-expanded {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.empty-comments,
+.error-comments {
+    text-align: center;
+    padding: 2rem;
+    color: var(--muted-text);
+}
+
+.empty-comments i {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+
+.auth-prompt {
+    text-align: center;
+    padding: 1rem;
+    background: var(--card-color);
+    border-radius: var(--radius);
+    border: 1px solid var(--border-color);
+}
+
+.login-link {
+    background: none;
+    border: none;
+    color: var(--accent-color);
+    text-decoration: underline;
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.login-link:hover {
+    color: var(--primary-color);
+}
+
 /* --- Post Header Layout --- */
 .post-header {
     display: flex;

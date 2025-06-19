@@ -72,6 +72,16 @@ export class App {
             this.categoryManager.setRouter(this.router);
             console.log('App: Router set in category manager');
 
+            // Set router reference in post manager
+            console.log('App: Setting router in post manager');
+            this.postManager.setRouter(this.router);
+            console.log('App: Router set in post manager');
+
+            // Set app reference in post manager
+            console.log('App: Setting app reference in post manager');
+            this.postManager.setApp(this);
+            console.log('App: App reference set in post manager');
+
             // Setup the application
             await this.setupApp();
             console.log('Forum application initialized successfully');
