@@ -786,70 +786,41 @@ body {
     cursor: pointer;
     display: flex;
     flex-direction: column;
-    min-height: 200px; /* Ensure consistent card heights */
-    overflow: hidden; /* Prevent content from overflowing the card */
-    min-width: 0; /* Allow flex items to shrink below their content size */
-    width: 100%; /* Ensure full width */
+    height: 350px; /* Fixed height for consistent card layout */
+    min-width: 0;
+    width: 100%;
+    box-sizing: border-box;
 }
 
-/* Smart text wrapping for post cards - wrap to new lines instead of overflow */
-.post-card * {
-    word-wrap: break-word !important;
-    overflow-wrap: break-word !important;
-    word-break: break-word !important;
-    white-space: pre-wrap !important; /* Preserve spaces and allow wrapping */
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important; /* Hide any remaining overflow */
+/* Content area that can scroll if needed */
+.post-card .post-content {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: hidden;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    word-break: break-word;
+    white-space: pre-wrap;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-bottom: var(--spacing-md);
+    padding-right: var(--spacing-xs); /* Space for scrollbar */
 }
 
-/* Specific fix for very long strings - preserve readability */
-.post-card .post-content,
+/* Ensure post title fits properly */
 .post-card .post-title {
-    display: block !important;
-    width: 100% !important;
-    overflow: hidden !important;
-    white-space: pre-wrap !important; /* Preserve formatting but wrap */
-    word-break: normal !important; /* Don't break normal words */
-    overflow-wrap: break-word !important; /* Only break extremely long words */
-    hyphens: auto !important; /* Add hyphens for better readability */
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin-bottom: var(--spacing-sm);
+    flex-shrink: 0; /* Don't shrink the title */
 }
 
-/* Emergency fix for extremely long strings */
-.post-card {
-    table-layout: fixed !important;
-    width: 100% !important;
-    max-width: 100% !important;
-    box-sizing: border-box !important;
-}
-
-.post-card > * {
-    max-width: 100% !important;
-    overflow: hidden !important;
-    box-sizing: border-box !important;
-}
-
-/* Balanced text handling for problematic content */
-.post-card .post-content,
-.post-card .post-title,
-.post-card h3 {
-    width: 100% !important;
-    max-width: 100% !important;
-    word-break: normal !important; /* Preserve normal word breaks */
-    overflow-wrap: break-word !important; /* Break only extremely long words */
-    white-space: pre-wrap !important; /* Preserve formatting */
-    overflow: hidden !important;
-    display: block !important;
-    box-sizing: border-box !important;
-    hyphens: auto !important; /* Better word breaking with hyphens */
-}
-
-/* Global overflow prevention for any text in post cards */
-.post-card,
-.post-card * {
-    max-width: 100% !important;
-    overflow-x: hidden !important;
-    word-wrap: break-word !important;
+/* Ensure post footer stays at bottom */
+.post-card .post-footer {
+    margin-top: auto;
+    flex-shrink: 0;
 }
 
 .post-card:hover {
@@ -879,13 +850,6 @@ body {
     }
 }
 
-    .post-card {
-        margin-bottom: 0;
-        height: fit-content;
-        min-width: 0 !important;
-        max-width: 100% !important;
-        overflow: hidden !important;
-    }
 }
 
 .post-header {
@@ -926,28 +890,25 @@ body {
 .post-title {
     font-size: var(--font-size-xl);
     font-weight: 600;
-    margin-bottom: var(--spacing-sm);
     color: var(--text-primary);
     line-height: 1.4;
     word-wrap: break-word;
-    word-break: normal; /* Preserve normal word breaks */
-    overflow-wrap: break-word; /* Break only extremely long words */
-    hyphens: auto;
+    overflow-wrap: break-word;
     max-width: 100%;
-    overflow: hidden; /* Hide any overflow */
+    display: -webkit-box;
+    -webkit-line-clamp: 2; /* Limit title to 2 lines */
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .post-content {
     color: var(--text-secondary);
-    margin-bottom: var(--spacing-md);
     line-height: 1.6;
     word-wrap: break-word;
-    word-break: normal; /* Preserve normal word breaks */
-    overflow-wrap: break-word; /* Break only extremely long words */
-    hyphens: auto;
+    overflow-wrap: break-word;
     max-width: 100%;
-    white-space: pre-wrap; /* Preserve whitespace but wrap */
-    overflow: hidden; /* Hide any overflow */
+    white-space: pre-wrap;
 }
 
 .post-image {
