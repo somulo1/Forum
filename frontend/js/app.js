@@ -1229,7 +1229,7 @@ class ForumApp {
                             <span>👎</span>
                             <span id="modal-dislikes-count-${comment.id}">0</span>
                         </button>
-                        ${this.currentUser ? `<button class="btn btn-sm btn-secondary" onclick="app.showReplyForm(${comment.id})">Reply</button>` : ''}
+                        ${this.currentUser && this.currentUser.id !== comment.user_id ? `<button class="btn btn-sm btn-secondary" onclick="app.showReplyForm(${comment.id})">Reply</button>` : ''}
                     </div>
                 </div>
 
