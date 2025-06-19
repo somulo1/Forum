@@ -118,6 +118,10 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	sortBy := r.URL.Query().Get("sort")
 	filterType := r.URL.Query().Get("filter")
 
+	// Debug logging
+	log.Printf("Search request - Query: '%s', Category: '%s', Filter: '%s', Sort: '%s'",
+		searchQuery, categoryID, filterType, sortBy)
+
 	// Get current user ID for user-specific filters
 	var currentUserID string
 	if filterType == "my-posts" || filterType == "liked-posts" {
@@ -133,6 +137,14 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 		log.Printf("Error fetching posts: %v", err)
 		utils.SendJSONError(w, "Failed to fetch posts", http.StatusInternalServerError)
 		return
+	}
+
+	// Debug logging
+	log.Printf("Backend returning %d posts for search query '%s'", len(posts), searchQuery)
+	if searchQuery != "" {
+		for _, post := range posts {
+			log.Printf("  Post ID %d: '%s' by %s", post.ID, post.Title, post.UserID)
+		}
 	}
 
 	var fullPosts []models.Post

@@ -441,7 +441,7 @@ class ForumApp {
 
             if (response.ok) {
                 this.posts = await response.json();
-                this.filterPostsClientSide(); // Apply client-side filtering as fallback
+                console.log('Received posts from backend:', this.posts.length, 'posts');
                 this.renderPosts();
             } else {
                 this.showNotification('Failed to load posts', 'error');

@@ -599,6 +599,7 @@ func GetPostsWithFilters(db *sql.DB, page, limit int, categoryID, searchQuery, s
 		conditions = append(conditions, "(p.title LIKE ? OR p.content LIKE ? OR u.username LIKE ?)")
 		searchPattern := "%" + searchQuery + "%"
 		args = append(args, searchPattern, searchPattern, searchPattern)
+		fmt.Printf("DEBUG: Search query '%s' with pattern '%s'\n", searchQuery, searchPattern)
 	}
 
 	// Add joins to query
@@ -624,6 +625,10 @@ func GetPostsWithFilters(db *sql.DB, page, limit int, categoryID, searchQuery, s
 	// Add pagination
 	query += " LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
+
+	// Debug logging
+	fmt.Printf("DEBUG: Final SQL query: %s\n", query)
+	fmt.Printf("DEBUG: Query args: %v\n", args)
 
 	rows, err := db.Query(query, args...)
 	if err != nil {
