@@ -1,5 +1,8 @@
 // Forum Application - Main JavaScript File
 
+// Configuration
+const API_BASE_URL = 'http://localhost:8080';
+
 class ForumApp {
     constructor() {
         this.currentUser = null;
@@ -120,7 +123,7 @@ class ForumApp {
     // Authentication Methods
     async checkAuthStatus() {
         try {
-            const response = await fetch('/api/user', {
+            const response = await fetch(`${API_BASE_URL}/api/user`, {
                 credentials: 'include'
             });
             
@@ -246,7 +249,7 @@ class ForumApp {
         this.showLoading();
         
         try {
-            const response = await fetch('/api/logout', {
+            const response = await fetch(`${API_BASE_URL}/api/logout`, {
                 method: 'POST',
                 credentials: 'include'
             });
@@ -269,7 +272,7 @@ class ForumApp {
     // Categories Methods
     async loadCategories() {
         try {
-            const response = await fetch('/api/categories');
+            const response = await fetch(`${API_BASE_URL}/api/categories`);
             if (response.ok) {
                 this.allCategories = await response.json();
                 this.renderCategoryFilters();
@@ -440,7 +443,7 @@ class ForumApp {
                 params.append('filter', this.currentFilter);
             }
 
-            const response = await fetch(`/api/posts?${params.toString()}`, {
+            const response = await fetch(`${API_BASE_URL}/api/posts?${params.toString()}`, {
                 credentials: 'include'
             });
 
@@ -608,7 +611,7 @@ class ForumApp {
         });
 
         try {
-            const response = await fetch('/api/posts/create', {
+            const response = await fetch(`${API_BASE_URL}/api/posts/create`, {
                 method: 'POST',
                 credentials: 'include',
                 body: formData
@@ -640,7 +643,7 @@ class ForumApp {
         this.showLoading();
 
         try {
-            const response = await fetch('/api/posts/delete', {
+            const response = await fetch(`${API_BASE_URL}/api/posts/delete`, {
                 method: 'DELETE',
                 headers: {
                     'Content-Type': 'application/json'
@@ -893,7 +896,7 @@ class ForumApp {
         console.log('Sending payload:', payload);
 
         try {
-            const response = await fetch('/api/likes/toggle', {
+            const response = await fetch(`${API_BASE_URL}/api/likes/toggle`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -926,7 +929,7 @@ class ForumApp {
     async loadReactionCounts(id, target) {
         try {
             const param = target === 'post' ? `post_id=${id}` : `comment_id=${id}`;
-            const response = await fetch(`/api/likes/reactions?${param}`);
+            const response = await fetch(`${API_BASE_URL}/api/likes/reactions?${param}`);
 
             if (response.ok) {
                 const data = await response.json();
@@ -1031,7 +1034,7 @@ class ForumApp {
 
     async loadCommentCounts(postId) {
         try {
-            const response = await fetch(`/api/comments/get?post_id=${postId}`);
+            const response = await fetch(`${API_BASE_URL}/api/comments/get?post_id=${postId}`);
 
             if (response.ok) {
                 const comments = await response.json();
@@ -1077,7 +1080,7 @@ class ForumApp {
             // Load comments with better error handling
             let comments = [];
             try {
-                const commentsResponse = await fetch(`/api/comments/get?post_id=${postId}`, {
+                const commentsResponse = await fetch(`${API_BASE_URL}/api/comments/get?post_id=${postId}`, {
                     credentials: 'include'
                 });
 
@@ -1296,7 +1299,7 @@ class ForumApp {
         this.showLoading();
 
         try {
-            const response = await fetch('/api/comments/create', {
+            const response = await fetch(`${API_BASE_URL}/api/comments/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1335,7 +1338,7 @@ class ForumApp {
         this.showLoading();
 
         try {
-            const response = await fetch('/api/comments/delete', {
+            const response = await fetch(`${API_BASE_URL}/api/comments/delete`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1410,7 +1413,7 @@ class ForumApp {
         this.showLoading();
 
         try {
-            const response = await fetch('/api/comment/reply/create', {
+            const response = await fetch(`${API_BASE_URL}/api/comment/reply/create`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -1623,7 +1626,7 @@ class ForumApp {
     // Enhanced error handling for network requests
     async makeRequest(url, options = {}) {
         try {
-            const response = await fetch(url, {
+            const response = await fetch(`${API_BASE_URL}${url}`, {
                 credentials: 'include',
                 ...options
             });
@@ -1719,7 +1722,7 @@ class ForumApp {
         });
 
         try {
-            const response = await fetch('/api/posts/update', {
+            const response = await fetch(`${API_BASE_URL}/api/posts/update`, {
                 method: 'PUT',
                 credentials: 'include',
                 body: formData
@@ -1821,7 +1824,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Test API call directly
         try {
             console.log('5. Testing API call...');
-            const response = await fetch(`/api/likes/reactions?post_id=${postId}`);
+            const response = await fetch(`${API_BASE_URL}/api/likes/reactions?post_id=${postId}`);
             console.log('6. API response status:', response.status);
 
             if (response.ok) {
