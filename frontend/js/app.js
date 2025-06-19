@@ -1768,4 +1768,51 @@ document.addEventListener('DOMContentLoaded', () => {
     window.debugLoadReactions = (id, target) => {
         window.app.loadReactionCounts(id, target);
     };
+
+    window.debugTestLike = async (postId) => {
+        console.log('=== DEBUGGING LIKE FUNCTIONALITY ===');
+        console.log('1. Testing post ID:', postId);
+
+        // Check if user is logged in
+        console.log('2. Current user:', window.app.currentUser);
+
+        // Check if DOM elements exist
+        const likesElement = document.getElementById(`likes-count-${postId}`);
+        const dislikesElement = document.getElementById(`dislikes-count-${postId}`);
+        console.log('3. Likes element exists:', !!likesElement);
+        console.log('4. Dislikes element exists:', !!dislikesElement);
+
+        // Test API call directly
+        try {
+            console.log('5. Testing API call...');
+            const response = await fetch(`/api/likes/reactions?post_id=${postId}`);
+            console.log('6. API response status:', response.status);
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('7. API response data:', data);
+
+                // Try to update elements
+                if (likesElement) {
+                    likesElement.textContent = data.likes || 0;
+                    console.log('8. Updated likes element to:', data.likes || 0);
+                } else {
+                    console.log('8. ERROR: Likes element not found!');
+                }
+
+                if (dislikesElement) {
+                    dislikesElement.textContent = data.dislikes || 0;
+                    console.log('9. Updated dislikes element to:', data.dislikes || 0);
+                } else {
+                    console.log('9. ERROR: Dislikes element not found!');
+                }
+            } else {
+                console.log('7. ERROR: API call failed');
+            }
+        } catch (error) {
+            console.log('5. ERROR: API call exception:', error);
+        }
+
+        console.log('=== DEBUG TEST COMPLETE ===');
+    };
 });
