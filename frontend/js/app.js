@@ -467,14 +467,7 @@ class ForumApp {
 
         // Note: User-specific filtering (my-posts, liked-posts) is now handled by the backend
 
-        // Search filter
-        if (this.currentSearchQuery) {
-            const query = this.currentSearchQuery.toLowerCase();
-            filteredPosts = filteredPosts.filter(post =>
-                post.title.toLowerCase().includes(query) ||
-                post.content.toLowerCase().includes(query)
-            );
-        }
+        // Note: Search filtering is now handled by the backend
 
         this.posts = filteredPosts;
     }
