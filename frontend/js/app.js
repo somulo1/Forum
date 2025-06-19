@@ -827,16 +827,21 @@ class ForumApp {
         if (!text) return '';
 
         // Truncate extremely long strings to prevent overflow
-        const maxLength = 500; // Reasonable limit for display
+        const maxLength = 300; // More aggressive limit for display
         let processedText = text.toString();
 
         if (processedText.length > maxLength) {
             processedText = processedText.substring(0, maxLength) + '...';
         }
 
-        // Break up very long words that could cause overflow
-        processedText = processedText.replace(/\S{50,}/g, (match) => {
-            return match.replace(/(.{50})/g, '$1​'); // Add zero-width space every 50 chars
+        // Break up very long words that could cause overflow - more aggressive
+        processedText = processedText.replace(/\S{30,}/g, (match) => {
+            return match.replace(/(.{30})/g, '$1​'); // Add zero-width space every 30 chars
+        });
+
+        // Handle repeated characters more aggressively
+        processedText = processedText.replace(/(.)\1{20,}/g, (_, char) => {
+            return char.repeat(20) + '...'; // Limit repeated chars to 20 + ellipsis
         });
 
         const div = document.createElement('div');
