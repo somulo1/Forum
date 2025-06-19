@@ -789,7 +789,17 @@ body {
     height: 350px; /* Fixed height for consistent card layout */
     min-width: 0;
     width: 100%;
+    max-width: 100%;
     box-sizing: border-box;
+    overflow: hidden; /* Ensure nothing escapes the card */
+}
+
+/* Force all content within post cards to respect boundaries */
+.post-card * {
+    max-width: 100% !important;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    box-sizing: border-box !important;
 }
 
 /* Content area that can scroll if needed */
@@ -797,14 +807,16 @@ body {
     flex: 1;
     overflow-y: auto;
     overflow-x: hidden;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    word-break: break-word;
-    white-space: pre-wrap;
-    max-width: 100%;
-    box-sizing: border-box;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important; /* Force break even within words */
+    white-space: pre-wrap !important;
+    max-width: 100% !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
     margin-bottom: var(--spacing-md);
     padding-right: var(--spacing-xs); /* Space for scrollbar */
+    hyphens: auto !important;
 }
 
 /* Ensure post title fits properly */
@@ -848,8 +860,6 @@ body {
         overflow: hidden !important;
         grid-column: span 1 !important;
     }
-}
-
 }
 
 .post-header {
@@ -905,10 +915,14 @@ body {
 .post-content {
     color: var(--text-secondary);
     line-height: 1.6;
-    word-wrap: break-word;
-    overflow-wrap: break-word;
-    max-width: 100%;
-    white-space: pre-wrap;
+    word-wrap: break-word !important;
+    overflow-wrap: break-word !important;
+    word-break: break-all !important; /* Force break even within words for very long strings */
+    max-width: 100% !important;
+    width: 100% !important;
+    white-space: pre-wrap !important;
+    box-sizing: border-box !important;
+    hyphens: auto !important;
 }
 
 .post-image {
