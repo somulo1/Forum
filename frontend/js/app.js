@@ -826,22 +826,12 @@ class ForumApp {
     escapeHtml(text) {
         if (!text) return '';
 
-        // Truncate extremely long strings to prevent overflow
-        const maxLength = 300; // More aggressive limit for display
         let processedText = text.toString();
 
-        if (processedText.length > maxLength) {
-            processedText = processedText.substring(0, maxLength) + '...';
-        }
-
-        // Break up very long words that could cause overflow - more aggressive
-        processedText = processedText.replace(/\S{30,}/g, (match) => {
-            return match.replace(/(.{30})/g, '$1​'); // Add zero-width space every 30 chars
-        });
-
-        // Handle repeated characters more aggressively
-        processedText = processedText.replace(/(.)\1{20,}/g, (_, char) => {
-            return char.repeat(20) + '...'; // Limit repeated chars to 20 + ellipsis
+        // Only break up extremely long words (no spaces) that could cause horizontal overflow
+        // This preserves normal text while handling edge cases like very long URLs or code
+        processedText = processedText.replace(/\S{80,}/g, (match) => {
+            return match.replace(/(.{80})/g, '$1​'); // Add zero-width space every 80 chars for very long words only
         });
 
         const div = document.createElement('div');

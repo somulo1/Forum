@@ -792,24 +792,24 @@ body {
     width: 100%; /* Ensure full width */
 }
 
-/* Force text wrapping for all text content in post cards */
+/* Smart text wrapping for post cards - preserve readability */
 .post-card * {
     word-wrap: break-word !important;
-    word-break: break-all !important;
-    overflow-wrap: anywhere !important;
+    overflow-wrap: break-word !important; /* Break only when necessary */
     max-width: 100% !important;
     box-sizing: border-box !important;
 }
 
-/* Specific fix for very long strings */
+/* Specific fix for very long strings - preserve readability */
 .post-card .post-content,
 .post-card .post-title {
     display: block !important;
     width: 100% !important;
     overflow: hidden !important;
-    white-space: normal !important;
-    word-break: break-all !important;
-    overflow-wrap: break-word !important;
+    white-space: pre-wrap !important; /* Preserve formatting but wrap */
+    word-break: normal !important; /* Don't break normal words */
+    overflow-wrap: break-word !important; /* Only break extremely long words */
+    hyphens: auto !important; /* Add hyphens for better readability */
 }
 
 /* Emergency fix for extremely long strings */
@@ -826,19 +826,19 @@ body {
     box-sizing: border-box !important;
 }
 
-/* Ultra-aggressive text breaking for problematic content */
+/* Balanced text handling for problematic content */
 .post-card .post-content,
 .post-card .post-title,
 .post-card h3 {
     width: 100% !important;
     max-width: 100% !important;
-    word-break: break-all !important;
-    overflow-wrap: break-word !important;
-    white-space: pre-wrap !important;
+    word-break: normal !important; /* Preserve normal word breaks */
+    overflow-wrap: break-word !important; /* Break only extremely long words */
+    white-space: pre-wrap !important; /* Preserve formatting */
     overflow: hidden !important;
-    text-overflow: clip !important;
     display: block !important;
     box-sizing: border-box !important;
+    hyphens: auto !important; /* Better word breaking with hyphens */
 }
 
 /* Global overflow prevention for any text in post cards */
@@ -927,8 +927,8 @@ body {
     color: var(--text-primary);
     line-height: 1.4;
     word-wrap: break-word;
-    word-break: break-all; /* More aggressive breaking */
-    overflow-wrap: anywhere; /* Break anywhere if needed */
+    word-break: normal; /* Preserve normal word breaks */
+    overflow-wrap: break-word; /* Break only extremely long words */
     hyphens: auto;
     max-width: 100%;
     overflow: hidden; /* Hide any overflow */
@@ -939,8 +939,8 @@ body {
     margin-bottom: var(--spacing-md);
     line-height: 1.6;
     word-wrap: break-word;
-    word-break: break-all; /* More aggressive breaking */
-    overflow-wrap: anywhere; /* Break anywhere if needed */
+    word-break: normal; /* Preserve normal word breaks */
+    overflow-wrap: break-word; /* Break only extremely long words */
     hyphens: auto;
     max-width: 100%;
     white-space: pre-wrap; /* Preserve whitespace but wrap */
