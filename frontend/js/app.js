@@ -442,6 +442,8 @@ class ForumApp {
             if (response.ok) {
                 this.posts = await response.json();
                 console.log('Received posts from backend:', this.posts.length, 'posts');
+                console.log('Search query was:', this.currentSearchQuery);
+                console.log('Posts received:', this.posts.map(p => ({id: p.id, title: p.title})));
                 this.renderPosts();
             } else {
                 this.showNotification('Failed to load posts', 'error');
@@ -822,8 +824,23 @@ class ForumApp {
     }
 
     escapeHtml(text) {
+        if (!text) return '';
+
+        // Truncate extremely long strings to prevent overflow
+        const maxLength = 500; // Reasonable limit for display
+        let processedText = text.toString();
+
+        if (processedText.length > maxLength) {
+            processedText = processedText.substring(0, maxLength) + '...';
+        }
+
+        // Break up very long words that could cause overflow
+        processedText = processedText.replace(/\S{50,}/g, (match) => {
+            return match.replace(/(.{50})/g, '$1​'); // Add zero-width space every 50 chars
+        });
+
         const div = document.createElement('div');
-        div.textContent = text;
+        div.textContent = processedText;
         return div.innerHTML;
     }
 
