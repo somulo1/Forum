@@ -785,6 +785,8 @@ body {
     display: flex;
     flex-direction: column;
     min-height: 200px; /* Ensure consistent card heights */
+    overflow: hidden; /* Prevent content from overflowing the card */
+    min-width: 0; /* Allow flex items to shrink below their content size */
 }
 
 .post-card:hover {
@@ -848,12 +850,21 @@ body {
     margin-bottom: var(--spacing-sm);
     color: var(--text-primary);
     line-height: 1.4;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
 }
 
 .post-content {
     color: var(--text-secondary);
     margin-bottom: var(--spacing-md);
     line-height: 1.6;
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
 }
 
 .post-image {
@@ -1190,6 +1201,11 @@ body {
     color: var(--text-secondary);
     line-height: 1.6;
     margin-bottom: var(--spacing-md);
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
 }
 
 .comment-footer {
@@ -1265,6 +1281,11 @@ body {
     font-size: var(--font-size-lg);
     line-height: 1.7;
     margin-bottom: var(--spacing-lg);
+    word-wrap: break-word;
+    word-break: break-word;
+    overflow-wrap: break-word;
+    hyphens: auto;
+    max-width: 100%;
 }
 
 /* ===== RESPONSIVE DESIGN SYSTEM ===== */
