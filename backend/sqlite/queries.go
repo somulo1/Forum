@@ -562,10 +562,11 @@ func UpdatePostWithCategories(db *sql.DB, postID int, title, content, imageURL s
 func GetPostsWithFilters(db *sql.DB, page, limit int, categoryID, searchQuery, sortBy, filterType, userID string) ([]models.Post, error) {
 	offset := (page - 1) * limit
 
-	// Build the base query
+	// Build the base query with user join for search
 	query := `
 		SELECT DISTINCT p.id, p.title, p.content, p.user_id, p.image_url, p.created_at, p.updated_at
 		FROM posts p
+		LEFT JOIN users u ON p.user_id = u.id
 	`
 
 	// Add joins if needed
@@ -593,11 +594,11 @@ func GetPostsWithFilters(db *sql.DB, page, limit int, categoryID, searchQuery, s
 		args = append(args, userID)
 	}
 
-	// Search filter
+	// Search filter - now includes username
 	if searchQuery != "" {
-		conditions = append(conditions, "(p.title LIKE ? OR p.content LIKE ?)")
+		conditions = append(conditions, "(p.title LIKE ? OR p.content LIKE ? OR u.username LIKE ?)")
 		searchPattern := "%" + searchQuery + "%"
-		args = append(args, searchPattern, searchPattern)
+		args = append(args, searchPattern, searchPattern, searchPattern)
 	}
 
 	// Add joins to query
