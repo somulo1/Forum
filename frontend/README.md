@@ -157,7 +157,23 @@ The frontend interacts with the backend API to perform various operations. Here 
 
 To run the frontend of the forum application, ensure you are in the `frontend` directory. You can use one of the following methods:
 
-1. **Using npm with a Development Script**:
+1. **Using npx serve (Recommended)**:
+   - First, ensure you have Node.js and npm installed on your machine.
+   - Navigate to the `frontend` directory:
+
+     ```bash
+     cd /path/to/your/forum/frontend
+     ```
+
+   - Run the server using npx serve:
+
+     ```bash
+     npx serve -s . -l 8000
+     ```
+
+   - **Access the Application**: Open your web browser and go to `http://localhost:8000`.
+
+2. **Using npm with a Development Script**:
    - First, ensure you have Node.js and npm installed on your machine.
    - Navigate to the `frontend` directory:
 
@@ -179,7 +195,7 @@ To run the frontend of the forum application, ensure you are in the `frontend` d
 
    - **Access the Application**: Open your web browser and go to the URL specified in your script (usually `http://localhost:5173` or similar).
 
-2. **Using Python's HTTP Server**:
+3. **Using Python's HTTP Server**:
    - Start a simple HTTP server to serve your static files. You can specify a port number (e.g., 8000) as follows:
 
      ```bash
