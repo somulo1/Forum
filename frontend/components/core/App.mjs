@@ -1,7 +1,7 @@
 /**
  * Main Application Controller - Orchestrates all components
  */
-
+import { setupRouter } from '../router/Router.mjs';
 import { AuthManager } from '../auth/AuthManager.mjs';
 import { AuthModal } from '../auth/AuthModal.mjs';
 import { NavManager } from '../navigation/NavManager.mjs';
@@ -21,7 +21,8 @@ export class App {
         this.postManager = null;
         this.postForm = null;
         this.commentManager = null;
-        
+        this.router = null;
+
         this.init();
     }
 
@@ -56,9 +57,33 @@ export class App {
                 () => this.onPostCreated()
             );
 
+            // Setup router first
+            console.log('App: Setting up router');
+            this.router = setupRouter(this);
+            console.log('App: Router created:', !!this.router);
+
+            // Set router reference in navigation manager
+            console.log('App: Setting router in navigation manager');
+            this.navManager.setRouter(this.router);
+            console.log('App: Router set in navigation manager');
+
+            // Set router reference in category manager
+            console.log('App: Setting router in category manager');
+            this.categoryManager.setRouter(this.router);
+            console.log('App: Router set in category manager');
+
+            // Set router reference in post manager
+            console.log('App: Setting router in post manager');
+            this.postManager.setRouter(this.router);
+            console.log('App: Router set in post manager');
+
+            // Set app reference in post manager
+            console.log('App: Setting app reference in post manager');
+            this.postManager.setApp(this);
+            console.log('App: App reference set in post manager');
+
             // Setup the application
             await this.setupApp();
-            
             console.log('Forum application initialized successfully');
         } catch (error) {
             console.error('Error initializing application:', error);
@@ -69,16 +94,13 @@ export class App {
      * Setup the application components
      */
     async setupApp() {
-        // Render create post section
-        this.postForm.renderCreatePostSection();
-        
-        // Fetch and render initial data
-        await this.postManager.fetchForumPosts();
-        await this.postManager.renderPosts();
+        // Render categories in sidebar
         await this.categoryManager.renderCategories();
-        
+
         // Setup authentication UI
         await this.navManager.setupAuthButtons();
+
+        // Note: Posts and main content will be rendered by the router based on the current route
     }
 
     /**
@@ -95,7 +117,17 @@ export class App {
      * @param {number} categoryId - Selected category ID
      */
     async onCategoryFilter(categoryId) {
-        await this.postManager.filterPostsByCategory(categoryId);
+        // Navigate to home with category filter or category-specific route
+        if (categoryId) {
+            // Option 1: Navigate to category-specific route
+            this.router.navigate(`/category/${categoryId}`);
+
+            // Option 2: Navigate to home with category query parameter
+            // this.router.navigate(`/?category=${categoryId}`);
+        } else {
+            // Navigate to home without filter
+            this.router.navigate('/');
+        }
     }
 
     /**

@@ -30,19 +30,33 @@ export class CommentManager {
         const username = comment.username || comment.UserName;
         const avatarUrl = comment.avatar_url || comment.ProfileAvatar;
 
+        // Build comment actions - only show reactions for top-level comments
+        let commentActions = '';
+        if (isReply) {
+            // Reply comments only show timestamp, no reactions or reply button
+            commentActions = '';
+        } else {
+            // Top-level comments show reactions and reply button
+            commentActions = `
+                <div class="comment-actions">
+                    <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
+                    <button class="reaction-btn comment-dislike-btn" data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
+                    <button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>
+                </div>
+            `;
+        }
+
         commentItem.innerHTML = `
             <div class="comment-avatar">
                 <img class="post-author-img" src="http://localhost:8080${avatarUrl || '/static/pictures/default-avatar.png'}"
                      onerror="this.src='data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNDAiIGhlaWdodD0iNDAiIHZpZXdCb3g9IjAgMCA0MCA0MCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPGNpcmNsZSBjeD0iMjAiIGN5PSIyMCIgcj0iMjAiIGZpbGw9IiNlNWU3ZWIiLz4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIiB4PSI4IiB5PSI4Ij4KPHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTEyIDEyQzE0LjIwOTEgMTIgMTYgMTAuMjA5MSAxNiA4QzE2IDUuNzkwODYgMTQuMjA5MSA0IDEyIDRDOS43OTA4NiA0IDggNS43OTA4NiA4IDhDOCAxMC4yMDkxIDkuNzkwODYgMTIgMTIgMTJaIiBmaWxsPSIjOWNhM2FmIi8+CjxwYXRoIGQ9Ik0xMiAxNEM5LjMzIDEzLjk5IDcuMDEgMTUuNjIgNiAxOEMxMC4wMSAyMCAxMy45OSAyMCAxOCAxOEMxNi45OSAxNS42MiAxNC42NyAxMy45OSAxMiAxNFoiIGZpbGw9IiM5Y2EzYWYiLz4KPC9zdmc+Cjwvc3ZnPgo8L3N2Zz4K'" />
             </div>
             <div class="comment-details">
-                <p class="comment-content"> <strong><span class="comment-username">${username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
+                <div>
+                    <p class="comment-content"> <strong><span class="comment-username">${username}</span>:</strong> <span class="comment-text">${comment.content}</span></p>
+                </div>
                 <div class="comment-footer">
-                    <div class="comment-actions">
-                        <button class="reaction-btn comment-like-btn" data-id="${comment.id}"><i class="fas fa-thumbs-up"></i></button>
-                        <button class="reaction-btn comment-dislike-btn" data-id="${comment.id}"><i class="fas fa-thumbs-down"></i></button>
-                        ${!isReply ? `<button class="reaction-btn comment-reply-btn" data-id="${comment.id}"><i class="fas fa-comment"></i></button>` : ''}
-                    </div>
+                    ${commentActions}
                     <p class="comment-time">${TimeUtils.getTimeAgo(comment.created_at)}</p>
                 </div>
             </div>
@@ -191,18 +205,19 @@ export class CommentManager {
             const result = await ApiUtils.post('/api/comment/reply/create', replyData, true);
             console.log('Reply created successfully:', result); // Debug log
 
-            // Clear the textarea
-            form.querySelector('textarea').value = '';
-
             // Find the post ID from the parent comment context
             const postCommentSection = form.closest('.post-comment');
             const postId = postCommentSection.getAttribute('data-id');
 
+            // Close the specific reply form
+            const replyFormContainer = form.closest('.reply-form-container');
+            if (replyFormContainer) {
+                const commentId = replyFormContainer.getAttribute('data-comment-id');
+                this.closeReplyForm(postId, commentId);
+            }
+
             // Refresh comments for this post to show the new reply
             await this.refreshPostComments(postId);
-
-            // Close the reply form and show normal comment form
-            this.closeReplyForm(postId);
 
         } catch (error) {
             console.error('Reply submission error:', error); // Debug log
@@ -244,21 +259,31 @@ export class CommentManager {
 
             console.log(`Total comment count for post ${postId}: ${totalCommentCount}`); // Debug log
 
-            // Clear and re-render comments
+            // Clear and re-render comments with proper threading
             const commentsContainer = PostCard.getCommentsContainer(postId);
             if (commentsContainer) {
                 commentsContainer.innerHTML = '<h4>Comments</h4>';
 
+                // Render each top-level comment with its own independent thread
                 for (const comment of comments) {
-                    const commentElement = this.createCommentElement(comment);
-                    commentsContainer.appendChild(commentElement);
+                    // Create a comment thread container for this specific comment
+                    const commentThreadContainer = document.createElement('div');
+                    commentThreadContainer.classList.add('comment-thread');
+                    commentThreadContainer.setAttribute('data-comment-id', comment.id);
 
-                    // Render replies if they exist (check both field names)
+                    // Create the main comment element
+                    const commentElement = this.createCommentElement(comment);
+                    commentThreadContainer.appendChild(commentElement);
+
+                    // Render replies directly under this specific comment
                     const replies = comment.replies || comment.Replies;
                     if (replies && Array.isArray(replies) && replies.length > 0) {
                         console.log(`Rendering ${replies.length} replies for comment ${comment.id}`); // Debug log
                         this.renderRepliesForComment(commentElement, replies);
                     }
+
+                    // Add the complete thread (comment + replies) to the comments container
+                    commentsContainer.appendChild(commentThreadContainer);
                 }
             }
 
@@ -294,7 +319,7 @@ export class CommentManager {
         const postComments = e.target.closest(`.post-card .post-comment`);
         const postID = postComments.getAttribute('data-id');
 
-        const replyFormContainer = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .write-comment-box`);
+        // Find the specific comment element being replied to
         const originalCommentElement = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .comment[comment-id="${commentID}"]`);
 
         if (!originalCommentElement) {
@@ -302,12 +327,17 @@ export class CommentManager {
             return;
         }
 
+        // Remove any existing reply forms from this post
+        this.clearAllReplyForms(postID);
+
+        // Get comment details
         const commenterAvatarSrc = originalCommentElement.querySelector('.comment-avatar img').getAttribute('src');
         const originalCommenterUsername = originalCommentElement.querySelector('.comment-details .comment-content span.comment-username').textContent;
         const originalCommenterText = originalCommentElement.querySelector('.comment-details .comment-content span.comment-text').textContent;
         const commentTimestamp = originalCommentElement.querySelector('.comment-details .comment-time').textContent;
 
-        this.renderReplyForm(replyFormContainer, {
+        // Create reply form directly under this specific comment
+        this.createReplyFormUnderComment(originalCommentElement, {
             commentID,
             postID,
             commenterAvatarSrc,
@@ -318,17 +348,38 @@ export class CommentManager {
     }
 
     /**
-     * Render reply form
-     * @param {HTMLElement} container - Container for reply form
+     * Clear all existing reply forms from a post
+     * @param {string} postID - Post ID
+     */
+    clearAllReplyForms(postID) {
+        // Remove any existing reply forms
+        const existingReplyForms = document.querySelectorAll(`.post-card .post-comment[data-id="${postID}"] .reply-form-container`);
+        existingReplyForms.forEach(form => form.remove());
+
+        // Restore the main comment form if it was replaced
+        const mainCommentBox = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .write-comment-box`);
+        if (mainCommentBox && !mainCommentBox.querySelector('form[data-post-id]')) {
+            this.restoreMainCommentForm(postID);
+        }
+    }
+
+    /**
+     * Create reply form directly under a specific comment
+     * @param {HTMLElement} commentElement - The comment element to reply to
      * @param {Object} replyData - Reply data
      */
-    renderReplyForm(container, replyData) {
-        container.innerHTML = `
+    createReplyFormUnderComment(commentElement, replyData) {
+        // Create reply form container
+        const replyFormContainer = document.createElement('div');
+        replyFormContainer.classList.add('reply-form-container');
+        replyFormContainer.setAttribute('data-comment-id', replyData.commentID);
+
+        replyFormContainer.innerHTML = `
             <div class="reply-comment-header">
                 <div><p><em>Replying to ${replyData.originalCommenterUsername}</em></p></div>
-                <button class="close-reply" data-post-id="${replyData.postID}">Cancel</button>
+                <button class="close-reply" data-post-id="${replyData.postID}" data-comment-id="${replyData.commentID}">Cancel</button>
             </div>
-            <div class="comment original-comment">
+            <div class="comment original-comment-preview">
                 <div class="comment-avatar">
                     <img class="post-author-img" src="${replyData.commenterAvatarSrc}" alt="username"/>
                 </div>
@@ -339,15 +390,44 @@ export class CommentManager {
                     </div>
                 </div>
             </div>
-            <form class="comment-box-form" comment-id="${replyData.commentID}">
+            <form class="comment-box-form reply-form" comment-id="${replyData.commentID}">
                 <textarea placeholder="Write your reply to @${replyData.originalCommenterUsername}..." cols="30" rows="2" required autocomplete="off"></textarea>
                 <button type="submit">Reply</button>
             </form>
         `;
 
+        // Insert the reply form directly after the comment element
+        commentElement.parentNode.insertBefore(replyFormContainer, commentElement.nextSibling);
+
         // Attach the submit handler to the new form
-        const form = container.querySelector('form');
+        const form = replyFormContainer.querySelector('form');
         form.addEventListener('submit', (e) => this.handleCommentSubmit(e));
+
+        // Focus on the textarea
+        const textarea = replyFormContainer.querySelector('textarea');
+        if (textarea) {
+            textarea.focus();
+        }
+    }
+
+    /**
+     * Restore the main comment form for a post
+     * @param {string} postID - Post ID
+     */
+    restoreMainCommentForm(postID) {
+        const mainCommentBox = document.querySelector(`.post-card .post-comment[data-id="${postID}"] .write-comment-box`);
+        if (mainCommentBox) {
+            mainCommentBox.innerHTML = `
+                <form class="comment-box-form" data-post-id="${postID}">
+                    <textarea placeholder="Write a comment..." cols="30" rows="1" required autocomplete="off"></textarea>
+                    <button type="submit">Comment</button>
+                </form>
+            `;
+
+            // Re-attach event listener
+            const form = mainCommentBox.querySelector('form');
+            form.addEventListener('submit', (e) => this.handleCommentSubmit(e));
+        }
     }
 
 
@@ -369,28 +449,40 @@ export class CommentManager {
      */
     handleCloseReply(e) {
         const postId = e.target.getAttribute('data-post-id');
-        this.closeReplyForm(postId);
+        const commentId = e.target.getAttribute('data-comment-id');
+        this.closeReplyForm(postId, commentId);
     }
 
     /**
-     * Close reply form and restore normal comment form
+     * Close specific reply form
      * @param {string} postId - Post ID
+     * @param {string} commentId - Comment ID (optional)
      */
-    closeReplyForm(postId) {
-        const replyFormContainer = document.querySelector(`.post-card .post-comment[data-id="${postId}"] .write-comment-box`);
+    closeReplyForm(postId, commentId = null) {
+        if (commentId) {
+            // Remove specific reply form
+            const replyFormContainer = document.querySelector(`.post-card .post-comment[data-id="${postId}"] .reply-form-container[data-comment-id="${commentId}"]`);
+            if (replyFormContainer) {
+                replyFormContainer.remove();
+            }
+        } else {
+            // Remove all reply forms for this post
+            this.clearAllReplyForms(postId);
+        }
+    }
 
-        if (!replyFormContainer) return;
-
-        // Reset to normal comment form
-        replyFormContainer.innerHTML = `
-            <form class="comment-box-form" data-post-id="${postId}">
-                <textarea placeholder="Write a comment..." cols="30" rows="1" required autocomplete="off"></textarea>
-                <button type="submit">Comment</button>
-            </form>
-        `;
-
-        // Re-attach event listener
-        const form = replyFormContainer.querySelector('form');
-        form.addEventListener('submit', (e) => this.handleCommentSubmit(e));
+    /**
+     * Get comments for a specific post
+     * @param {number} postId - Post ID
+     * @returns {Array} - Array of comments
+     */
+    async getPostComments(postId) {
+        try {
+            const comments = await ApiUtils.get(`/api/comments/get?post_id=${postId}`);
+            return Array.isArray(comments) ? comments : [];
+        } catch (error) {
+            console.error(`Error getting comments for post ${postId}:`, error);
+            return [];
+        }
     }
 }

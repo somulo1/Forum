@@ -12,6 +12,24 @@ export class PostManager {
         this.reactionManager = reactionManager;
         this.commentManager = commentManager;
         this.postContainer = document.getElementById("postFeed");
+        this.router = null; // Will be set by the app
+        this.app = null; // Will be set by the app
+    }
+
+    /**
+     * Set router instance for navigation
+     * @param {Object} router - Router instance
+     */
+    setRouter(router) {
+        this.router = router;
+    }
+
+    /**
+     * Set app instance for accessing other managers
+     * @param {Object} app - App instance
+     */
+    setApp(app) {
+        this.app = app;
     }
 
     /**
@@ -34,14 +52,28 @@ export class PostManager {
      */
     async renderPosts(posts = null) {
         const postsToRender = posts || this.posts;
+
+        // Ensure we have a valid container
+        if (!this.postContainer) {
+            this.postContainer = document.getElementById("postFeed");
+        }
+
+        if (!this.postContainer) {
+            console.error("Post container not found");
+            return;
+        }
+
         this.postContainer.innerHTML = "";
 
         for (const post of postsToRender) {
             const postCard = PostCard.create(post);
-            
+
             // Setup comment toggle for this post
             PostCard.setupCommentToggle(postCard);
-            
+
+            // Setup post navigation for this post (pass app instance instead of router)
+            PostCard.setupPostNavigation(postCard, this.app);
+
             this.postContainer.appendChild(postCard);
         }
 
@@ -67,7 +99,7 @@ export class PostManager {
 
         for (const btn of commentBtns) {
             const postId = btn.getAttribute('data-id');
-            
+
             try {
                 const comments = await ApiUtils.get(`/api/comments/get?post_id=${postId}`);
 
@@ -75,9 +107,20 @@ export class PostManager {
                 const commentsArray = comments && Array.isArray(comments) ? comments : [];
 
                 // Update comment count
-                PostCard.updateCommentCount(postId, commentsArray.length);
+                // Calculate total comment count (including replies)
+                let totalCommentCount = commentsArray.length;
+                commentsArray.forEach(comment => {
+                    // Check both 'replies' and 'Replies' for compatibility
+                    const replies = comment.replies || comment.Replies;
+                    if (replies && Array.isArray(replies)) {
+                        console.log(`Comment ${comment.id} has ${replies.length} replies in PostManager`); // Debug log
+                        totalCommentCount += replies.length;
+                    }
+                });
 
-                // Render comments
+                PostCard.updateCommentCount(postId, totalCommentCount);
+
+                // Render comments with replies
                 const commentsContainer = PostCard.getCommentsContainer(postId);
                 if (commentsContainer) {
                     this.renderCommentsInContainer(commentsContainer, commentsArray);
@@ -91,7 +134,7 @@ export class PostManager {
     }
 
     /**
-     * Render comments in a container
+     * Render comments in a container with proper threading
      * @param {HTMLElement} container - Comments container
      * @param {Array} comments - Comments to render
      */
@@ -105,9 +148,26 @@ export class PostManager {
             container.innerHTML = '<h4>Comments</h4>';
         }
 
+        // Render each top-level comment with its own independent thread
         for (const comment of comments) {
+            // Create a comment thread container for this specific comment
+            const commentThreadContainer = document.createElement('div');
+            commentThreadContainer.classList.add('comment-thread');
+            commentThreadContainer.setAttribute('data-comment-id', comment.id);
+
+            // Create the main comment element
             const commentElement = this.commentManager.createCommentElement(comment);
-            container.appendChild(commentElement);
+            commentThreadContainer.appendChild(commentElement);
+
+            // Render replies directly under this specific comment
+            const replies = comment.replies || comment.Replies;
+            if (replies && Array.isArray(replies) && replies.length > 0) {
+                console.log(`Rendering ${replies.length} replies for comment ${comment.id} in PostManager`); // Debug log
+                this.commentManager.renderRepliesForComment(commentElement, replies);
+            }
+
+            // Add the complete thread (comment + replies) to the comments container
+            container.appendChild(commentThreadContainer);
         }
     }
 
@@ -171,7 +231,17 @@ export class PostManager {
             // Handle null or undefined responses by treating them as empty arrays
             const commentsArray = comments && Array.isArray(comments) ? comments : [];
 
-            PostCard.updateCommentCount(postId, commentsArray.length);
+            // Calculate total comment count (including replies)
+            let totalCommentCount = commentsArray.length;
+            commentsArray.forEach(comment => {
+                // Check both 'replies' and 'Replies' for compatibility
+                const replies = comment.replies || comment.Replies;
+                if (replies && Array.isArray(replies)) {
+                    totalCommentCount += replies.length;
+                }
+            });
+
+            PostCard.updateCommentCount(postId, totalCommentCount);
 
             const commentsContainer = PostCard.getCommentsContainer(postId);
             if (commentsContainer) {
@@ -184,6 +254,28 @@ export class PostManager {
             console.error(`Error updating comments for post ${postId}:`, error);
             // Set comment count to 0 on error
             PostCard.updateCommentCount(postId, 0);
+        }
+    }
+
+    /**
+     * Get a post by ID (fetch from API if not in cache)
+     * @param {string} postId - Post ID
+     * @returns {Object} - Post data
+     */
+    async getPostById(postId) {
+        // First check if we have it in our cached posts
+        const cachedPost = this.posts.find(post => post.id.toString() === postId.toString());
+        if (cachedPost) {
+            return cachedPost;
+        }
+
+        // If not cached, fetch from API
+        try {
+            const post = await ApiUtils.get(`/api/posts/${postId}`);
+            return post;
+        } catch (error) {
+            console.error('Error fetching post by ID:', error);
+            throw error;
         }
     }
 }
