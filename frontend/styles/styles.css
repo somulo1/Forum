@@ -892,6 +892,25 @@ img {
     justify-content: center;
     border-radius: var(--radius);
     background: rgba(0, 0, 0, 1);
+    min-height: 100px;
+    align-items: center;
+}
+
+/* Image error styling */
+.image-error {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: var(--hover-color2);
+    border: 2px dashed var(--border-color);
+    border-radius: var(--radius);
+    padding: 2rem;
+    color: var(--muted-text);
+    font-size: 0.9rem;
+    font-style: italic;
+    min-height: 100px;
+    width: 100%;
+    box-sizing: border-box;
 }
 
 
@@ -2781,6 +2800,16 @@ body.modal-open {
     margin: 1rem 0;
     border-radius: var(--radius);
     overflow: hidden;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.post-image-container .image-error {
+    margin: 0;
+    width: 100%;
+    min-height: 150px;
 }
 
 .trending-post-image {

@@ -127,7 +127,7 @@ export class PostDetailView extends BaseView {
 
                 <div class="post-body">
                     <h1 class="post-title">${this.post.title}</h1>
-                    ${this.post.image_url ? `<img src="http://localhost:8080${this.post.image_url}" alt="Post image" class="post-image">` : ''}
+                    ${this.post.image_url ? `<img src="http://localhost:8080${this.post.image_url}" alt="Post image" class="post-image" onerror="this.outerHTML='<div class=\\'image-error\\'>Image unavailable</div>'">` : ''}
                     <div class="post-content">${this.post.content}</div>
                 </div>
 

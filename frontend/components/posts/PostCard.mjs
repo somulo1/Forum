@@ -32,7 +32,7 @@ export class PostCard {
             <div class="post-content">
                 <div class="post-title">${post.title}</div>
                 <div class="post-image hidden">
-                    <img src="http://localhost:8080${post.image_url || ''}" alt="post-image" onerror="this.style.display='none'"/>
+                    <img src="http://localhost:8080${post.image_url || ''}" alt="Post image" onerror="this.parentElement.innerHTML='<div class=\\'image-error\\'>Image unavailable</div>'"/>
                 </div>
                 <div class="post-body">${post.content}</div>
             </div>
@@ -93,14 +93,46 @@ export class PostCard {
                 return;
             }
 
-            // Toggle post detail expansion
+            // Toggle post detail expansion AND update URL
             if (postId && app) {
-                PostCard.togglePostDetail(postCard, postId, app);
+                PostCard.togglePostDetailWithNavigation(postCard, postId, app);
             }
         });
 
         // Add visual feedback
         postCard.style.cursor = 'pointer';
+    }
+
+    /**
+     * Toggle post detail expansion with URL navigation
+     * @param {HTMLElement} postCard - Post card element
+     * @param {string} postId - Post ID
+     * @param {Object} app - App instance
+     */
+    static async togglePostDetailWithNavigation(postCard, postId, app) {
+        const existingDetail = postCard.querySelector('.post-detail-expansion');
+
+        if (existingDetail) {
+            // Collapse the detail view and navigate back
+            existingDetail.remove();
+            postCard.classList.remove('post-expanded');
+
+            // Navigate back to home (or previous page)
+            if (app.router) {
+                window.history.back();
+            }
+            return;
+        }
+
+        // Update URL to show post detail
+        if (app.router) {
+            // Use pushState to update URL without triggering router navigation
+            const newUrl = `/post/${postId}`;
+            window.history.pushState({ postId, expandedInPlace: true }, '', newUrl);
+        }
+
+        // Expand the detail view
+        await PostCard.togglePostDetail(postCard, postId, app);
     }
 
     /**
@@ -222,7 +254,7 @@ export class PostCard {
             <div class="post-full-content">
                 ${post.image_url ? `
                     <div class="post-image-container">
-                        <img src="http://localhost:8080${post.image_url}" alt="Post image" class="post-image-full">
+                        <img src="http://localhost:8080${post.image_url}" alt="Post image" class="post-image-full" onerror="this.parentElement.innerHTML='<div class=\\'image-error\\'>Image unavailable</div>'">
                     </div>
                 ` : ''}
                 <div class="post-full-text">${post.content}</div>
@@ -264,6 +296,11 @@ export class PostCard {
             collapseBtn.addEventListener('click', () => {
                 container.remove();
                 container.closest('.post-card').classList.remove('post-expanded');
+
+                // Navigate back in history if we have a post URL
+                if (window.location.pathname.includes('/post/')) {
+                    window.history.back();
+                }
             });
         }
 

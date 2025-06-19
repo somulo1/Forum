@@ -116,7 +116,38 @@ export class Router {
      */
     handlePopState(event) {
         const path = event.state?.path || window.location.pathname;
+
+        // Check if we're navigating back from an expanded post
+        if (event.state?.expandedInPlace) {
+            // This was an in-place expansion, just collapse it
+            this.collapseExpandedPost();
+            return;
+        }
+
+        // Check if we're going back to home from a post detail and there's an expanded post
+        if (path === '/' || path === '/home') {
+            const expandedPost = document.querySelector('.post-card.post-expanded');
+            if (expandedPost) {
+                this.collapseExpandedPost();
+                return;
+            }
+        }
+
         this.handleRoute(path);
+    }
+
+    /**
+     * Collapse any expanded post on the page
+     */
+    collapseExpandedPost() {
+        const expandedPost = document.querySelector('.post-card.post-expanded');
+        if (expandedPost) {
+            const expansion = expandedPost.querySelector('.post-detail-expansion');
+            if (expansion) {
+                expansion.remove();
+            }
+            expandedPost.classList.remove('post-expanded');
+        }
     }
 
     /**

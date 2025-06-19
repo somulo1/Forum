@@ -193,7 +193,7 @@ export class TrendingView extends BaseView {
                         </div>
                         ${post.image_url ? `
                             <div class="post-image-container">
-                                <img src="http://localhost:8080${post.image_url}" alt="Post image" class="trending-post-image">
+                                <img src="http://localhost:8080${post.image_url}" alt="Post image" class="trending-post-image" onerror="this.parentElement.innerHTML='<div class=\\'image-error\\'>Image unavailable</div>'">
                             </div>
                         ` : ''}
                         <div class="post-snippet">${this.truncateContent(post.content, 150)}</div>
