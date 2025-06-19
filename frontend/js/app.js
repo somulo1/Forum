@@ -18,6 +18,11 @@ class ForumApp {
     }
 
     async init() {
+        // Ensure posts is always an array
+        if (!Array.isArray(this.posts)) {
+            this.posts = [];
+        }
+
         this.setupEventListeners();
         await this.checkAuthStatus();
         await this.loadCategories();
@@ -336,10 +341,10 @@ class ForumApp {
             }
         });
 
-        // Update "All Posts" count
+        // Update "All Posts" count with null safety
         const allCountElement = document.querySelector('[data-category-id="all"] .post-count');
         if (allCountElement) {
-            allCountElement.textContent = this.posts.length;
+            allCountElement.textContent = this.posts && Array.isArray(this.posts) ? this.posts.length : 0;
         }
     }
 
@@ -440,7 +445,8 @@ class ForumApp {
             });
 
             if (response.ok) {
-                this.posts = await response.json();
+                const postsData = await response.json();
+                this.posts = Array.isArray(postsData) ? postsData : [];
                 console.log('Received posts from backend:', this.posts.length, 'posts');
                 console.log('Search query was:', this.currentSearchQuery);
                 console.log('Posts received:', this.posts.map(p => ({id: p.id, title: p.title})));
@@ -450,6 +456,7 @@ class ForumApp {
             }
         } catch (error) {
             console.error('Failed to load posts:', error);
+            this.posts = []; // Ensure posts is always an array
             this.showNotification('Failed to load posts', 'error');
         } finally {
             this.hideLoading();
@@ -478,7 +485,8 @@ class ForumApp {
         const container = document.getElementById('posts-container');
         container.innerHTML = '';
 
-        if (this.posts.length === 0) {
+        // Add null safety check for posts array
+        if (!this.posts || !Array.isArray(this.posts) || this.posts.length === 0) {
             container.innerHTML = '<p class="no-posts">No posts found.</p>';
             this.updateCategoryPostCounts();
             return;
@@ -522,7 +530,7 @@ class ForumApp {
         postDiv.dataset.postId = post.id;
 
         // Get categories for this post
-        const postCategories = post.category_ids ?
+        const postCategories = (post.category_ids && Array.isArray(post.category_ids)) ?
             post.category_ids.map(id => this.allCategories.find(cat => cat.id === id)?.name).filter(Boolean) : [];
 
         postDiv.innerHTML = `
@@ -1107,7 +1115,7 @@ class ForumApp {
         // Ensure comments is always an array
         comments = Array.isArray(comments) ? comments : [];
 
-        const postCategories = post.category_ids ?
+        const postCategories = (post.category_ids && Array.isArray(post.category_ids)) ?
             post.category_ids.map(id => this.allCategories.find(cat => cat.id === id)?.name).filter(Boolean) : [];
 
         modalBody.innerHTML = `
@@ -1755,11 +1763,13 @@ class ForumApp {
             }
 
             const response = await this.makeRequest(url);
-            this.posts = await response.json();
+            const postsData = await response.json();
+            this.posts = Array.isArray(postsData) ? postsData : [];
             this.renderPosts();
 
         } catch (error) {
             console.error('Failed to load posts:', error);
+            this.posts = []; // Ensure posts is always an array
             this.showNotification(error.message || 'Failed to load posts', 'error');
 
             // Show fallback content
