@@ -743,6 +743,7 @@ img {
     object-fit: cover;
     border-radius: var(--radius);
     margin-bottom: 1rem;
+    display: block;
 }
 
 .post-full-text {
@@ -894,6 +895,15 @@ img {
     background: rgba(0, 0, 0, 1);
     min-height: 100px;
     align-items: center;
+    overflow: hidden;
+    width: 100%;
+}
+
+.post-image img {
+    width: 100%;
+    max-height: 300px;
+    object-fit: cover;
+    border-radius: var(--radius);
 }
 
 /* Image error styling */
@@ -2817,6 +2827,7 @@ body.modal-open {
     max-height: 200px;
     object-fit: cover;
     display: block;
+    border-radius: var(--radius);
 }
 
 .trending-topic-item {
@@ -2984,7 +2995,8 @@ body.modal-open {
     color: var(--text-color);
 }
 
-.post-image {
+/* Post detail view specific image styling */
+.post-detail-view .post-image {
     width: 100%;
     max-height: 400px;
     object-fit: cover;
