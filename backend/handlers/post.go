@@ -149,12 +149,15 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 
 	var fullPosts []models.Post
 
-	for _, post := range posts {
+	for i, post := range posts {
+		log.Printf("Processing post %d/%d: ID=%d, UserID=%s", i+1, len(posts), post.ID, post.UserID)
 		userInfo, err := sqlite.GetUserByID(db, post.UserID)
 		if err != nil {
+			log.Printf("ERROR: Failed to get user info for UserID %s: %v", post.UserID, err)
 			utils.SendJSONError(w, "Failed to fetch post user information", http.StatusInternalServerError)
 			return
 		}
+		log.Printf("Successfully got user info for UserID %s: %s", post.UserID, userInfo.Username)
 		post.ProfileAvatar = userInfo.AvatarURL
 		fullPosts = append(fullPosts, post)
 	}
