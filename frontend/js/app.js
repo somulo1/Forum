@@ -16,7 +16,11 @@ class ForumApp {
         this.editSelectedCategories = [];
         this.allCategories = [];
         this.posts = [];
-        
+
+        // URL routing properties
+        this.currentView = 'posts'; // 'posts', 'post-detail', 'categories'
+        this.currentPostId = null;
+
         this.init();
     }
 
@@ -27,9 +31,12 @@ class ForumApp {
         }
 
         this.setupEventListeners();
+        this.setupRouting();
         await this.checkAuthStatus();
         await this.loadCategories();
-        await this.loadPosts();
+
+        // Handle initial route
+        this.handleRoute();
     }
 
     setupEventListeners() {
@@ -118,6 +125,94 @@ class ForumApp {
                 }
             });
         });
+    }
+
+    // URL Routing Methods
+    setupRouting() {
+        // Listen for browser back/forward button
+        window.addEventListener('popstate', () => {
+            this.handleRoute();
+        });
+    }
+
+    handleRoute() {
+        const path = window.location.pathname;
+
+        // Parse the route
+        if (path === '/' || path === '/posts') {
+            this.currentView = 'posts';
+            this.currentPostId = null;
+            this.showPostsView();
+        } else if (path.startsWith('/post/')) {
+            const postId = parseInt(path.split('/')[2]);
+            if (postId && !isNaN(postId)) {
+                this.currentView = 'post-detail';
+                this.currentPostId = postId;
+                this.showPostDetail(postId);
+            } else {
+                // Invalid post ID, redirect to posts
+                this.navigateTo('/posts');
+            }
+        } else if (path === '/categories') {
+            this.currentView = 'categories';
+            this.currentPostId = null;
+            this.showCategoriesView();
+        } else {
+            // Unknown route, redirect to posts
+            this.navigateTo('/posts');
+        }
+    }
+
+    navigateTo(path, replaceState = false) {
+        if (replaceState) {
+            window.history.replaceState({}, '', path);
+        } else {
+            window.history.pushState({}, '', path);
+        }
+        this.handleRoute();
+    }
+
+    showPostsView() {
+        // Hide post detail view if it exists
+        const postDetailModal = document.getElementById('post-detail-modal');
+        if (postDetailModal) {
+            postDetailModal.style.display = 'none';
+        }
+
+        // Show posts container
+        const postsContainer = document.getElementById('posts-container');
+        if (postsContainer) {
+            postsContainer.style.display = 'block';
+        }
+
+        // Load posts if not already loaded
+        if (!this.posts || this.posts.length === 0) {
+            this.loadPosts();
+        }
+    }
+
+    async showPostDetail(postId) {
+        try {
+            // Load the specific post
+            const response = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
+                credentials: 'include'
+            });
+
+            if (response.ok) {
+                const post = await response.json();
+                this.openPostDetails(postId, post);
+            } else if (response.status === 404) {
+                this.showNotification('Post not found', 'error');
+                this.navigateTo('/posts', true);
+            } else {
+                this.showNotification('Failed to load post', 'error');
+                this.navigateTo('/posts', true);
+            }
+        } catch (error) {
+            console.error('Failed to load post:', error);
+            this.showNotification('Failed to load post', 'error');
+            this.navigateTo('/posts', true);
+        }
     }
 
     // Authentication Methods
@@ -793,6 +888,11 @@ class ForumApp {
         const modal = document.getElementById(modalId);
         modal.classList.remove('show');
         modal.style.display = 'none';
+
+        // Handle URL routing when closing post detail modal
+        if (modalId === 'post-detail-modal') {
+            this.navigateTo('/posts');
+        }
     }
 
     showLoading() {
@@ -1084,15 +1184,32 @@ class ForumApp {
     }
 
     // Comments Methods
-    async openPostDetails(postId) {
+    async openPostDetails(postId, postData = null) {
+        // Update URL if not already on the correct route
+        const expectedPath = `/post/${postId}`;
+        if (window.location.pathname !== expectedPath) {
+            this.navigateTo(expectedPath);
+            return; // The navigation will trigger this method again
+        }
+
         this.showLoading();
 
         try {
             // Load post details and comments
-            const post = this.posts.find(p => p.id === postId);
+            let post = postData || this.posts.find(p => p.id === postId);
             if (!post) {
-                this.showNotification('Post not found', 'error');
-                return;
+                // Try to fetch the post from the server
+                const response = await fetch(`${API_BASE_URL}/api/posts/${postId}`, {
+                    credentials: 'include'
+                });
+
+                if (response.ok) {
+                    post = await response.json();
+                } else {
+                    this.showNotification('Post not found', 'error');
+                    this.navigateTo('/posts', true);
+                    return;
+                }
             }
 
             // Load comments with better error handling

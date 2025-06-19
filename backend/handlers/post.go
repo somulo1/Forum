@@ -10,6 +10,7 @@ import (
 	"os"
 	"path/filepath"
 	"strconv"
+	"strings"
 	"time"
 
 	"forum/models"
@@ -163,6 +164,64 @@ func GetPosts(db *sql.DB, w http.ResponseWriter, r *http.Request) {
 	}
 
 	utils.SendJSONResponse(w, fullPosts, http.StatusOK)
+}
+
+// GetSinglePost fetches a single post by ID
+func GetSinglePost(db *sql.DB, w http.ResponseWriter, r *http.Request) {
+	if r.Method != http.MethodGet {
+		http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+
+	// Extract post ID from URL path
+	path := r.URL.Path
+	if !strings.HasPrefix(path, "/api/posts/") {
+		http.Error(w, "Invalid URL", http.StatusBadRequest)
+		return
+	}
+
+	postIDStr := strings.TrimPrefix(path, "/api/posts/")
+	if postIDStr == "" {
+		http.Error(w, "Missing post ID", http.StatusBadRequest)
+		return
+	}
+
+	postID, err := strconv.Atoi(postIDStr)
+	if err != nil {
+		http.Error(w, "Invalid post ID", http.StatusBadRequest)
+		return
+	}
+
+	// Get the post
+	post, err := sqlite.GetPost(db, postID)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			http.Error(w, "Post not found", http.StatusNotFound)
+		} else {
+			log.Printf("Error fetching post: %v", err)
+			utils.SendJSONError(w, "Failed to fetch post", http.StatusInternalServerError)
+		}
+		return
+	}
+
+	// Get user info for the post
+	userInfo, err := sqlite.GetUserByID(db, post.UserID)
+	if err != nil {
+		log.Printf("ERROR: Failed to get user info for UserID %s: %v", post.UserID, err)
+		utils.SendJSONError(w, "Failed to fetch post user information", http.StatusInternalServerError)
+		return
+	}
+
+	post.Username = userInfo.Username
+	post.ProfileAvatar = userInfo.AvatarURL
+
+	// Get category IDs for the post
+	categoryIDs, err := sqlite.GetPostCategoryIDs(db, post.ID)
+	if err == nil {
+		post.CategoryIDs = categoryIDs
+	}
+
+	utils.SendJSONResponse(w, post, http.StatusOK)
 }
 
 // UpdatePost updates an existing post
